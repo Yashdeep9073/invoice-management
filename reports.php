@@ -155,9 +155,6 @@ try {
     }
 
 
-
-
-
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
 }

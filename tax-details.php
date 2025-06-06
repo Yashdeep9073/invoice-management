@@ -445,13 +445,15 @@ ob_end_flush();
                                     <div class="col-lg-12">
                                         <div class="mb-3">
                                             <label class="form-label">Name <span> *</span></label>
-                                            <input type="text" name="taxName" class="form-control" required>
+                                            <input type="text" name="taxName" placeholder="Name" class="form-control"
+                                                required>
                                         </div>
                                     </div>
                                     <div class="col-lg-12">
                                         <div class="mb-0">
                                             <label class="form-label">Tax Rate % <span> *</span></label>
-                                            <input type="text" class="form-control" name="taxRate" required>
+                                            <input type="text" class="form-control" name="taxRate"
+                                                placeholder="Tax Rate %" required>
                                         </div>
                                     </div>
                                 </div>

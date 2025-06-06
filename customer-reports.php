@@ -286,7 +286,7 @@ ob_end_flush();
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer Name</label>
-                                            <input type="text" class="form-control" name="customerName" required>
+                                            <input type="text" class="form-control" name="customerName"  required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">

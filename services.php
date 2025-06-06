@@ -329,13 +329,14 @@ try {
                                     <div class="col-lg-12">
                                         <div class="input-blocks">
                                             <label>Service Name</label>
-                                            <input type="text" class="form-control" name="serviceName" required>
+                                            <input type="text" class="form-control" placeholder="Service Name"
+                                                name="serviceName" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-12">
                                         <div class="input-blocks">
                                             <label>SAC Code (Services Accounting Code)</label>
-                                            <input type="text" class="form-control" name="sacCode" required>
+                                            <input type="text" class="form-control" name="sacCode" placeholder="SAC Code" required>
                                         </div>
                                     </div>
                                 </div>

@@ -9,7 +9,11 @@ if (!isset($_SESSION["admin_id"])) {
 
 
 try {
-    $stmtFetchInvoices = $db->prepare("SELECT * FROM invoice 
+    $stmtFetchInvoices = $db->prepare("SELECT 
+     invoice.*,
+     customer.customer_id,
+     customer.customer_name
+     FROM invoice 
     INNER JOIN customer
     ON customer.customer_id = invoice.customer_id
      WHERE invoice.is_active = 0
@@ -313,15 +317,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdsDelete'])) {
                     </div>
                     <ul class="table-top-head">
 
-                        <li>
+                        <!-- <li>
                             <a data-bs-toggle="tooltip" class="multi-delete-button" data-bs-placement="top"
                                 title="Delete"><img src="assets/img/icons/delete.png" alt="img" /></a>
-                        </li>
+                        </li> -->
 
-                        <li>
+                        <!-- <li>
                             <a data-bs-toggle="tooltip" class="multi-restore-button" data-bs-placement="top"
                                 title="Restore"><img src="assets/img/icons/folder-restore.png" alt="img" /></a>
-                        </li>
+                        </li> -->
                         <li>
                             <a data-bs-toggle="tooltip" onclick="exportToPDF()" data-bs-placement="top" title="Pdf"><img
                                     src="assets/img/icons/pdf.svg" alt="img" /></a>
@@ -368,6 +372,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdsDelete'])) {
                                         <th>Invoice No</th>
                                         <th>Customer</th>
                                         <th>Due Date</th>
+                                        <th>Created Date</th>
                                         <th>Amount</th>
                                         <th>Status</th>
                                         <th class="no-sort text-center">Action</th>
@@ -386,6 +391,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdsDelete'])) {
                                             <td><?php echo $invoice['invoice_number'] ?></td>
                                             <td><?php echo $invoice['customer_name'] ?></td>
                                             <td><?php $date = new DateTime($invoice['due_date']);
+                                            echo $date->format('d M Y') ?>
+                                            </td>
+                                            <td><?php $date = new DateTime($invoice['created_at']);
                                             echo $date->format('d M Y') ?>
                                             </td>
                                             <td><?php echo $invoice['total_amount'] ?></td>
@@ -413,13 +421,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdsDelete'])) {
                                                                 data-feather="eye" class="info-img"></i>Show
                                                             Detail</a>
                                                     </li>
-                                                    <li>
+                                                    <!-- <li>
                                                         <a href="javascript:void(0);"
                                                             data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
                                                             class="restoreButton dropdown-item"><i
                                                                 data-feather="corner-up-left" class="info-img"></i>Restore
                                                         </a>
-                                                    </li>
+                                                    </li> -->
                                                     <li>
                                                         <a target="_blank"
                                                             href="download-invoice.php?id=<?php echo base64_encode($invoice['invoice_id']) ?>"
@@ -427,12 +435,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdsDelete'])) {
                                                                 class="info-img"></i>Download
                                                         </a>
                                                     </li>
-                                                    <li>
+                                                    <!-- <li>
                                                         <a href="javascript:void(0);"
                                                             data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
                                                             class="dropdown-item deleteButton mb-0"><i
                                                                 data-feather="trash-2" class="info-img"></i>Delete </a>
-                                                    </li>
+                                                    </li> -->
                                                 </ul>
                                             </td>
                                         </tr>

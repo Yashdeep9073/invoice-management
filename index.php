@@ -17,26 +17,54 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $passwordInput = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING);
     $recaptcha = filter_input(INPUT_POST, 'g-recaptcha-response', FILTER_SANITIZE_STRING);
 
-    if (!$emailInput || !$passwordInput || !$recaptcha) {
+    // Check if reCAPTCHA is active in the database
+    if (isset($data['is_recaptcha_active']) && $data['is_recaptcha_active'] == 1) {
+        // If reCAPTCHA is active, g-recaptcha-response must be present
+        if (empty($recaptcha)) {
+            $_SESSION['error'] = "Please complete the reCAPTCHA verification.";
+            header("Location: index.php");
+            exit;
+        }
+
+        // Google reCAPTCHA verification
+        $secret_key = getenv('GOOGLE_RECAPTCHA_SECRET_KEY');
+        if (!$secret_key) {
+            $_SESSION['error'] = "reCAPTCHA configuration error. Please contact the administrator.";
+            header("Location: index.php");
+            exit;
+        }
+
+        // Use cURL for more robust HTTP request handling
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://www.google.com/recaptcha/api/siteverify');
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+            'secret' => $secret_key,
+            'response' => $recaptcha
+        ]));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($ch);
+        $curl_error = curl_error($ch);
+        curl_close($ch);
+
+        if ($curl_error) {
+            $_SESSION['error'] = "reCAPTCHA verification failed due to network error. Please try again.";
+            header("Location: index.php");
+            exit;
+        }
+
+        $response = json_decode($response, true);
+
+        if (!$response || !isset($response['success']) || !$response['success']) {
+            $_SESSION['error'] = "reCAPTCHA verification failed. Please try again.";
+            header("Location: index.php");
+            exit;
+        }
+    }
+
+    // Validate email and password
+    if (!$emailInput || !$passwordInput) {
         $_SESSION['error'] = "Invalid input. Please fill in all fields correctly.";
-        header("Location: index.php");
-        exit;
-    }
-
-    // Google reCAPTCHA verification
-    $secret_key = getenv('GOOGLE_RECAPTCHA_SECRET_KEY');
-    if (!$secret_key) {
-        $_SESSION['error'] = "reCAPTCHA configuration error. Please contact the administrator.";
-        header("Location: index.php");
-        exit;
-
-    }
-
-    $url = 'https://www.google.com/recaptcha/api/siteverify?secret=' . urlencode($secret_key) . '&response=' . urlencode($recaptcha);
-    $response = json_decode(file_get_contents($url));
-
-    if (!$response || !$response->success) {
-        $_SESSION['error'] = "reCAPTCHA verification failed. Please try again.";
         header("Location: index.php");
         exit;
     }
@@ -67,7 +95,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_SESSION['error'] = "Invalid password.";
         header("Location: index.php");
         exit;
-
     }
 
     // Store session values securely
@@ -81,7 +108,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmtRolesData->execute();
     $roleData = $stmtRolesData->get_result()->fetch_all(MYSQLI_ASSOC);
 
-    $_SESSION['admin_role'] = $roleData['0']['role_name'];
+    $_SESSION['admin_role'] = $roleData[0]['role_name'];
 
     // Redirect to admin dashboard
     header("Location: admin-dashboard.php");
@@ -89,10 +116,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 try {
-    $stmtFetch = $db->prepare("SELECT auth_banner FROM system_settings");
+    $stmtFetch = $db->prepare("SELECT * FROM system_settings");
     $stmtFetch->execute();
     $data = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
     $imageUrl = $data['auth_banner'];
+
+
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
 }
@@ -229,15 +258,21 @@ ob_end_flush();
                                         </div>
                                     </div>
                                 </div>
+                                <?php if ($data['is_recaptcha_active'] == 1): ?>
+                                    <div class="form-login">
+                                        <div class="g-recaptcha"
+                                            data-sitekey="<?= htmlspecialchars($siteKey, ENT_QUOTES, 'UTF-8') ?>"
+                                            data-callback="enableSubmit" style="border:none;" align="center"></div>
+                                    </div>
+                                <?php endif; ?>
+
                                 <div class="form-login">
-                                    <div class="g-recaptcha"
-                                        data-sitekey="<?= htmlspecialchars($siteKey, ENT_QUOTES, 'UTF-8') ?>"
-                                        data-callback="callback" style="border:none;" align="center"></div>
+                                    <button type="submit" name="submit" id="submit" class="btn btn-login" <?php
+                                    echo isset($data['is_recaptcha_active']) && $data['is_recaptcha_active'] == 1 ? 'disabled' : ''; ?>>
+                                        Sign In
+                                    </button>
                                 </div>
-                                <div class="form-login">
-                                    <button type="submit" name="submit" id="submit" class="btn btn-login" disabled>Sign
-                                        In</button>
-                                </div>
+
                                 <div class="form-sociallink">
                                     <div class="my-4 d-flex justify-content-center align-items-center copyright-text">
                                         <p>Copyright &copy; <?php echo date('Y'); ?> <a href="https://vibrantick.in/"
@@ -264,10 +299,19 @@ ob_end_flush();
 <script src="https://unpkg.com/@popperjs/core@2"></script>
 
 <script>
-    function callback() {
-        const submitButton = document.getElementById("submit");
-        submitButton.removeAttribute("disabled");
+    function enableSubmit(token) {
+        document.getElementById('submit').removeAttribute('disabled');
     }
+
+    // Prevent form submission if reCAPTCHA is active but not completed
+    document.querySelector('form').addEventListener('submit', function (e) {
+        <?php if (isset($data['is_recaptcha_active']) && $data['is_recaptcha_active'] == 1): ?>
+            if (!grecaptcha.getResponse()) {
+                e.preventDefault();
+                alert('Please complete the reCAPTCHA verification.');
+            }
+        <?php endif; ?>
+    });
 </script>
 <script>
     if (window.history.replaceState) {

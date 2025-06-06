@@ -16,18 +16,120 @@ if (!isset($_SESSION["admin_id"])) {
 
 
 try {
-    $stmtFetchInvoices = $db->prepare("SELECT * FROM invoice 
-    INNER JOIN customer
-    ON customer.customer_id = invoice.customer_id
-    LEFT JOIN admin
-    ON admin.admin_id = invoice.created_by 
-    WHERE invoice.is_active = 1
-    ");
-    if ($stmtFetchInvoices->execute()) {
-        $invoices = $stmtFetchInvoices->get_result();
-    } else {
-        $_SESSION['error'] = 'Error for fetching customers';
+
+
+    if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+        // Define the expected query parameters
+        $params = [
+            'customer' => isset($_GET['customer']) ? $_GET['customer'] : '',
+            'from' => isset($_GET['from']) ? $_GET['from'] : '',
+            'to' => isset($_GET['to']) ? $_GET['to'] : '',
+        ];
+
+        // Check if at least one parameter is present (non-empty)
+        $hasParams = false;
+        foreach ($params as $value) {
+            if ($value !== '') {
+                $hasParams = true;
+                break;
+            }
+        }
+
+        if ($hasParams) {
+
+            $customerId = $params['customer'] ?? null;
+            $startDate = $params['from'] ?? null;
+            $endDate = $params['to'] ?? null;
+
+            // Clean and format dates
+            $startDate = $startDate ? date('Y-m-d', strtotime($startDate)) : null;
+            $endDate = $endDate ? date('Y-m-d', strtotime($endDate)) : null;
+
+            // Prepare SQL with conditions
+            $query = "SELECT 
+            invoice.*,
+            customer.customer_id,
+            customer.customer_name,
+            admin.admin_username
+            FROM invoice 
+            INNER JOIN customer ON customer.customer_id = invoice.customer_id
+            LEFT JOIN admin ON admin.admin_id = invoice.created_by 
+            WHERE invoice.is_active = 1";
+
+            $conditions = [];
+            $paramsToBind = [];
+
+            if ($customerId) {
+                $conditions[] = "invoice.customer_id = ?";
+                $paramsToBind[] = $customerId;
+            }
+
+            if ($startDate) {
+                $conditions[] = "DATE(invoice.created_at) >= ?";
+                $paramsToBind[] = $startDate;
+            }
+
+            if ($endDate) {
+                $conditions[] = "DATE(invoice.created_at) <= ?";
+                $paramsToBind[] = $endDate;
+            }
+
+            if (!empty($conditions)) {
+                $query .= " AND " . implode(" AND ", $conditions);
+            }
+
+            $stmtFetchInvoices = $db->prepare($query);
+
+            if ($stmtFetchInvoices === false) {
+                $_SESSION['error'] = 'Query preparation failed';
+            } else {
+                // Bind parameters dynamically
+                if (!empty($paramsToBind)) {
+                    $types = str_repeat("s", count($paramsToBind)); // all are strings
+                    $stmtFetchInvoices->bind_param($types, ...$paramsToBind);
+                }
+
+                if ($stmtFetchInvoices->execute()) {
+                    $invoices = $stmtFetchInvoices->get_result();
+                } else {
+                    $_SESSION['error'] = 'Error fetching filtered invoices';
+                }
+
+                $stmtFetchInvoices->close();
+            }
+
+            // Also fetch customers for the filter UI
+            $stmtFetchCustomers = $db->prepare("SELECT * FROM customer WHERE isActive = 1");
+            $stmtFetchCustomers->execute();
+            $customers = $stmtFetchCustomers->get_result()->fetch_all(MYSQLI_ASSOC);
+            $stmtFetchCustomers->close();
+        } else {
+            $stmtFetchInvoices = $db->prepare("SELECT 
+                invoice.*,
+                customer.customer_id,
+                customer.customer_name,
+                admin.admin_username
+                FROM invoice 
+                INNER JOIN customer
+                ON customer.customer_id = invoice.customer_id
+                LEFT JOIN admin
+                ON admin.admin_id = invoice.created_by 
+                WHERE invoice.is_active = 1
+                ");
+            if ($stmtFetchInvoices->execute()) {
+                $invoices = $stmtFetchInvoices->get_result();
+            } else {
+                $_SESSION['error'] = 'Error for fetching customers';
+            }
+
+            // Fetch customers
+            $stmtFetchCustomers = $db->prepare("SELECT * FROM customer WHERE isActive = 1");
+            $stmtFetchCustomers->execute();
+            $customers = $stmtFetchCustomers->get_result()->fetch_all(MYSQLI_ASSOC);
+            $stmtFetchCustomers->close();
+        }
     }
+
 
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
@@ -547,7 +649,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                         </li>
 
                         <li>
-                            <a href="" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
+                            <a href="manage-invoice.php" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
                                     data-feather="rotate-ccw" class="feather-rotate-ccw"></i></a>
                         </li>
                         <li>
@@ -574,6 +676,57 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                             class="feather-search"></i></a>
                                 </div>
                             </div>
+                            <div class="search-path">
+                                <div class="d-flex align-items-center">
+                                    <a class="btn btn-filter" id="filter_search">
+                                        <i data-feather="filter" class="filter-icon"></i>
+                                        <span><img src="assets/img/icons/closes.svg" alt="img" /></span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" id="filter_inputs">
+                            <div class="card-body pb-0">
+                                <div class="row">
+                                    <div class="col-lg-3 col-sm-6 col-12">
+                                        <div class="input-blocks">
+                                            <i data-feather="user" class="info-img"></i>
+                                            <select class="select" name="customerId">
+                                                <option value="">Choose Name</option>
+                                                <?php foreach ($customers as $customer) { ?>
+                                                    <option value="<?php echo $customer['customer_id'] ?>">
+                                                        <?php echo $customer['customer_name'] ?>
+                                                    </option>
+                                                <?php } ?>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-3 col-sm-6 col-12">
+                                        <div class="input-blocks">
+                                            <div class="position-relative daterange-wraper">
+                                                <input type="date" class="form-control" name="from">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-sm-6 col-12">
+                                        <div class="input-blocks">
+                                            <div class="position-relative daterange-wraper">
+                                                <input type="date" class="form-control" name="to">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-sm-6 col-12">
+                                        <div class="input-blocks">
+                                            <a class="btn btn-filters ms-auto">
+                                                <i data-feather="search" class="feather-search"></i>
+                                                Search
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
 
@@ -590,6 +743,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         <th>Invoice No</th>
                                         <th>Customer</th>
                                         <th>Due Date</th>
+                                        <th>Created Date</th>
                                         <th>Amount</th>
                                         <th>Created By</th>
                                         <th>Status</th>
@@ -609,6 +763,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                             <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
                                             <td><?php echo $invoice['customer_name'] ?></td>
                                             <td><?php $date = new DateTime($invoice['due_date']);
+                                            echo $date->format('d M Y') ?>
+                                            </td>
+                                            <td><?php $date = new DateTime($invoice['created_at']);
                                             echo $date->format('d M Y') ?>
                                             </td>
                                             <td><?php echo $invoice['total_amount'] ?></td>
@@ -720,6 +877,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
 
     <script>
         $(document).ready(function () {
+
+            // Initialize Notyf
+            const notyf = new Notyf({
+                duration: 3000,
+                position: { x: "center", y: "top" },
+                types: [
+                    {
+                        type: "success",
+                        background: "#4dc76f",
+                        textColor: "#FFFFFF",
+                        dismissible: false,
+                    },
+                    {
+                        type: "error",
+                        background: "#ff1916",
+                        textColor: "#FFFFFF",
+                        dismissible: false,
+                        duration: 3000,
+                    },
+                ],
+            });
+
             // Handle the click event on the delete button
             $(document).on('click', '.deleteButton', function (event) {
                 let invoiceId = $(this).data('invoice-id');
@@ -771,7 +950,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                     }
                 });
             });
-
 
             $(document).on('click', '.sendMail', function (e) {
                 e.preventDefault();
@@ -891,6 +1069,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
 
             });
 
+            $(document).on("click", ".row .col-lg-3 .input-blocks .btn-filters", function (e) {
+                e.preventDefault();
+                let customerId = $(".input-blocks select[name='customerId']").val();
+                let fromDate = $(".row .col-lg-3 .input-blocks .daterange-wraper input[name='from']").val();
+                let toDate = $(".row .col-lg-3 .input-blocks .daterange-wraper input[name='to']").val();
+
+                // Check if customerId is missing or not a number
+                // if (!customerId || isNaN(customerId) || !Number.isInteger(Number(customerId))) {
+                //     notyf.error("Please select a valid customer");
+                //     return;
+                // }
+                if (!fromDate) {
+                    notyf.error("Please select from date");
+                    return;
+                }
+                if (!toDate) {
+                    notyf.error("Please select to date");
+                    return;
+                }
+
+                // Output
+                console.log("Customer ID -", customerId);
+                console.log("From Date -", fromDate);
+                console.log("To Date -", toDate);
+                window.location.href = `manage-invoice.php?customer=${customerId}&from=${fromDate}&to=${toDate}`;
+            });
         });
     </script>
 

@@ -166,6 +166,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         $stmt->close();
 
         $_SESSION['success'] = 'Invoice created successfully!';
+        header("Location: manage-invoice.php");
+        exit;
     } catch (Exception $e) {
         $_SESSION['error'] = $e->getMessage();
     }
@@ -336,7 +338,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="input-blocks add-product list">
-                                                        <label class="form-label">Invoice Number</label>
+                                                        <label class="form-label">Invoice Number <span> *</span></label>
                                                         <input type="text" id="invoice_number" name="invoice_number"
                                                             placeholder="Enter Invoice Number" class="form-control"
                                                             required>
@@ -349,7 +351,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="mb-3 add-product">
-                                                        <label class="form-label">Payment Method:</label>
+                                                        <label class="form-label">Payment Method: <span>
+                                                                *</span></label>
                                                         <select id="payment_method" name="payment_method"
                                                             class="form-control" required>
                                                             <option>Select Method</option>
@@ -366,7 +369,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="input-blocks add-product list">
-                                                        <label>Transaction ID:</label>
+                                                        <label>Transaction ID: <span> *</span></label>
                                                         <input type="text" id="transaction_id" name="transaction_id"
                                                             placeholder="Enter Transaction ID" class="form-control">
                                                         <button type="button"
@@ -378,7 +381,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="mb-3 add-product">
-                                                        <label class="form-label">Payment Status</label>
+                                                        <label class="form-label">Payment Status <span> *</span></label>
                                                         <select id="payment_status" name="status" class="form-control"
                                                             required>
                                                             <option>Select Status</option>
@@ -392,7 +395,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="mb-3 add-product">
-                                                        <label class="form-label">Due Date:</label>
+                                                        <label class="form-label">Due Date: <span> *</span></label>
                                                         <input type="date" id="due_date" name="due_date"
                                                             placeholder="Enter Due Date" class="form-control"
                                                             autocomplete="off" required>
@@ -400,7 +403,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                 </div>
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="mb-3 add-product">
-                                                        <label class="form-label">Customer</label>
+                                                        <label class="form-label">Customer <span> *</span></label>
 
                                                         <select class="select2 form-control" id="" name="customerName"
                                                             required>
@@ -417,7 +420,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                 </div>
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="mb-3 add-product">
-                                                        <label class="form-label">Services</label>
+                                                        <label class="form-label">Services <span> *</span></label>
 
                                                         <select class="select2 form-select" name="serviceName[]"
                                                             multiple="multiple">
@@ -455,7 +458,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                 <div class="addproduct-icon list icon">
                                                     <h5>
                                                         <i data-feather="life-buoy" class="add-info"></i><span>Amount
-                                                            Details</span>
+                                                            Details </span>
                                                     </h5>
                                                     <a href="javascript:void(0);"><i data-feather="chevron-down"
                                                             class="chevron-down-add"></i></a>
@@ -473,7 +476,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                     <div class="row">
                                                         <div class="col-lg-3 col-sm-6 col-12">
                                                             <div class="mb-3 add-product">
-                                                                <label class="form-label">Amount</label>
+                                                                <label class="form-label">Amount <span> *</span></label>
                                                                 <input type="number" id="invoiceAmount" name="amount"
                                                                     class="form-control" placeholder="Enter Price"
                                                                     required>
@@ -481,7 +484,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                         </div>
                                                         <div class="col-lg-3 col-sm-6 col-12">
                                                             <div class="mb-3 add-product">
-                                                                <label class="form-label">Quantity</label>
+                                                                <label class="form-label">Quantity <span>
+                                                                        *</span></label>
                                                                 <input type="number" id="quantity" name="quantity"
                                                                     class="form-control" placeholder="Enter Quantity"
                                                                     value="1" min="1" step="1" style="appearance: auto;"
@@ -490,7 +494,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                         </div>
                                                         <div class="col-lg-3 col-sm-6 col-12">
                                                             <div class="mb-3 add-product">
-                                                                <label class="form-label">Tax (%)</label>
+                                                                <label class="form-label">Tax (%) <span>
+                                                                        *</span></label>
                                                                 <select id="tax" name="tax" class="form-control"
                                                                     required>
                                                                     <option>Select Tax Rate
@@ -606,8 +611,6 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                 $('#transaction_id').val(generateTransactionId());
             });
 
-            // set invoice number on reload
-            $('#invoice_number').val("<?php echo generateInvoiceNumber($db) ?>");
 
             $(document).on('click', '.invoiceNumber', function (event) {
                 event.preventDefault();

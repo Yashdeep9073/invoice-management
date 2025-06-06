@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editAdminId'])) {
   try {
 
-    
+
     // echo '<pre>';
     // print_r($_POST);
     // exit;
@@ -236,6 +236,10 @@ try {
 
   <!-- html to excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- intl-tel-input -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/css/intlTelInput.css">
+  <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/intlTelInput.min.js"></script>
 
 </head>
 
@@ -455,7 +459,7 @@ try {
           <div class="content">
             <div class="modal-header border-0 custom-modal-header">
               <div class="page-title">
-                <h4>Add Customer</h4>
+                <h4>Add Admin</h4>
               </div>
               <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
@@ -467,26 +471,26 @@ try {
 
                   <div class="col-lg-6">
                     <div class="input-blocks">
-                      <label>Admin Name</label>
-                      <input type="text" class="form-control" name="adminName" required>
+                      <label>Admin Name <span> *</span></label>
+                      <input type="text" class="form-control" name="adminName" placeholder="Admin Name" required>
                     </div>
                   </div>
                   <div class="col-lg-6">
                     <div class="input-blocks">
-                      <label>Admin Email</label>
-                      <input type="email" class="form-control" name="adminEmail" required>
+                      <label>Admin Email <span> *</span></label>
+                      <input type="email" class="form-control" name="adminEmail" placeholder="Admin Name" required>
                     </div>
                   </div>
                   <div class="col-lg-6">
                     <div class="input-blocks">
-                      <label>Admin Phone</label>
-                      <input type="tel" class="form-control" name="adminPhone" required>
+                      <label>Admin Phone <span> *</span></label>
+                      <input type="tel" class="form-control" name="adminPhone" placeholder="Admin Name" required>
                     </div>
                   </div>
                   <div class="col-lg-6">
                     <div class="input-blocks">
-                      <label>Role</label>
-                      <select class="form-select" name="adminRole" id="" required>
+                      <label>Role <span> *</span></label>
+                      <select class="form-select" name="adminRole" id="" placeholder="Admin Name" required>
                         <option>Select</option>
                         <?php foreach ($roles as $role) { ?>
                           <option value="<?php echo $role['role_id'] ?>"><?php echo $role['role_name'] ?></option>
@@ -497,9 +501,9 @@ try {
 
                   <div class="col-lg-6">
                     <div class="input-blocks">
-                      <label>Password</label>
+                      <label>Password <span> *</span></label>
                       <div class="pass-group">
-                        <input type="password" class="pass-input" name="adminPassword" required />
+                        <input type="password" class="pass-input" name="adminPassword" placeholder="*****" required />
                         <span class="fas toggle-password fa-eye-slash"></span>
                       </div>
                     </div>
@@ -695,6 +699,32 @@ try {
             });
           }
         });
+      });
+
+      const input = $(".input-blocks input[name='adminPhone']").get(0); // or use [0]
+
+      window.intlTelInput(input, {
+        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js",
+        initialCountry: "auto",
+        geoIpLookup: function (callback) {
+          fetch('https://ipapi.co/json')
+            .then(response => response.json())
+            .then(data => callback(data.country_code))
+            .catch(() => callback('us'));
+        }
+      });
+
+      const inputEdit = $(".input-blocks input[name='editAdminPhone']").get(0); // or use [0]
+
+      window.intlTelInput(inputEdit, {
+        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js",
+        initialCountry: "auto",
+        geoIpLookup: function (callback) {
+          fetch('https://ipapi.co/json')
+            .then(response => response.json())
+            .then(data => callback(data.country_code))
+            .catch(() => callback('us'));
+        }
       });
 
     })

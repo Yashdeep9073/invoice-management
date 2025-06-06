@@ -112,6 +112,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaStatus'])) {
+    try {
+
+        $status = $_POST['captchaStatus'];
+
+        $stmtUpdate = $db->prepare("UPDATE system_settings SET is_recaptcha_active = ? ");
+        $stmtUpdate->bind_param("i", $status);
+        $stmtUpdate->execute();
+
+        //throw $th;
+        echo json_encode([
+            "status" => 200,
+            "message" => "Captcha status updated successfully",
+
+        ]);
+        exit;
+
+    } catch (\Throwable $th) {
+        //throw $th;
+        echo json_encode([
+            "status" => 500,
+            "error" => $th->getMessage(),
+            "message" => "Error while updating captcha status",
+
+        ]);
+        exit;
+    }
+}
 
 
 ?>
@@ -260,7 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                                                                 data-feather="airplay"></i><span>System
                                                                 Settings</span><span class="menu-arrow"></span></a>
                                                         <ul>
-                                                            <li><a href="system-settings.html" class="active">System
+                                                            <li><a href="system-settings.php" class="active">System
                                                                     Settings</a></li>
                                                         </ul>
                                                     </li>
@@ -474,6 +502,83 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
     <script src="assets/plugins/sweetalert/sweetalerts.min.js" type="2d09356b56ee97a9b1de7823-text/javascript"></script>
     <script src="assets/js/script.js" type="2d09356b56ee97a9b1de7823-text/javascript"></script>
     <script src="assets/js/rocket-loader-min.js" data-cf-settings="2d09356b56ee97a9b1de7823-|49" defer=""></script>
+
+    <script>
+        $(document).ready(function () {
+
+            // Initialize Notyf
+            const notyf = new Notyf({
+                duration: 3000,
+                position: { x: "center", y: "top" },
+                types: [
+                    {
+                        type: "success",
+                        background: "#4dc76f",
+                        textColor: "#FFFFFF",
+                        dismissible: false,
+                    },
+                    {
+                        type: "error",
+                        background: "#ff1916",
+                        textColor: "#FFFFFF",
+                        dismissible: false,
+                        duration: 3000,
+                    },
+                ],
+            });
+
+            $(document).on("change", "#user1", function () {
+                if ($(this).is(":checked")) {
+                    console.log("Status: Checked (ON)");
+
+                    $.ajax({
+                        url: "system-settings.php",
+                        type: "POST",
+                        data: { captchaStatus: 1 },
+                        success: function (response, xhr) {
+                            let result = JSON.parse(response);
+
+                            console.log(result);
+
+                            if (result.status == 200) {
+                                notyf.success(result.message || "Status updated successfully");
+                            }
+
+
+                        },
+                        error: function (error, xhr) {
+                            console.error(error);
+                            notyf.error(error || "Error while updating status");
+                        }
+                    })
+
+                } else {
+
+                    $.ajax({
+                        url: "system-settings.php",
+                        type: "POST",
+                        data: { captchaStatus: 0 },
+                        success: function (response, xhr) {
+                            let result = JSON.parse(response);
+
+                            console.log(result);
+
+                            if (result.status == 200) {
+                                notyf.success(result.message || "Status updated successfully");
+                            }
+
+
+                        },
+                        error: function (error, xhr) {
+                            console.error(error);
+                            notyf.error(error || "Error while updating status");
+                        }
+                    })
+                }
+            });
+        });
+    </script>
+
 
 
 </body>

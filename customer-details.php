@@ -5,6 +5,9 @@ if (!isset($_SESSION["admin_id"])) {
     header("location: index.php");
 }
 require "./database/config.php";
+require 'vendor/autoload.php';
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
@@ -202,6 +205,76 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['stateCode'])) {
 
 }
 
+// Bulk Excel upload
+if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_FILES['excel_file'])) {
+    $file = $_FILES['excel_file']['tmp_name'];
+    $fileType = IOFactory::identify($file);
+    $reader = IOFactory::createReader($fileType);
+    $spreadsheet = $reader->load($file);
+    $sheet = $spreadsheet->getActiveSheet();
+    $rows = $sheet->toArray();
+
+    $successCount = 0;
+    $failCount = 0;
+    $errors = [];
+
+    foreach ($rows as $rowIndex => $row) {
+        // Skip header row (assuming first row is the header)
+        if ($rowIndex == 0 || empty($row[0])) {
+            continue;
+        }
+
+        $customerName = filter_var($row[0], FILTER_SANITIZE_STRING);
+        $customerPhone = preg_replace('/\D/', '', $row[1]); // Remove all non-digit chars
+        $customerEmail = filter_var($row[2], FILTER_SANITIZE_EMAIL);
+        $customerAddress = filter_var($row[3], FILTER_SANITIZE_STRING);
+        $gstNumber = filter_var($row[4], FILTER_SANITIZE_STRING);
+
+        // Basic validation
+        if (empty($customerPhone) || empty($customerEmail)) {
+            $failCount++;
+            $errors[] = "Row $rowIndex: Missing phone or email.";
+            continue;
+        }
+
+        // Check for duplicates
+        $stmtCheck = $db->prepare("SELECT * FROM customer WHERE customer_phone = ? OR customer_email = ? OR gst_number = ?");
+        $stmtCheck->bind_param("sss", $customerPhone, $customerEmail, $gstNumber);
+        $stmtCheck->execute();
+        $result = $stmtCheck->get_result();
+
+        if ($result->num_rows > 0) {
+            $failCount++;
+            $errors[] = "Row $rowIndex: Duplicate entry (phone/email/gst).";
+            continue;
+        }
+
+        // Insert into database
+        $stmtInsert = $db->prepare("INSERT INTO customer (customer_name, customer_phone, customer_email, customer_address, gst_number) VALUES (?, ?, ?, ?, ?)");
+        $stmtInsert->bind_param("sssss", $customerName, $customerPhone, $customerEmail, $customerAddress, $gstNumber);
+
+        if ($stmtInsert->execute()) {
+            $successCount++;
+        } else {
+            $failCount++;
+            $errors[] = "Row $rowIndex: DB error - " . $stmtInsert->error;
+        }
+
+        $stmtCheck->close();
+        $stmtInsert->close();
+    }
+
+    // Feedback
+    $_SESSION['success'] = "$successCount rows inserted successfully.";
+    if ($failCount > 0) {
+        $_SESSION['error'] = "$failCount rows failed to insert. See logs.";
+        file_put_contents("upload_errors.log", implode(PHP_EOL, $errors));
+    }
+
+    header("Location: customer-details.php"); // or wherever you want to redirect
+    exit;
+}
+
 
 try {
     $stmtFetch = $db->prepare("SELECT * FROM customer");
@@ -211,10 +284,6 @@ try {
     $stmtFetchState = $db->prepare("SELECT * FROM state");
     $stmtFetchState->execute();
     $states = $stmtFetchState->get_result();
-
-
-
-
 
 } catch (Exception $e) {
     $_SESSION['error'] = $e;
@@ -261,6 +330,12 @@ ob_end_flush();
     <!-- toast  -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+
+    <!-- intl-tel-input -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/css/intlTelInput.css">
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/intlTelInput.min.js"></script>
+
+
 </head>
 
 <body>
@@ -361,6 +436,10 @@ ob_end_flush();
                     <div class="page-btn">
                         <a href="#" class="btn btn-added" data-bs-toggle="modal" data-bs-target="#add-units"><i
                                 data-feather="plus-circle" class="me-2"></i>Add Customer</a>
+                    </div>
+                    <div class="page-btn import">
+                        <a href="javascript:void(0);" class="btn btn-added color" data-bs-toggle="modal"
+                            data-bs-target="#view-notes"><i data-feather="download" class="me-2"></i>Import Customer</a>
                     </div>
                 </div>
 
@@ -498,34 +577,36 @@ ob_end_flush();
                         <div class="modal-body custom-modal-body">
                             <form action="" method="post">
                                 <div class="row">
-
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Customer Name</label>
-                                            <input type="text" class="form-control" name="customerName" required>
+                                            <label>Customer Name <span> *</span></label>
+                                            <input type="text" class="form-control" name="customerName"
+                                                placeholder="Enter customer name" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Customer Phone</label>
-                                            <input type="tel" class="form-control" name="customerPhone" required>
+                                            <label>Customer Phone <span> *</span></label>
+                                            <input type="tel" class="form-control" name="customerPhone"
+                                                placeholder="Enter customer phone" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Customer Email</label>
-                                            <input type="email" class="form-control" name="customerEmail" required>
+                                            <label>Customer Email <span> *</span></label>
+                                            <input type="email" class="form-control" name="customerEmail"
+                                                placeholder="Enter customer email" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Customer State</label>
-                                            <select class=" form-select" id="customerState" name="customerState"
+                                            <label>Customer State <span> *</span></label>
+                                            <select class="form-select" id="customerState" name="customerState"
                                                 required>
                                                 <option>Select</option>
                                                 <?php foreach ($states as $state) { ?>
-                                                    <option value="<?php echo $state['state_code'] ?>">
-                                                        <?php echo $state['state_name'] ?>
+                                                    <option value="<?php echo $state['state_code']; ?>">
+                                                        <?php echo $state['state_name']; ?>
                                                     </option>
                                                 <?php } ?>
                                             </select>
@@ -533,51 +614,54 @@ ob_end_flush();
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Customer City</label>
+                                            <label>Customer City <span> *</span></label>
                                             <select class="form-select" id="customerCity" name="customerCity" required>
-
+                                                <option>Select a city</option>
                                             </select>
                                         </div>
                                     </div>
-
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Customer Address</label>
-                                            <input type="text" class="form-control" name="customerAddress" required>
+                                            <label>Customer Address <span> *</span></label>
+                                            <input type="text" class="form-control" name="customerAddress"
+                                                placeholder="Enter customer address" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Shipping Name</label>
-                                            <input type="text" class="form-control" name="shippingName" required>
+                                            <label>Shipping Name <span> *</span></label>
+                                            <input type="text" class="form-control" name="shippingName"
+                                                placeholder="Enter shipping name" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Shipping Phone</label>
-                                            <input type="tel" class="form-control" name="shippingPhone" required>
+                                            <label>Shipping Phone <span> *</span></label>
+                                            <input type="tel" class="form-control" name="shippingPhone"
+                                                placeholder="Enter shipping phone" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Shipping Email</label>
-                                            <input type="email" class="form-control" name="shippingEmail" required>
+                                            <label>Shipping Email <span> *</span></label>
+                                            <input type="email" class="form-control" name="shippingEmail"
+                                                placeholder="Enter shipping email" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Shipping Address</label>
-                                            <input type="text" class="form-control" name="shippingAddress" required>
+                                            <label>Shipping Address <span> *</span></label>
+                                            <input type="text" class="form-control" name="shippingAddress"
+                                                placeholder="Enter shipping address" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>GST Numbers</label>
-                                            <input type="text" class="form-control" name="gstNumber" required>
+                                            <label>GST Numbers <span> *</span></label>
+                                            <input type="text" class="form-control" name="gstNumber"
+                                                placeholder="Enter GST number" required>
                                         </div>
                                     </div>
-
-
                                 </div>
                                 <div class="modal-footer-btn">
                                     <button type="button" class="btn btn-cancel me-2"
@@ -585,6 +669,7 @@ ob_end_flush();
                                     <button type="submit" name="submit" class="btn btn-submit">Submit</button>
                                 </div>
                             </form>
+
                         </div>
                     </div>
                 </div>
@@ -722,7 +807,78 @@ ob_end_flush();
         </div>
     </div>
 
+    <div class="modal fade" id="view-notes">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="page-wrapper-new p-0">
+                    <div class="content">
+                        <div class="modal-header border-0 custom-modal-header">
+                            <div class="page-title">
+                                <h4>Import Product</h4>
+                            </div>
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body custom-modal-body">
+                            <form action="" method="post" enctype="multipart/form-data">
+                                <div class="row">
+                                    <div class="col-lg-12 col-sm-6 col-12">
+                                        <div class="row">
+                                            <div>
+                                                <div class="modal-footer-btn download-file">
+                                                    <a href="public/sample/docs/demo_customer_upload.xlsx"
+                                                        class="btn btn-submit">Download Sample
+                                                        File</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <div class="input-blocks image-upload-down">
+                                            <label> Upload CSV File</label>
+                                            <div class="image-upload download">
+                                                <input type="file" accept=".xls,.xlsx,.csv" name="excel_file"
+                                                    required />
+                                                <div class="image-uploads">
+                                                    <img src="assets/img/download-img.png" alt="img" />
+                                                    <h4>Drag and drop a <span>file to upload</span></h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- <div class="col-lg-6">
+                                        <div class="input-blocks image-upload-down">
+                                            <label> Upload Images </label>
+                                            <div class="image-upload download">
+                                                <input type="file" accept=".png,.jpg,.jpeg,.webp"
+                                                    name="product_images[]" multiple  />
+                                                <div class="image-uploads">
+                                                    <img src="assets/img/download-img.png" alt="img" />
+                                                    <h4>Drag and drop a <span>file to upload</span></h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> -->
+                                </div>
 
+                                <div class="col-lg-12">
+                                    <div class="modal-footer-btn">
+                                        <button type="button" class="btn btn-cancel me-2" data-bs-dismiss="modal">
+                                            Cancel
+                                        </button>
+                                        <button type="submit" name="excel_file" class="btn btn-submit">
+                                            Submit
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <script src="assets/js/jquery-3.7.1.min.js"></script>
@@ -922,6 +1078,32 @@ ob_end_flush();
                 });
 
             })
+
+            const input = $(".input-blocks input[name='customerPhone']").get(0); // or use [0]
+
+            window.intlTelInput(input, {
+                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js",
+                initialCountry: "auto",
+                geoIpLookup: function (callback) {
+                    fetch('https://ipapi.co/json')
+                        .then(response => response.json())
+                        .then(data => callback(data.country_code))
+                        .catch(() => callback('us'));
+                }
+            });
+
+            const inputEdit = $(".input-blocks input[name='editCustomerPhone']").get(0); // or use [0]
+
+            window.intlTelInput(inputEdit, {
+                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js",
+                initialCountry: "auto",
+                geoIpLookup: function (callback) {
+                    fetch('https://ipapi.co/json')
+                        .then(response => response.json())
+                        .then(data => callback(data.country_code))
+                        .catch(() => callback('us'));
+                }
+            });
 
         })
     </script>
