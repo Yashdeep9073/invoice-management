@@ -24,6 +24,10 @@ try {
         $_SESSION['error'] = 'Error for fetching customers';
     }
 
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
 }
@@ -201,7 +205,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdsDelete'])) {
     <meta name="robots" content="noindex, nofollow">
     <title>Deleted Invoice</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/animate.css">
@@ -396,7 +401,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdsDelete'])) {
                                             <td><?php $date = new DateTime($invoice['created_at']);
                                             echo $date->format('d M Y') ?>
                                             </td>
-                                            <td><?php echo $invoice['total_amount'] ?></td>
+                                            <td>₹<?php echo $invoice['total_amount'] ?></td>
                                             <td>
                                                 <?php if ($invoice['status'] == 'PAID') { ?>
                                                     <span class="badge badge-lg bg-success">Paid</span>

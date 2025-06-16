@@ -23,6 +23,10 @@ try {
     } else {
         $_SESSION['error'] = 'Error for fetching customers';
     }
+
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 } catch (Exception $e) {
     $_SESSION['error'] = $e;
 }
@@ -41,8 +45,8 @@ try {
     <meta name="robots" content="noindex, nofollow" />
     <title>Pending Payment</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
-
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
 
     <link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css" />
@@ -214,7 +218,7 @@ try {
                                             </td>
                                             <td><?php $date = new DateTime($invoice['due_date']);
                                             echo $date->format('d M Y') ?></td>
-                                            <td class="ref-number"c><?php echo $invoice['invoice_number'] ?></td>
+                                            <td class="ref-number" c><?php echo $invoice['invoice_number'] ?></td>
                                             <td>
                                                 <?php echo $invoice['customer_name'] ?>
                                             </td>

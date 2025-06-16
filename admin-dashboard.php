@@ -8,6 +8,10 @@ require './utility/env.php';
 
 try {
 
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
     $stmtNumber = $db->prepare("SELECT COUNT(*) AS total_invoices FROM invoice  WHERE is_active = 1;");
     $stmtNumber->execute();
     $totalNumberInvoice = $stmtNumber->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -55,6 +59,29 @@ try {
         if (isset($statusCounts[$status])) {
             $statusCounts[$status] = $count;
         }
+    }
+
+    $stmtFetchInvoices = $db->prepare("SELECT 
+        invoice.*,
+        customer.customer_id,
+        customer.customer_name,
+        admin.admin_username
+        FROM invoice 
+        INNER JOIN customer ON customer.customer_id = invoice.customer_id
+        LEFT JOIN admin ON admin.admin_id = invoice.created_by 
+        WHERE invoice.is_active = 1
+        ORDER BY invoice.created_at DESC
+        LIMIT 10;
+        ");
+
+    if ($stmtFetchInvoices->execute()) {
+        $invoices = $stmtFetchInvoices->get_result();
+
+        // echo "<pre>";
+        // print_r($invoices->fetch_all());
+        // exit;
+    } else {
+        $_SESSION['error'] = 'Error for fetching customers';
     }
 
 } catch (Exception $e) {
@@ -158,8 +185,8 @@ ob_end_flush();
     <meta name="robots" content="noindex, nofollow">
     <title>Dashboard</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
-
+ <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css">
@@ -256,7 +283,7 @@ ob_end_flush();
                         <div class="dash-count">
                             <div class="dash-counts">
                                 <h4><?php echo $totalNumberInvoice['0']['total_invoices'] ?></h4>
-                                <h5>Invoices</h5>
+                                <h5><a class="text-white" href="manage-invoice.php">Invoices</a></h5>
                             </div>
                             <div class="dash-imgs">
                                 <i data-feather="file"></i>
@@ -267,7 +294,7 @@ ob_end_flush();
                         <div class="dash-count das1">
                             <div class="dash-counts">
                                 <h4>₹ <?php echo $totalAmount['0']['total_payment'] ?></h4>
-                                <h5>Total Payment</h5>
+                                <h5><a class="text-white" href="reports.php">Total Payment</a></h5>
                             </div>
                             <div class="dash-imgs">
                                 <i data-feather="credit-card"></i>
@@ -278,7 +305,7 @@ ob_end_flush();
                         <div class="dash-count das2">
                             <div class="dash-counts">
                                 <h4>₹ <?php echo $totalPaidAmount['0']['total_paid_payment']; ?></h4>
-                                <h5>Received</h5>
+                                <h5><a class="text-white" href="reports.php">Received</a></h5>
                             </div>
                             <div class="dash-imgs">
                                 <img src="assets/img/icons/file-text-icon-01.svg" class="img-fluid" alt="icon">
@@ -289,7 +316,7 @@ ob_end_flush();
                         <div class="dash-count das3">
                             <div class="dash-counts">
                                 <h4>₹ <?php echo $totalDueAmount['0']['total_due_payment']; ?></h4>
-                                <h5>Due Payment</h5>
+                                <h5><a class="text-white" href="reports.php">Due Payment</a></h5>
                             </div>
                             <div class="dash-imgs">
                                 <i data-feather="file"></i>
@@ -317,6 +344,74 @@ ob_end_flush();
                             <div class="card-body">
                                 <div id="donut-chart" class="chart-set"></div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title">Recent Invoices</h4>
+                        <div class="view-all-link">
+                            <a href="manage-invoice.php" class="view-all d-flex align-items-center">
+                                View All<span class="ps-2 d-flex align-items-center"><i data-feather="arrow-right"
+                                        class="feather-16"></i></span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive dataview">
+                            <table class="table dashboard-expired-products">
+                                <thead>
+                                    <tr>
+                                        <th class="no-sort">
+                                            <label class="checkboxs">
+                                                <input type="checkbox" id="select-all" />
+                                                <span class="checkmarks"></span>
+                                            </label>
+                                        </th>
+                                        <th>Invoice Number</th>
+                                        <th>Customer</th>
+                                        <th>Due Date</th>
+                                        <th>Created Date</th>
+                                        <th class="no-sort">Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($invoices->fetch_all(MYSQLI_ASSOC) as $invoice) { ?>
+                                        <tr>
+                                            <td>
+                                                <label class="checkboxs">
+                                                    <input type="checkbox" />
+                                                    <span class="checkmarks"></span>
+                                                </label>
+                                            </td>
+                                            <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
+                                            <td><a
+                                                    href="view-customer-report.php?id=<?= base64_encode($invoice['customer_id']) ?>"><?php echo $invoice['customer_name'] ?></a>
+                                            </td>
+                                            <td><?php $date = new DateTime($invoice['due_date']);
+                                            echo $date->format('d M Y') ?></td>
+                                            <td><?php $date = new DateTime($invoice['created_at']);
+                                            echo $date->format('d M Y') ?></td>
+                                            <td class="text-primary">
+                                                ₹<?php echo $invoice['total_amount'] ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($invoice['status'] == 'PAID') { ?>
+                                                    <span class="badge badge-lg bg-success">Paid</span>
+                                                <?php } elseif ($invoice['status'] == 'CANCELLED') { ?>
+                                                    <span class="badge badge-lg bg-danger">Cancelled</span>
+                                                <?php } elseif ($invoice['status'] == 'PENDING') { ?>
+                                                    <span class="badge badge-lg bg-warning">Pending</span>
+                                                <?php } elseif ($invoice['status'] == 'REFUNDED') { ?>
+                                                    <span class="badge badge-lg bg-primary">Refunded</span>
+                                                <?php } ?>
+                                            </td>
+                                        </tr>
+                                    <?php } ?>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

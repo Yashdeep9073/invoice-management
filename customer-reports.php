@@ -29,7 +29,9 @@ ORDER BY
     $states = $stmtFetchState->get_result();
 
 
-
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
 
 } catch (Exception $e) {
@@ -51,8 +53,8 @@ ob_end_flush();
     <meta name="robots" content="noindex, nofollow">
     <title>Customers</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
-
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css">
@@ -197,7 +199,7 @@ ob_end_flush();
                                             class="feather-search"></i></a>
                                 </div>
                             </div>
-                            
+
                         </div>
 
 
@@ -286,7 +288,7 @@ ob_end_flush();
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer Name</label>
-                                            <input type="text" class="form-control" name="customerName"  required>
+                                            <input type="text" class="form-control" name="customerName" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">

@@ -120,6 +120,10 @@ try {
     $stmtFetch = $db->prepare("SELECT * FROM tax");
     $stmtFetch->execute();
     $taxes = $stmtFetch->get_result();
+
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 } catch (Exception $e) {
     $_SESSION['error'] = $e;
 }
@@ -139,8 +143,8 @@ ob_end_flush();
     <meta name="robots" content="noindex, nofollow">
     <title>Tax Detail</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
-
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/animate.css">

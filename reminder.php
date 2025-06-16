@@ -8,6 +8,17 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 try {
+
+    $stmtFetch = $db->prepare("SELECT * FROM email_settings WHERE is_active = 1");
+    $stmtFetch->execute();
+    $emailSettingData = $stmtFetch->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    $host = !empty($emailSettingData[0]['email_host']) ? $emailSettingData[0]['email_host'] : getenv("SMTP_HOST");
+    $userName = !empty($emailSettingData[0]['email_address']) ? $emailSettingData[0]['email_address'] : getenv('SMTP_USER_NAME');
+    $password = !empty($emailSettingData[0]['email_password']) ? $emailSettingData[0]['email_password'] : getenv('SMTP_PASSCODE');
+    $port = !empty($emailSettingData[0]['email_port']) ? $emailSettingData[0]['email_port'] : getenv('SMTP_PORT');
+    $title = !empty($emailSettingData[0]['email_from_title']) ? $emailSettingData[0]['email_from_title'] : "Vibrantick InfoTech Solution";
+
     // Get current date for due_date comparison
     $currentDate = date('Y-m-d');
 
@@ -54,13 +65,13 @@ try {
     $mail = new PHPMailer(true);
     $mail->SMTPDebug = 0; // Set to 2 for debugging
     $mail->isSMTP();
-    $mail->Host = getenv('SMTP_HOST');
+    $mail->Host = $host;
     $mail->SMTPAuth = true;
-    $mail->Username = getenv('SMTP_USER_NAME');
-    $mail->Password = getenv('SMTP_PASSCODE');
+    $mail->Username = $userName;
+    $mail->Password = $password;
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // 'ssl'
-    $mail->Port = 465;
-    $mail->setFrom(getenv('SMTP_USER_NAME'), 'Vibrantick InfoTech Solution');
+    $mail->Port = $port;
+    $mail->setFrom($userName, $title);
     $mail->isHTML(true);
 
     // Prepare statement for updating reminder_count
@@ -136,10 +147,10 @@ try {
                             <tr>
                                 <td>' . htmlspecialchars($invoice['invoice_number']) . '</td>
                                 <td>' . htmlspecialchars($invoice['due_date']) . '</td>
-                                <td>₹' . number_format($invoice['amount'], 2) . '</td>
+                                <td>Rs: ' . number_format($invoice['amount'], 2) . '</td>
                                 <td>' . htmlspecialchars($invoice['tax_rate']) . '</td>
                                 <td>' . htmlspecialchars($invoice['discount']) . '</td>
-                                <td>₹' . number_format($invoice['total_amount'], 2) . '</td>
+                                <td>Rs: ' . number_format($invoice['total_amount'], 2) . '</td>
                             </tr>
         ';
         }

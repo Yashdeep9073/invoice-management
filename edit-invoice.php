@@ -46,7 +46,9 @@ try {
         die('JSON decode error: ' . json_last_error_msg());
     }
 
-
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
 
 } catch (Exception $e) {
@@ -141,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
             $customerId,
             $serviceIdsJson,
             $description,
-            $setReminder,   
+            $setReminder,
             $invoiceId,
         );
         // Execute the query
@@ -174,8 +176,9 @@ ob_end_flush();
     <meta name="robots" content="noindex, nofollow">
     <title>Edit Invoice</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
-
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
+        
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css">

@@ -98,6 +98,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['servicesIds'])) {
     exit;
 }
 
+try {
+
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+} catch (\Throwable $th) {
+    //throw $th;
+}
+
 
 ob_end_clean();
 
@@ -114,8 +123,8 @@ ob_end_clean();
     <meta name="robots" content="noindex, nofollow">
     <title>Customer Report </title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
-
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/animate.css">
@@ -285,9 +294,9 @@ ob_end_clean();
                                                         class="feather-search"></i></a>
                                             </div>
                                         </div>
-                                       
+
                                     </div>
-                                    
+
                                     <div class="table-responsive">
                                         <table id="paidTable" class="table datanew">
                                             <thead>
@@ -358,9 +367,9 @@ ob_end_clean();
                                                         class="feather-search"></i></a>
                                             </div>
                                         </div>
-                                        
+
                                     </div>
-                                    
+
                                     <div class="table-responsive">
                                         <table id="pendingTable" class="table datanew">
                                             <thead>
@@ -433,9 +442,9 @@ ob_end_clean();
                                                         class="feather-search"></i></a>
                                             </div>
                                         </div>
-                                       
+
                                     </div>
-                                    
+
                                     <div class="table-responsive">
                                         <table id="cancelledTable" class="table datanew">
                                             <thead>
@@ -509,7 +518,7 @@ ob_end_clean();
                                                         class="feather-search"></i></a>
                                             </div>
                                         </div>
-                                        
+
                                     </div>
 
 

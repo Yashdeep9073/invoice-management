@@ -9,6 +9,10 @@ require "./database/config.php";
 
 try {
 
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
     if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         // Define the expected query parameters
         $params = [
@@ -95,7 +99,7 @@ try {
             $stmtFetchPaid = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
             INNER JOIN customer
             ON customer.customer_id = invoice.customer_id
-            INNER JOIN tax
+            LEFT JOIN tax
             ON tax.tax_id = invoice.tax
             WHERE invoice.status = 'PAID' AND invoice.is_active = 1  ");
             if ($stmtFetchPaid->execute()) {
@@ -176,8 +180,8 @@ ob_end_clean();
     <meta name="robots" content="noindex, nofollow">
     <title>Report</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
-
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css">
@@ -604,8 +608,8 @@ ob_end_clean();
                                                                 <span class="badge badge-lg bg-primary">Refunded</span>
                                                             <?php } ?>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($paidInvoice['discount']); ?>%</td>
-                                                        <td><?php echo htmlspecialchars($paidInvoice['tax_rate']); ?></td>
+                                                        <td><?php echo $pendingInvoice['discount']; ?>%</td>
+                                                        <td><?php echo $pendingInvoice['tax_rate']; ?></td>
                                                         <td><?php $date = new DateTime($pendingInvoice['created_at']);
                                                         echo htmlspecialchars($date->format("d M Y h:i:A")); ?>
                                                         </td>

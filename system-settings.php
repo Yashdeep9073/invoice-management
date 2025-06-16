@@ -14,6 +14,10 @@ try {
     $stmtFetch->execute();
     $data = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
     $imageUrl = $data['auth_banner'];
+
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
 }
@@ -155,8 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaStatus'])) {
     <meta name="robots" content="noindex, nofollow">
     <title>System Settings</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
-
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/animate.css">
@@ -284,12 +288,23 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaStatus'])) {
                                                 <ul>
 
                                                     <li class="submenu">
-                                                        <a href="javascript:void(0);" class="active subdrop"><i
+                                                        <a href="javascript:void(0);" class="subdrop"><i
                                                                 data-feather="airplay"></i><span>System
                                                                 Settings</span><span class="menu-arrow"></span></a>
                                                         <ul>
-                                                            <li><a href="system-settings.php" class="active">System
+                                                            <li><a href="system-settings.php">System
                                                                     Settings</a></li>
+                                                            <li><a href="email-settings.php">Email</a>
+                                                            </li>
+                                                            <li><a href="company-settings.php">Company Settings</a>
+                                                            </li>
+
+                                                        </ul>
+                                                        <a href="javascript:void(0);"><i
+                                                                data-feather="archive"></i><span>App
+                                                                Settings</span><span class="menu-arrow"></span></a>
+                                                        <ul>
+                                                            <li><a href="invoice-settings.php">Invoice</a></li>
                                                         </ul>
                                                     </li>
                                                 </ul>

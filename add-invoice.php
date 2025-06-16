@@ -9,6 +9,11 @@ if (!isset($_SESSION["admin_id"])) {
 
 
 try {
+
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
     $stmtFetchCustomers = $db->prepare("SELECT * FROM customer WHERE isActive = 1");
     if ($stmtFetchCustomers->execute()) {
         $customers = $stmtFetchCustomers->get_result();
@@ -186,8 +191,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
     <meta name="robots" content="noindex, nofollow">
     <title>Create Invoice</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
-
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css">

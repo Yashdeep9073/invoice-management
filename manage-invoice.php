@@ -18,6 +18,10 @@ if (!isset($_SESSION["admin_id"])) {
 try {
 
 
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
     if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         // Define the expected query parameters
         $params = [
@@ -179,6 +183,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['invoiceId'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForMail'])) {
 
     try {
+
+        $stmtFetch = $db->prepare("SELECT * FROM email_settings WHERE is_active = 1");
+        $stmtFetch->execute();
+        $emailSettingData = $stmtFetch->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        $host = !empty($emailSettingData[0]['email_host']) ? $emailSettingData[0]['email_host'] : getenv("SMTP_HOST");
+        $userName = !empty($emailSettingData[0]['email_address']) ? $emailSettingData[0]['email_address'] : getenv('SMTP_USER_NAME');
+        $password = !empty($emailSettingData[0]['email_password']) ? $emailSettingData[0]['email_password'] : getenv('SMTP_PASSCODE');
+        $port = !empty($emailSettingData[0]['email_port']) ? $emailSettingData[0]['email_port'] : getenv('SMTP_PORT');
+        $title = !empty($emailSettingData[0]['email_from_title']) ? $emailSettingData[0]['email_from_title'] : "Vibrantick InfoTech Solution";
+
+
         $invoiceId = intval($_POST['invoiceIdForMail']);
         $stmtFetchCustomer = $db->prepare("SELECT invoice.*, customer.*, tax.* FROM invoice 
         INNER JOIN customer
@@ -209,18 +225,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForMail'])) {
             exit;
         }
 
-
         // Initialize PHPMailer
         $mail = new PHPMailer(true);
         $mail->SMTPDebug = 0; // Set to 2 for debugging
         $mail->isSMTP();
-        $mail->Host = getenv('SMTP_HOST');
+        $mail->Host = $host;
         $mail->SMTPAuth = true;
-        $mail->Username = getenv('SMTP_USER_NAME');
-        $mail->Password = getenv('SMTP_PASSCODE');
+        $mail->Username = $userName;
+        $mail->Password = $password;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // 'ssl'
-        $mail->Port = 465;
-        $mail->setFrom(getenv('SMTP_USER_NAME'), 'Vibrantick InfoTech Solution');
+        $mail->Port = $port;
+        $mail->setFrom($userName, $title);
         $mail->isHTML(true);
 
         // Prepare statement for updating reminder_count
@@ -386,10 +401,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForMail'])) {
                             <tr>
                                 <td>' . $invoices['0']['invoice_number'] . '</td>
                                 <td>' . $invoices['0']['due_date'] . '</td>
-                                <td>' . $invoices['0']['amount'] . '</td>
+                                <td>Rs: ' . $invoices['0']['amount'] . '</td>
                                 <td>' . $invoices['0']['tax_rate'] . '</td>
                                 <td>' . $invoices['0']['discount'] . '</td>
-                                <td>' . $invoices['0']['total_amount'] . '</td>
+                                <td>Rs: ' . $invoices['0']['total_amount'] . '</td>
                             </tr>
                         </tbody>
                     </table>
@@ -519,7 +534,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
     <meta name="robots" content="noindex, nofollow">
     <title>Manage Invoice</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/animate.css">
@@ -649,8 +665,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                         </li>
 
                         <li>
-                            <a href="manage-invoice.php" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
-                                    data-feather="rotate-ccw" class="feather-rotate-ccw"></i></a>
+                            <a href="manage-invoice.php" data-bs-toggle="tooltip" data-bs-placement="top"
+                                title="Refresh"><i data-feather="rotate-ccw" class="feather-rotate-ccw"></i></a>
                         </li>
                         <li>
                             <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i
@@ -768,7 +784,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                             <td><?php $date = new DateTime($invoice['created_at']);
                                             echo $date->format('d M Y') ?>
                                             </td>
-                                            <td><?php echo $invoice['total_amount'] ?></td>
+                                            <td>₹<?php echo $invoice['total_amount'] ?></td>
                                             <td><?php echo $invoice['admin_username'] ?></td>
                                             <td>
                                                 <?php if ($invoice['status'] == 'PAID') { ?>

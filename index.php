@@ -121,6 +121,11 @@ try {
     $data = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
     $imageUrl = $data['auth_banner'];
 
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+
 
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
@@ -141,7 +146,8 @@ ob_end_flush();
     <meta name="author" content="">
     <meta name="robots" content="noindex, nofollow">
     <title>Login</title>
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
     <link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
@@ -218,7 +224,8 @@ ob_end_flush();
                     <form action="" method="POST">
                         <div class="login-userset">
                             <div class="login-logo logo-normal">
-                                <img src="assets/img/logo/vis-logo.png" alt="Logo">
+                                <img src="<?= isset($companySettings['company_logo']) ? $companySettings['company_logo'] : "assets/img/logo/vis-logo.png" ?>"
+                                    alt="Logo">
                             </div>
                             <div class="account-wrapper">
                                 <div class="login-userheading">

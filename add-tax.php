@@ -9,6 +9,10 @@ if (!isset($db) || !$db) {
     die("Database connection failed.");
 }
 
+$stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+$stmtFetchCompanySettings->execute();
+$companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
 // Check if the admin is logged in
 if (!isset($_SESSION["admin_id"])) {
     header("Location: login.php"); // Redirect to login if not logged in
@@ -75,8 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="robots" content="noindex, nofollow">
     <title>Add Tax</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
-
+ <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css">

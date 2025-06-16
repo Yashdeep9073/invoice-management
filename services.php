@@ -19,6 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
         } else {
             $_SESSION['error'] = 'Error While adding service';
         }
+
+        $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+        $stmtFetchCompanySettings->execute();
+        $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
     } catch (Exception $e) {
         $_SESSION['error'] = $e;
     }
@@ -110,8 +114,8 @@ try {
     <meta name="robots" content="noindex, nofollow">
     <title>Services</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
-
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/animate.css">
@@ -336,7 +340,8 @@ try {
                                     <div class="col-lg-12">
                                         <div class="input-blocks">
                                             <label>SAC Code (Services Accounting Code)</label>
-                                            <input type="text" class="form-control" name="sacCode" placeholder="SAC Code" required>
+                                            <input type="text" class="form-control" name="sacCode"
+                                                placeholder="SAC Code" required>
                                         </div>
                                     </div>
                                 </div>

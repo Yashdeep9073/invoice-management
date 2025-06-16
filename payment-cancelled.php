@@ -23,6 +23,10 @@ try {
     } else {
         $_SESSION['error'] = 'Error for fetching customers';
     }
+
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 } catch (Exception $e) {
     $_SESSION['error'] = $e;
 }
@@ -41,8 +45,8 @@ try {
     <meta name="robots" content="noindex, nofollow" />
     <title>Cancelled Payment</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/fav/vis-favicon.png">
-
+    <link rel="shortcut icon" type="image/x-icon"
+        href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
 
     <link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css" />
