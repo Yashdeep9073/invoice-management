@@ -350,7 +350,7 @@ ob_end_flush();
 
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4 class="card-title">Recent Invoices</h4>
+                        <h4 class="card-title">Recent Invoice</h4>
                         <div class="view-all-link">
                             <a href="manage-invoice.php" class="view-all d-flex align-items-center">
                                 View All<span class="ps-2 d-flex align-items-center"><i data-feather="arrow-right"
