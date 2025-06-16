@@ -64,6 +64,10 @@ try {
         }
     }
 
+    $stmtFetch = $db->prepare("SELECT * FROM invoice_settings");
+    $stmtFetch->execute();
+    $invoiceSettings = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
+
     // Step 1: Generate stylized Service Table using DomPDF
     ob_start(); ?>
     <style>
@@ -159,7 +163,7 @@ try {
 
     // Step 2: Overlay on main invoice PDF using FPDI
     $pdf = new Fpdi();
-    $templatePath = 'public/assets/invoice-temp/invoice-temp-1.pdf';
+    $templatePath = isset($invoiceSettings['template']) ? $invoiceSettings['template'] : 'public/assets/invoice-temp/invoice-temp-1.pdf';
 
     if (!file_exists($templatePath)) {
         throw new Exception("Template not found.");
@@ -292,48 +296,48 @@ try {
     // Write the second line of the message
     $pdf->Cell(0, 0, 'fruitful relationship with our company', 0, 1);
 
-    // Payment Information Section
-    $pdf->SetFont('Helvetica', 'B', 12);
-    $pdf->SetXY(20, 160);
-    $pdf->SetTextColor(62, 144, 237); // Blue (#3e90ed)
-    $pdf->Cell(0, 5, 'Payment Information:', 0, 1);
-    $pdf->SetTextColor(0, 0, 0); // Black
+    // // Payment Information Section
+    // $pdf->SetFont('Helvetica', 'B', 12);
+    // $pdf->SetXY(20, 160);
+    // $pdf->SetTextColor(62, 144, 237); // Blue (#3e90ed)
+    // $pdf->Cell(0, 5, 'Payment Information:', 0, 1);
+    // $pdf->SetTextColor(0, 0, 0); // Black
 
-    // Payment Method
-    $pdf->SetXY(20, 165);
-    $pdf->SetFont('Helvetica', '', 12); // Regular font for label
-    $pdf->SetTextColor(0, 0, 0); // Black for label
-    $pdf->Write(5, 'Payment Method: ');
-    $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
-    $pdf->SetTextColor(62, 144, 237); // Blue for value
-    $pdf->Write(5, $invoice['payment_method'] . "\n");
+    // // Payment Method
+    // $pdf->SetXY(20, 165);
+    // $pdf->SetFont('Helvetica', '', 12); // Regular font for label
+    // $pdf->SetTextColor(0, 0, 0); // Black for label
+    // $pdf->Write(5, 'Payment Method: ');
+    // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
+    // $pdf->SetTextColor(62, 144, 237); // Blue for value
+    // $pdf->Write(5, $invoice['payment_method'] . "\n");
 
-    // Transaction ID
-    $pdf->SetXY(20, 170);
-    $pdf->SetFont('Helvetica', '', 12); // Regular font for label
-    $pdf->SetTextColor(0, 0, 0); // Black for label
-    $pdf->Write(5, 'Transaction ID: ');
-    $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
-    $pdf->SetTextColor(62, 144, 237); // Blue for value
-    $pdf->Write(5, $invoice['transaction_id'] . "\n");
+    // // Transaction ID
+    // $pdf->SetXY(20, 170);
+    // $pdf->SetFont('Helvetica', '', 12); // Regular font for label
+    // $pdf->SetTextColor(0, 0, 0); // Black for label
+    // $pdf->Write(5, 'Transaction ID: ');
+    // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
+    // $pdf->SetTextColor(62, 144, 237); // Blue for value
+    // $pdf->Write(5, $invoice['transaction_id'] . "\n");
 
-    // Payment Status
-    $pdf->SetXY(20, 175);
-    $pdf->SetFont('Helvetica', '', 12); // Regular font for label
-    $pdf->SetTextColor(0, 0, 0); // Black for label
-    $pdf->Write(5, 'Payment Status: ');
-    $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
-    $pdf->SetTextColor(62, 144, 237); // Blue for value
-    $pdf->Write(5, $invoice['paymentStatus'] . "\n");
+    // // Payment Status
+    // $pdf->SetXY(20, 175);
+    // $pdf->SetFont('Helvetica', '', 12); // Regular font for label
+    // $pdf->SetTextColor(0, 0, 0); // Black for label
+    // $pdf->Write(5, 'Payment Status: ');
+    // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
+    // $pdf->SetTextColor(62, 144, 237); // Blue for value
+    // $pdf->Write(5, $invoice['paymentStatus'] . "\n");
 
-    // Due Date
-    $pdf->SetXY(20, 180);
-    $pdf->SetFont('Helvetica', '', 12); // Regular font for label
-    $pdf->SetTextColor(0, 0, 0); // Black for label
-    $pdf->Write(5, 'Due Date: ');
-    $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
-    $pdf->SetTextColor(62, 144, 237); // Blue for value
-    $pdf->Write(5, $invoice['due_date'] . "\n");
+    // // Due Date
+    // $pdf->SetXY(20, 180);
+    // $pdf->SetFont('Helvetica', '', 12); // Regular font for label
+    // $pdf->SetTextColor(0, 0, 0); // Black for label
+    // $pdf->Write(5, 'Due Date: ');
+    // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
+    // $pdf->SetTextColor(62, 144, 237); // Blue for value
+    // $pdf->Write(5, $invoice['due_date'] . "\n");
 
     // Output final PDF
     $pdf->Output('D', 'Final_Invoice_' . $invoiceId . '.pdf');

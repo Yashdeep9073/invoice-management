@@ -12,7 +12,7 @@ $uploadDirectory = 'public/upload/invoice/images/';
 try {
     $stmtFetch = $db->prepare("SELECT * FROM invoice_settings");
     $stmtFetch->execute();
-    $data = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
+    $invoiceSettings = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
 
     $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
     $stmtFetchCompanySettings->execute();
@@ -397,7 +397,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                                         <h4>Invoice Settings</h4>
                                     </div>
                                     <input type="hidden" name="invoice_settings_id"
-                                        value="<?= isset($data['invoice_settings_id']) ? $data['invoice_settings_id'] : "" ?>">
+                                        value="<?= isset($invoiceSettings['invoice_settings_id']) ? $invoiceSettings['invoice_settings_id'] : "" ?>">
 
                                     <div class="company-info border-0">
                                         <ul class="logo-company">
@@ -434,7 +434,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                                                     <div class="col-md-2">
                                                         <div class="new-logo ms-auto">
                                                             <a href="#"><img
-                                                                    src="<?= isset($data["logo"]) ? $data["logo"] : "assets/img/logo-small.png" ?>"
+                                                                    src="<?= isset($invoiceSettings["logo"]) ? $invoiceSettings["logo"] : "assets/img/logo-small.png" ?>"
                                                                     alt="Logo" /></a>
                                                         </div>
                                                     </div>
@@ -488,7 +488,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                                                 <div class="col-sm-4">
                                                     <div class="localization-select">
                                                         <input type="text" class="form-control"
-                                                            value="<?= isset($data['invoice_prefix']) ? $data['invoice_prefix'] : "VIS" ?>"
+                                                            value="<?= isset($invoiceSettings['invoice_prefix']) ? $invoiceSettings['invoice_prefix'] : "VIS" ?>"
                                                             name="invoicePrefix" />
                                                     </div>
                                                 </div>
@@ -561,7 +561,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                                                 <div class="col-sm-8">
                                                     <div class="mb-3">
                                                         <textarea rows="4" class="form-control" name="invoiceHeader"
-                                                            placeholder="Type your message"><?= isset($data['header_terms']) ? $data['header_terms'] : "" ?></textarea>
+                                                            placeholder="Type your message"><?= isset($invoiceSettings['header_terms']) ? $invoiceSettings['header_terms'] : "" ?></textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -574,7 +574,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                                                 <div class="col-sm-8">
                                                     <div class="mb-3">
                                                         <textarea rows="4" class="form-control" name="invoiceFooter"
-                                                            placeholder="Type your message"><?= isset($data['footer_terms']) ? $data['footer_terms'] : "" ?></textarea>
+                                                            placeholder="Type your message"><?= isset($invoiceSettings['footer_terms']) ? $invoiceSettings['footer_terms'] : "" ?></textarea>
                                                     </div>
                                                 </div>
                                             </div>

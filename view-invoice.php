@@ -64,8 +64,13 @@ try {
         }
     }
 
+    $stmtFetch = $db->prepare("SELECT * FROM invoice_settings");
+    $stmtFetch->execute();
+    $invoiceSettings = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
+
     // Step 1: Generate stylized Service Table using DomPDF
-    ob_start(); ?>
+    ob_start();
+    ?>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -159,7 +164,7 @@ try {
 
     // Step 2: Overlay on main invoice PDF using FPDI
     $pdf = new Fpdi();
-    $templatePath = 'public/assets/invoice-temp/invoice-temp-1.pdf';
+    $templatePath = isset($invoiceSettings['template']) ? $invoiceSettings['template'] : 'public/assets/invoice-temp/invoice-temp-1.pdf';
 
     if (!file_exists($templatePath)) {
         throw new Exception("Template not found.");
