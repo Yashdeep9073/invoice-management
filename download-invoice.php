@@ -243,10 +243,10 @@ try {
         // Bill To and Ship To (side by side, below header)
         $pdf->SetFont('Helvetica', '', 10);
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
-        $pdf->SetXY(150, 75);
+        $pdf->SetXY(150, 85);
         $pdf->Cell(15, 10, 'From:', 0, 0); // Narrower cell for label
         $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
-        $pdf->SetXY(160, 75);
+        $pdf->SetXY(160, 85);
         $pdf->SetFont('Helvetica', 'B', 10);
         $fromDate = date('d M', strtotime(trim($invoice['from_date'])));
         $toDate = date('d M y', strtotime(trim($invoice['to_date'])));

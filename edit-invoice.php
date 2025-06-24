@@ -55,8 +55,7 @@ try {
     $_SESSION['error'] = $e->getMessage();
 }
 
-function generateInvoiceNumber($db)
-{
+if (isset($_POST['invoiceNumber']) && $_SERVER['REQUEST_METHOD'] == "POST") {
     // Get current date in YYYYMMDD format
     $date = date('Ymd'); // e.g., '20250530'
 
@@ -97,10 +96,19 @@ function generateInvoiceNumber($db)
         $db->commit();
 
         // Format invoice number
-        return sprintf("$prefix-%s-%05d", $date, $newSequence); // e.g., VIS-20250530-00001
+        $invoiceNumber = sprintf("$prefix-%s-%05d", $date, $newSequence); // e.g., VIS-20250530-00001
+        echo json_encode([
+            "status" => 201,
+            "data" => $invoiceNumber
+        ]);
+        exit;
     } catch (Exception $e) {
         $db->rollback();
-        throw new Exception("Error generating invoice number: " . $e->getMessage());
+        echo json_encode([
+            "status" => 500,
+            "error" => $e->getMessage()
+        ]);
+        exit;
     }
 }
 
@@ -146,6 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
             $toDate = ''; // Reset to empty if invalid
         }
 
+        $invoiceType = htmlspecialchars($_POST['invoice_type'] ?? '', ENT_QUOTES, 'UTF-8');
 
         $customerId = filter_input(INPUT_POST, 'customerName', FILTER_SANITIZE_NUMBER_INT) ?? 0;
         // Ensure customerId is a positive integer
@@ -192,11 +201,17 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
 
         $validStatuses = ['PAID', 'PENDING', 'CANCELLED', 'REFUNDED'];
 
+        $validTypes = ['FIXED', 'RECURSIVE'];
+
         if (!in_array($paymentMethod, $validPaymentMethods)) {
             throw new Exception('Invalid payment method.');
         }
         if (!in_array($status, $validStatuses)) {
             throw new Exception('Invalid status.');
+        }
+
+        if (!in_array($invoiceType, $validTypes)) {
+            throw new Exception('Invalid Types.');
         }
 
         // Prepare and execute the SQL UPDATE query
@@ -216,7 +231,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         `customer_id` = ?, 
         `service_id` = ?, 
         `description` = ?,
-        `reminder_enabled` = ?
+        `reminder_enabled` = ?,
+        `invoice_type` = ?
         WHERE `invoice_id` = ?";
 
         $stmt = $db->prepare($sql);
@@ -225,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         }
 
         $stmt->bind_param(
-            'ssssdiiddsssissii',
+            'ssssdiiddsssissisi',
             $invoiceNumber,
             $paymentMethod,
             $transactionId,
@@ -242,6 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
             $serviceIdsJson,
             $description,
             $setReminder,
+            $invoiceType,
             $invoiceId,
         );
         // Execute the query
@@ -542,6 +559,21 @@ ob_end_flush();
                                                 </div>
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="mb-3 add-product">
+                                                        <label class="form-label">Type : <span>
+                                                                *</span></label>
+                                                        <select id="invoice_type" name="invoice_type"
+                                                            class="form-control" required>
+                                                            <option>Select</option>
+                                                            <option value="FIXED" <?php if ($invoices['0']['invoice_type'] == "FIXED")
+                                                                echo 'selected' ?>>Fixed</option>
+                                                                <option value="RECURSIVE" <?php if ($invoices['0']['invoice_type'] == "RECURSIVE")
+                                                                echo 'selected' ?>>Recursive</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div
+                                                        class="col-lg-4 col-sm-6 col-12 from-date <?php echo $invoices['0']['invoice_type'] == "RECURSIVE" ? "" : "apexcharts-toolbar" ?> ">
+                                                    <div class="mb-3 add-product">
                                                         <label class="form-label">From Date: <span> *</span></label>
                                                         <input type="date" id="from_date"
                                                             value="<?php echo $invoices[0]['from_date'] ?>"
@@ -549,7 +581,8 @@ ob_end_flush();
                                                             class="form-control" autocomplete="off" required>
                                                     </div>
                                                 </div>
-                                                <div class="col-lg-4 col-sm-6 col-12">
+                                                <div
+                                                    class="col-lg-4 col-sm-6 col-12 to-date <?php echo $invoices['0']['invoice_type'] == "RECURSIVE" ? "" : "apexcharts-toolbar" ?>">
                                                     <div class="mb-3 add-product">
                                                         <label class="form-label">To Date: <span> *</span></label>
                                                         <input type="date" id="to_date"
@@ -716,7 +749,6 @@ ob_end_flush();
 
     <script src="assets/js/bootstrap.bundle.min.js" type="85b95337cd86ef30623c36b5-text/javascript"></script>
 
-    <script src="assets/js/theme-script.js" type="85b95337cd86ef30623c36b5-text/javascript"></script>
     <script src="assets/js/script.js" type="85b95337cd86ef30623c36b5-text/javascript"></script>
     <script src="assets/js/custom-select2.js" type="85b95337cd86ef30623c36b5-text/javascript"></script>
     <script src="assets/js/rocket-loader-min.js" data-cf-settings="85b95337cd86ef30623c36b5-|49" defer=""></script>
@@ -755,10 +787,26 @@ ob_end_flush();
                 $('#transaction_id').val(generateTransactionId());
             });
 
-            $(document).on('click', '.invoiceNumber', function (event) {
-                event.preventDefault();
-                // Set transaction ID in the input field
-                $('#invoice_number').val("<?php echo generateInvoiceNumber($db) ?>");
+            $(document).on('click', '.invoiceNumber', async function (event) {
+
+                try {
+                    event.preventDefault();
+                    let invoiceNumber = 1;
+
+                    const response = await $.ajax({
+                        url: window.location.href,
+                        method: 'POST',
+                        data: { invoiceNumber: invoiceNumber },
+                    });
+
+                    let result = JSON.parse(response);
+
+                    // Set transaction ID in the input field
+                    $('#invoice_number').val(result.data);
+                } catch (error) {
+                    console.error('Error fetching invoice data:', error);
+                }
+
             });
 
 
@@ -838,6 +886,17 @@ ob_end_flush();
 
 
 
+            $(document).on('change', "#invoice_type", function (e) {
+                const selectedType = $(this).val();
+
+                if (selectedType === 'FIXED') {
+                    $('.from-date').addClass('apexcharts-toolbar');
+                    $('.to-date').addClass('apexcharts-toolbar');
+                } else if (selectedType === 'RECURSIVE') {
+                    $('.from-date').removeClass('apexcharts-toolbar');
+                    $('.to-date').removeClass('apexcharts-toolbar');
+                }
+            })
         });
     </script>
 

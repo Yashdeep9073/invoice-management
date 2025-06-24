@@ -38,8 +38,8 @@ try {
 }
 
 
-function generateInvoiceNumber($db)
-{
+
+if (isset($_POST['invoiceNumber']) && $_SERVER['REQUEST_METHOD'] == "POST") {
     // Get current date in YYYYMMDD format
     $date = date('Ymd'); // e.g., '20250530'
 
@@ -80,10 +80,19 @@ function generateInvoiceNumber($db)
         $db->commit();
 
         // Format invoice number
-        return sprintf("$prefix-%s-%05d", $date, $newSequence); // e.g., VIS-20250530-00001
+        $invoiceNumber = sprintf("$prefix-%s-%05d", $date, $newSequence); // e.g., VIS-20250530-00001
+        echo json_encode([
+            "status" => 201,
+            "data" => $invoiceNumber
+        ]);
+        exit;
     } catch (Exception $e) {
         $db->rollback();
-        throw new Exception("Error generating invoice number: " . $e->getMessage());
+        echo json_encode([
+            "status" => 500,
+            "error" => $e->getMessage()
+        ]);
+        exit;
     }
 }
 
@@ -102,6 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         $dueDate = htmlspecialchars($_POST['due_date'] ?? '', ENT_QUOTES, 'UTF-8');
         $fromDate = htmlspecialchars($_POST['from_date'] ?? '', ENT_QUOTES, 'UTF-8');
         $toDate = htmlspecialchars($_POST['to_date'] ?? '', ENT_QUOTES, 'UTF-8');
+        $invoiceType = htmlspecialchars($_POST['invoice_type'] ?? '', ENT_QUOTES, 'UTF-8');
         $description = htmlspecialchars($_POST['description'] ?? '', ENT_QUOTES, 'UTF-8');
         $customerId = filter_input(INPUT_POST, 'customerName', FILTER_VALIDATE_INT);
         $amount = filter_input(INPUT_POST, 'amount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
@@ -133,26 +143,31 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
         $validStatuses = ['PAID', 'PENDING', 'CANCELLED', 'REFUNDED'];
 
+        $validTypes = ['FIXED', 'RECURSIVE'];
+
         if (!in_array($paymentMethod, $validPaymentMethods)) {
             throw new Exception('Invalid payment method.');
         }
         if (!in_array($status, $validStatuses)) {
             throw new Exception('Invalid status.');
         }
+        if (!in_array($invoiceType, $validTypes)) {
+            throw new Exception('Invalid Types.');
+        }
 
         // Prepare and execute the SQL query
         $sql = "INSERT INTO `invoice` (
             `invoice_number`, `payment_method`, `transaction_id`, `status`, 
             `amount`, `quantity`, `tax`, `discount`, `total_amount`, 
-            `due_date`, `from_date`,`to_date` , `customer_id`, `service_id`, `description`,`created_by`
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?)";
+            `due_date`, `from_date`,`to_date` , `customer_id`, `service_id`, `description`,`created_by`,`invoice_type`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?)";
 
         $stmt = $db->prepare($sql);
         if ($stmt === false) {
             throw new Exception('Prepare failed: ' . $db->error);
         }
         $stmt->bind_param(
-            'ssssdiiddsssissi',
+            'ssssdiiddsssissis',
             $invoiceNumber,
             $paymentMethod,
             $transactionId,
@@ -168,7 +183,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
             $customerId,
             $serviceIdsJson,
             $description,
-            $createdBy
+            $createdBy,
+            $invoiceType
         );
 
         // Execute the query
@@ -447,20 +463,34 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
                                                     </div>
                                                 </div>
+
                                                 <div class="col-lg-4 col-sm-6 col-12">
+                                                    <div class="mb-3 add-product">
+                                                        <label class="form-label">Type : <span>
+                                                                *</span></label>
+                                                        <select id="invoice_type" name="invoice_type"
+                                                            class="form-control" required>
+                                                            <option>Select</option>
+                                                            <option value="FIXED">Fixed</option>
+                                                            <option value="RECURSIVE">Recursive</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-lg-4 col-sm-6 col-12 from-date apexcharts-toolbar">
                                                     <div class="mb-3 add-product">
                                                         <label class="form-label">From Date: <span> *</span></label>
                                                         <input type="date" id="from_date" name="from_date"
                                                             placeholder="Enter From Date" class="form-control"
-                                                            autocomplete="off" required>
+                                                            autocomplete="off">
                                                     </div>
                                                 </div>
-                                                <div class="col-lg-4 col-sm-6 col-12">
+                                                <div class="col-lg-4 col-sm-6 col-12 to-date apexcharts-toolbar">
                                                     <div class="mb-3 add-product">
                                                         <label class="form-label">To Date: <span> *</span></label>
                                                         <input type="date" id="to_date" name="to_date"
                                                             placeholder="Enter To Date" class="form-control"
-                                                            autocomplete="off" required>
+                                                            autocomplete="off">
                                                     </div>
                                                 </div>
 
@@ -641,10 +671,27 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
             });
 
 
-            $(document).on('click', '.invoiceNumber', function (event) {
-                event.preventDefault();
-                // Set transaction ID in the input field
-                $('#invoice_number').val("<?php echo generateInvoiceNumber($db) ?>");
+
+            $(document).on('click', '.invoiceNumber', async function (event) {
+
+                try {
+                    event.preventDefault();
+                    let invoiceNumber = 1;
+
+                    const response = await $.ajax({
+                        url: window.location.href,
+                        method: 'POST',
+                        data: { invoiceNumber: invoiceNumber },
+                    });
+
+                    let result = JSON.parse(response);
+
+                    // Set transaction ID in the input field
+                    $('#invoice_number').val(result.data);
+                } catch (error) {
+                    console.error('Error fetching invoice data:', error);
+                }
+
             });
 
 
@@ -747,7 +794,17 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                 $('#total_amount').val(calculateTotal());
             });
 
+            $(document).on('change', "#invoice_type", function (e) {
+                const selectedType = $(this).val();
 
+                if (selectedType === 'FIXED') {
+                    $('.from-date').addClass('apexcharts-toolbar');
+                    $('.to-date').addClass('apexcharts-toolbar');
+                } else if (selectedType === 'RECURSIVE') {
+                    $('.from-date').removeClass('apexcharts-toolbar');
+                    $('.to-date').removeClass('apexcharts-toolbar');
+                }
+            })
         });
     </script>
 
