@@ -578,7 +578,7 @@ ob_end_flush();
                                                         <input type="date" id="from_date"
                                                             value="<?php echo $invoices[0]['from_date'] ?>"
                                                             name="from_date" placeholder="Enter From Date"
-                                                            class="form-control" autocomplete="off" required>
+                                                            class="form-control" autocomplete="off" >
                                                     </div>
                                                 </div>
                                                 <div
@@ -588,7 +588,7 @@ ob_end_flush();
                                                         <input type="date" id="to_date"
                                                             value="<?php echo $invoices[0]['to_date'] ?>" name="to_date"
                                                             placeholder="Enter To Date" class="form-control"
-                                                            autocomplete="off" required>
+                                                            autocomplete="off" >
                                                     </div>
                                                 </div>
 
