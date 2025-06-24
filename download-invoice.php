@@ -69,7 +69,8 @@ try {
     $invoiceSettings = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
 
     // Step 1: Generate stylized Service Table using DomPDF
-    ob_start(); ?>
+    ob_start();
+    ?>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -225,16 +226,34 @@ try {
     $pdf->SetLineWidth(0.2); // Set line thickness
     $pdf->Line(20, 85, 190, 85); // Draw a horizontal line from (20, 50) to (190, 50)
 
-    // Bill To and Ship To (side by side, below header)
-    $pdf->SetFont('Helvetica', '', 10);
-    $pdf->SetTextColor(0, 0, 0); // Reset text color to black
-    $pdf->SetXY(150, 55);
-    $pdf->Cell(90, 10, 'HSN Code:', 0, 0);
-    $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
-    $pdf->SetXY(170, 55);
-    $pdf->SetFont('Helvetica', 'B', 10);
-    $pdf->Cell(90, 10, $hsnCode, 0, 0);
-    $pdf->SetTextColor(0, 0, 0); // Reset text color to black
+    if ($invoiceSettings['is_show_hsn'] === 1) {
+        // Bill To and Ship To (side by side, below header)
+        $pdf->SetFont('Helvetica', '', 10);
+        $pdf->SetTextColor(0, 0, 0); // Reset text color to black
+        $pdf->SetXY(150, 55);
+        $pdf->Cell(90, 10, 'HSN Code:', 0, 0);
+        $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+        $pdf->SetXY(170, 55);
+        $pdf->SetFont('Helvetica', 'B', 10);
+        $pdf->Cell(90, 10, $hsnCode, 0, 0);
+        $pdf->SetTextColor(0, 0, 0); // Reset text color to black
+    }
+
+    if ($invoiceSettings['is_show_bill_date'] === 1) {
+        // Bill To and Ship To (side by side, below header)
+        $pdf->SetFont('Helvetica', '', 10);
+        $pdf->SetTextColor(0, 0, 0); // Reset text color to black
+        $pdf->SetXY(150, 75);
+        $pdf->Cell(15, 10, 'From:', 0, 0); // Narrower cell for label
+        $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+        $pdf->SetXY(160, 75);
+        $pdf->SetFont('Helvetica', 'B', 10);
+        $fromDate = date('d M', strtotime(trim($invoice['from_date'])));
+        $toDate = date('d M y', strtotime(trim($invoice['to_date'])));
+        $pdf->Cell(90, 10, $fromDate . ' - ' . $toDate, 0, 0);
+        $pdf->SetTextColor(0, 0, 0); // Reset text color to black
+
+    }
 
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('Helvetica', 'B', 10);
@@ -338,6 +357,7 @@ try {
     // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
     // $pdf->SetTextColor(62, 144, 237); // Blue for value
     // $pdf->Write(5, $invoice['due_date'] . "\n");
+
 
     // Output final PDF
     $pdf->Output('D', 'Final_Invoice_' . $invoiceId . '.pdf');
