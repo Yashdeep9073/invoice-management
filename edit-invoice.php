@@ -55,6 +55,56 @@ try {
     $_SESSION['error'] = $e->getMessage();
 }
 
+function generateInvoiceNumber($db)
+{
+    // Get current date in YYYYMMDD format
+    $date = date('Ymd'); // e.g., '20250530'
+
+    // Use a transaction to ensure atomicity
+    try {
+        $db->begin_transaction();
+
+        $stmtFetchInvoiceSettings = $db->prepare("SELECT * FROM invoice_settings");
+        $stmtFetchInvoiceSettings->execute();
+        $invoiceSettings = $stmtFetchInvoiceSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+        $prefix = isset($invoiceSettings['invoice_prefix']) ? $invoiceSettings['invoice_prefix'] : "VIS";
+
+        // Lock the row for the current date
+        $stmt = $db->prepare("SELECT last_sequence FROM invoice_sequence WHERE date = ? FOR UPDATE");
+        $stmt->bind_param("s", $date);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
+            // No sequence for today, create one
+            $stmt = $db->prepare("INSERT INTO invoice_sequence (date, last_sequence) VALUES (?, 0)");
+            $stmt->bind_param("s", $date);
+            $stmt->execute();
+            $lastSequence = 0;
+        } else {
+            $row = $result->fetch_assoc();
+            $lastSequence = $row['last_sequence'];
+        }
+
+        // Increment sequence
+        $newSequence = $lastSequence + 1;
+
+        // Update sequence
+        $stmt = $db->prepare("UPDATE invoice_sequence SET last_sequence = ? WHERE date = ?");
+        $stmt->bind_param("is", $newSequence, $date);
+        $stmt->execute();
+
+        $db->commit();
+
+        // Format invoice number
+        return sprintf("$prefix-%s-%05d", $date, $newSequence); // e.g., VIS-20250530-00001
+    } catch (Exception $e) {
+        $db->rollback();
+        throw new Exception("Error generating invoice number: " . $e->getMessage());
+    }
+}
+
+
 
 if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
     try {
@@ -63,19 +113,63 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         // exit();
 
         // Sanitize and validate inputs
-        $invoiceNumber = filter_input(INPUT_POST, 'invoice_number', FILTER_SANITIZE_STRING);
-        $paymentMethod = filter_input(INPUT_POST, 'payment_method', FILTER_SANITIZE_STRING);
-        $transactionId = filter_input(INPUT_POST, 'transaction_id', FILTER_SANITIZE_STRING);
-        $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
-        $dueDate = filter_input(INPUT_POST, 'due_date', FILTER_SANITIZE_STRING);
-        $customerId = filter_input(INPUT_POST, 'customerName', FILTER_SANITIZE_NUMBER_INT);
-        $description = filter_input(INPUT_POST, 'description', FILTER_SANITIZE_STRING);
-        $amount = filter_input(INPUT_POST, 'amount', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-        $quantity = filter_input(INPUT_POST, 'quantity', FILTER_SANITIZE_NUMBER_INT);
-        $tax = filter_input(INPUT_POST, 'tax', FILTER_SANITIZE_NUMBER_INT);
-        $discount = filter_input(INPUT_POST, 'discount', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-        $totalAmount = filter_input(INPUT_POST, 'total_amount', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-        $setReminder = isset($_POST['setReminder']) ? (int) $_POST['setReminder'] : 0; // Convert to integer
+        $invoiceNumber = filter_input(INPUT_POST, 'invoice_number', FILTER_UNSAFE_RAW) ?? '';
+        $invoiceNumber = trim(htmlspecialchars($invoiceNumber, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+
+        $paymentMethod = filter_input(INPUT_POST, 'payment_method', FILTER_UNSAFE_RAW) ?? '';
+        $paymentMethod = trim(htmlspecialchars($paymentMethod, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+
+        $transactionId = filter_input(INPUT_POST, 'transaction_id', FILTER_UNSAFE_RAW) ?? '';
+        $transactionId = trim(htmlspecialchars($transactionId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+
+        $status = filter_input(INPUT_POST, 'status', FILTER_UNSAFE_RAW) ?? '';
+        $status = trim(htmlspecialchars($status, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+
+        $dueDate = filter_input(INPUT_POST, 'due_date', FILTER_UNSAFE_RAW) ?? '';
+        $dueDate = trim(htmlspecialchars($dueDate, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        // Validate date format (e.g., YYYY-MM-DD)
+        if ($dueDate !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dueDate)) {
+            $dueDate = ''; // Reset to empty if invalid
+        }
+
+        $fromDate = filter_input(INPUT_POST, 'from_date', FILTER_UNSAFE_RAW) ?? '';
+        $fromDate = trim(htmlspecialchars($fromDate, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        // Validate date format (e.g., YYYY-MM-DD)
+        if ($fromDate !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromDate)) {
+            $fromDate = ''; // Reset to empty if invalid
+        }
+
+        $toDate = filter_input(INPUT_POST, 'to_date', FILTER_UNSAFE_RAW) ?? '';
+        $toDate = trim(htmlspecialchars($toDate, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        // Validate date format (e.g., YYYY-MM-DD)
+        if ($toDate !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $toDate)) {
+            $toDate = ''; // Reset to empty if invalid
+        }
+
+
+        $customerId = filter_input(INPUT_POST, 'customerName', FILTER_SANITIZE_NUMBER_INT) ?? 0;
+        // Ensure customerId is a positive integer
+        $customerId = max(0, (int) $customerId);
+
+        $description = filter_input(INPUT_POST, 'description', FILTER_UNSAFE_RAW) ?? '';
+        $description = trim(htmlspecialchars($description, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+
+        $amount = filter_input(INPUT_POST, 'amount', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) ?? 0.0;
+        $amount = (float) $amount;
+
+        $quantity = filter_input(INPUT_POST, 'quantity', FILTER_SANITIZE_NUMBER_INT) ?? 0;
+        $quantity = max(0, (int) $quantity);
+
+        $tax = filter_input(INPUT_POST, 'tax', FILTER_SANITIZE_NUMBER_INT) ?? 0;
+        $tax = max(0, (int) $tax);
+
+        $discount = filter_input(INPUT_POST, 'discount', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) ?? 0.0;
+        $discount = (float) $discount;
+
+        $totalAmount = filter_input(INPUT_POST, 'total_amount', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) ?? 0.0;
+        $totalAmount = (float) $totalAmount;
+
+        $setReminder = isset($_POST['setReminder']) ? (int) $_POST['setReminder'] : 0;
 
 
         // Handle serviceName array
@@ -117,6 +211,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         `discount` = ?, 
         `total_amount` = ?, 
         `due_date` = ?, 
+        `from_date` = ?, 
+        `to_date` = ?, 
         `customer_id` = ?, 
         `service_id` = ?, 
         `description` = ?,
@@ -129,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         }
 
         $stmt->bind_param(
-            'ssssdiiddsissii',
+            'ssssdiiddsssissii',
             $invoiceNumber,
             $paymentMethod,
             $transactionId,
@@ -140,6 +236,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
             $discount,
             $totalAmount,
             $dueDate,
+            $fromDate,
+            $toDate,
             $customerId,
             $serviceIdsJson,
             $description,
@@ -178,7 +276,7 @@ ob_end_flush();
 
     <link rel="shortcut icon" type="image/x-icon"
         href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
-        
+
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css">
@@ -444,6 +542,25 @@ ob_end_flush();
                                                 </div>
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="mb-3 add-product">
+                                                        <label class="form-label">From Date: <span> *</span></label>
+                                                        <input type="date" id="from_date"
+                                                            value="<?php echo $invoices[0]['from_date'] ?>"
+                                                            name="from_date" placeholder="Enter From Date"
+                                                            class="form-control" autocomplete="off" required>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-6 col-12">
+                                                    <div class="mb-3 add-product">
+                                                        <label class="form-label">To Date: <span> *</span></label>
+                                                        <input type="date" id="to_date"
+                                                            value="<?php echo $invoices[0]['to_date'] ?>" name="to_date"
+                                                            placeholder="Enter To Date" class="form-control"
+                                                            autocomplete="off" required>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-lg-4 col-sm-6 col-12">
+                                                    <div class="mb-3 add-product">
                                                         <label class="form-label">Reminder</label>
 
                                                         <select class="form-select" name="setReminder" required>
@@ -453,7 +570,9 @@ ob_end_flush();
                                                                 echo 'selected' ?>>Manual </option>
                                                             </select>
                                                         </div>
+
                                                     </div>
+
 
 
                                                     <div class="col-lg-12">
@@ -635,21 +754,11 @@ ob_end_flush();
                 // Set transaction ID in the input field
                 $('#transaction_id').val(generateTransactionId());
             });
+
             $(document).on('click', '.invoiceNumber', function (event) {
                 event.preventDefault();
-
-                // Generate invoice number in format INV-YYYYMMDD-NNNNN
-                function generateInvoiceNumber() {
-                    const now = new Date();
-                    const year = now.getFullYear();
-                    const month = String(now.getMonth() + 1).padStart(2, '0');
-                    const day = String(now.getDate()).padStart(2, '0');
-                    const randomNumber = Math.floor(Math.random() * 90000) + 10000;
-                    return `VIS-${year}${month}${day}-${randomNumber}`;
-                }
-
                 // Set transaction ID in the input field
-                $('#invoice_number').val(generateInvoiceNumber());
+                $('#invoice_number').val("<?php echo generateInvoiceNumber($db) ?>");
             });
 
 
