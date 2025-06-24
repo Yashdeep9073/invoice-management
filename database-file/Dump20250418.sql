@@ -210,10 +210,12 @@ CREATE TABLE `invoice` (
   `reminder_enabled` int NOT NULL DEFAULT '0',
   `reminder_count` int NOT NULL DEFAULT '0',
   `created_by` int NOT NULL,
+  `from_date` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `to_date` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`invoice_id`),
   UNIQUE KEY `invoice_number_UNIQUE` (`invoice_number`),
   UNIQUE KEY `transaction_id_UNIQUE` (`transaction_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=195 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=197 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -222,7 +224,7 @@ CREATE TABLE `invoice` (
 
 LOCK TABLES `invoice` WRITE;
 /*!40000 ALTER TABLE `invoice` DISABLE KEYS */;
-INSERT INTO `invoice` VALUES (191,'VIS-20250606-00012','CREDIT_CARD','TX-20250606-26082-PX6K','PENDING',500.00,1,13,0.00,575.00,'2025-06-03',83,'[2]','Maximum 60 Characters\r\n\r\n','2025-06-01 07:24:30','2025-06-13 09:47:04',1,0,2,1),(192,'VIS-20250606-00017','CASH','TX-20250606-48246-628X','PENDING',500.00,1,13,0.00,575.00,'2025-06-12',77,'[2]','manage-invoice.php','2025-06-06 07:25:50','2025-06-06 07:26:05',0,0,0,1),(193,'VIS-20250606-00018','CREDIT_CARD','TX-20250606-65079-OY41','PENDING',1000.00,1,14,0.00,1012.50,'2025-06-13',77,'[7]','Maximum 60 Characters\r\n\r\n','2025-06-06 07:29:51','2025-06-06 07:29:51',1,0,0,1),(194,'VIS-20250613-00001','CASH','TX-20250613-45896-E1B9','PENDING',1000.00,1,13,0.00,1150.00,'2025-05-20',78,'[2]','Description','2025-06-13 09:48:10','2025-06-13 09:58:49',1,1,5,1);
+INSERT INTO `invoice` VALUES (195,'VIS-20250624-00004','CASH','TX-20250624-19380-AG4P','PENDING',514.00,1,12,0.00,606.52,'2025-07-05',83,'[2]','This shows you&#039;ve been operating since 2021 till now.\r\nLet me know if you want the PHP code to handle that automatically too.','2025-06-24 05:33:56','2025-06-24 05:33:56',1,0,0,1,'2025-06-01','2025-06-30'),(196,'VIS-20250624-00005','CASH','TX-20250624-53815-NJAV','CANCELLED',5000.00,1,8,0.00,5750.00,'2025-07-11',78,'[2]','This is testing','2025-06-24 05:47:10','2025-06-24 05:47:10',1,0,0,1,'2025-06-01','2025-06-30');
 /*!40000 ALTER TABLE `invoice` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -241,7 +243,7 @@ CREATE TABLE `invoice_sequence` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `date` (`date`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -250,7 +252,7 @@ CREATE TABLE `invoice_sequence` (
 
 LOCK TABLES `invoice_sequence` WRITE;
 /*!40000 ALTER TABLE `invoice_sequence` DISABLE KEYS */;
-INSERT INTO `invoice_sequence` VALUES (3,'20250606',19,'2025-06-06 07:17:17','2025-06-06 08:47:30'),(4,'20250613',1,'2025-06-13 09:47:44','2025-06-13 09:47:44');
+INSERT INTO `invoice_sequence` VALUES (3,'20250606',19,'2025-06-06 07:17:17','2025-06-06 08:47:30'),(4,'20250613',1,'2025-06-13 09:47:44','2025-06-13 09:47:44'),(5,'20250617',1,'2025-06-17 06:49:58','2025-06-17 06:49:58'),(6,'20250623',1,'2025-06-23 05:39:12','2025-06-23 05:39:12'),(7,'20250624',8,'2025-06-24 05:10:24','2025-06-24 06:35:03');
 /*!40000 ALTER TABLE `invoice_sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -271,6 +273,7 @@ CREATE TABLE `invoice_settings` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `is_show_hsn` int DEFAULT '0',
+  `is_show_bill_date` int DEFAULT '0',
   PRIMARY KEY (`invoice_settings_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -281,7 +284,7 @@ CREATE TABLE `invoice_settings` (
 
 LOCK TABLES `invoice_settings` WRITE;
 /*!40000 ALTER TABLE `invoice_settings` DISABLE KEYS */;
-INSERT INTO `invoice_settings` VALUES (1,'VIS','public/upload/invoice/images/img_684fc980c2c6f3.96229369.png','It checks if a file was uploaded using $_FILES[\"...\"][\"error\"] === 0.\r\n\r\nUpdates logo/favicon only if new ones are uploaded.\r\n\r\nSafely binds dynamic number of parameters based on what’s uploaded.\r\n\r\nUse id as primary key for update logic.','It checks if a file was uploaded using $_FILES[\"...\"][\"error\"] === 0.\r\n\r\nUpdates logo/favicon only if new ones are uploaded.\r\n\r\nSafely binds dynamic number of parameters based on what’s uploaded.\r\n\r\nUse id as primary key for update logic.','public/upload/invoice/images/img_684fc980c32871.32648349.pdf','2025-06-16 07:36:32','2025-06-16 07:53:32',NULL);
+INSERT INTO `invoice_settings` VALUES (1,'VIS','public/upload/invoice/images/img_684fc980c2c6f3.96229369.png','It checks if a file was uploaded using $_FILES[\"...\"][\"error\"] === 0.\r\n\r\nUpdates logo/favicon only if new ones are uploaded.\r\n\r\nSafely binds dynamic number of parameters based on what’s uploaded.\r\n\r\nUse id as primary key for update logic.','It checks if a file was uploaded using $_FILES[\"...\"][\"error\"] === 0.\r\n\r\nUpdates logo/favicon only if new ones are uploaded.\r\n\r\nSafely binds dynamic number of parameters based on what’s uploaded.\r\n\r\nUse id as primary key for update logic.','public/upload/invoice/images/img_684fe475a6b0f8.35010741.pdf','2025-06-16 07:36:32','2025-06-24 06:45:42',1,1);
 /*!40000 ALTER TABLE `invoice_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -486,4 +489,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-06-16 13:53:48
+-- Dump completed on 2025-06-24 12:17:26

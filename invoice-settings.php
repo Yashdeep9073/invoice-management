@@ -79,10 +79,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
     try {
 
+        // echo "<pre>";
+        // print_r($_POST);
+        // exit();
+
+
         if (isset($_POST['invoice_settings_id']) && $_POST['invoice_settings_id'] != "") {
             $invoiceSettingsId = $_POST["invoice_settings_id"];
             $invoicePrefix = $_POST["invoicePrefix"];
             $showHsnCode = !empty($_POST["showHsnCode"]) && $_POST["showHsnCode"] == "on" ? 1 : null;
+            $showBillDate = !empty($_POST["showBillDate"]) && $_POST["showBillDate"] == "on" ? 1 : null;
             $invoiceHeader = $_POST["invoiceHeader"];
             $invoiceFooter = $_POST["invoiceFooter"];
 
@@ -124,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
             }
 
             // Update record
-            $stmtUpdate = $db->prepare("UPDATE invoice_settings SET invoice_prefix = ?, logo = ?, header_terms = ?, footer_terms = ?, template = ?, is_show_hsn = ? WHERE invoice_settings_id = ?");
+            $stmtUpdate = $db->prepare("UPDATE invoice_settings SET invoice_prefix = ?, logo = ?, header_terms = ?, footer_terms = ?, template = ?, is_show_hsn = ?,is_show_bill_date = ? WHERE invoice_settings_id = ?");
             if ($stmtUpdate === false) {
                 $_SESSION['error'] = "Database prepare error: " . $db->error;
                 header("Location: invoice-settings.php");
@@ -132,13 +138,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
             }
 
             $stmtUpdate->bind_param(
-                "ssssssi",
+                "ssssssii",
                 $invoicePrefix,
                 $logoUrl,
                 $invoiceHeader,
                 $invoiceFooter,
                 $templateUrl,
                 $showHsnCode,
+                $showBillDate,
                 $invoiceSettingsId
             );
 
@@ -173,8 +180,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                 // Insert into database
                 $stmtInsert = $db->prepare("INSERT INTO invoice_settings (
                 invoice_prefix, logo, header_terms, footer_terms,
-                template,is_show_hsn
-            ) VALUES (?, ?, ?, ?, ?, ?)");
+                template,is_show_hsn,is_show_bill_date
+            ) VALUES (?, ?, ?, ?, ?, ?,?)");
 
 
                 if ($stmtInsert === false) {
@@ -184,13 +191,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                 }
 
                 $stmtInsert->bind_param(
-                    "sssssi",
+                    "sssssii",
                     $invoicePrefix,
                     $logoUrl,
                     $invoiceHeader,
                     $invoiceFooter,
                     $templateUrl,
-                    $showHsnCode
+                    $showHsnCode,
+                    $showBillDate
                 );
 
                 if ($stmtInsert->execute()) {
@@ -235,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
     <link rel="shortcut icon" type="image/x-icon"
         href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
-        
+
     <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
 
     <link rel="stylesheet" href="assets/css/animate.css" />
@@ -547,6 +555,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                                                             class="status-toggle modal-status d-flex justify-content-between align-items-center me-3">
                                                             <input type="checkbox" id="user4" class="check" checked=""
                                                                 name="showHsnCode" />
+                                                            <label for="user4" class="checktoggle"></label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row align-items-center">
+                                                <div class="col-sm-4">
+                                                    <div class="setting-info">
+                                                        <h6>Show Bill Date</h6>
+                                                        <p>Show / Hide Bill Date in Invoice</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-4">
+                                                    <div class="localization-select d-flex align-items-center">
+                                                        <div
+                                                            class="status-toggle modal-status d-flex justify-content-between align-items-center me-3">
+                                                            <input type="checkbox" id="user4" class="check" checked=""
+                                                                name="showBillDate" />
                                                             <label for="user4" class="checktoggle"></label>
                                                         </div>
                                                     </div>

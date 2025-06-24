@@ -33,7 +33,6 @@ try {
         $taxOptions = $stmtFetchTax->get_result();
     }
 
-
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
 }
@@ -47,6 +46,11 @@ function generateInvoiceNumber($db)
     // Use a transaction to ensure atomicity
     try {
         $db->begin_transaction();
+
+        $stmtFetchInvoiceSettings = $db->prepare("SELECT * FROM invoice_settings");
+        $stmtFetchInvoiceSettings->execute();
+        $invoiceSettings = $stmtFetchInvoiceSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+        $prefix = isset($invoiceSettings['invoice_prefix']) ? $invoiceSettings['invoice_prefix'] : "VIS";
 
         // Lock the row for the current date
         $stmt = $db->prepare("SELECT last_sequence FROM invoice_sequence WHERE date = ? FOR UPDATE");
@@ -76,7 +80,7 @@ function generateInvoiceNumber($db)
         $db->commit();
 
         // Format invoice number
-        return sprintf("VIS-%s-%05d", $date, $newSequence); // e.g., VIS-20250530-00001
+        return sprintf("$prefix-%s-%05d", $date, $newSequence); // e.g., VIS-20250530-00001
     } catch (Exception $e) {
         $db->rollback();
         throw new Exception("Error generating invoice number: " . $e->getMessage());
@@ -91,19 +95,21 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         // print_r($_POST);
         // exit();
 
-        // Sanitize and validate inputs
-        $invoiceNumber = filter_input(INPUT_POST, 'invoice_number', FILTER_SANITIZE_STRING);
-        $paymentMethod = filter_input(INPUT_POST, 'payment_method', FILTER_SANITIZE_STRING);
-        $transactionId = filter_input(INPUT_POST, 'transaction_id', FILTER_SANITIZE_STRING);
-        $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
-        $dueDate = filter_input(INPUT_POST, 'due_date', FILTER_SANITIZE_STRING);
-        $customerId = filter_input(INPUT_POST, 'customerName', FILTER_SANITIZE_NUMBER_INT);
-        $description = filter_input(INPUT_POST, 'description', FILTER_SANITIZE_STRING);
-        $amount = filter_input(INPUT_POST, 'amount', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-        $quantity = filter_input(INPUT_POST, 'quantity', FILTER_SANITIZE_NUMBER_INT);
-        $tax = filter_input(INPUT_POST, 'tax', FILTER_SANITIZE_NUMBER_INT);
-        $discount = filter_input(INPUT_POST, 'discount', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-        $totalAmount = filter_input(INPUT_POST, 'total_amount', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+        $invoiceNumber = htmlspecialchars($_POST['invoice_number'] ?? '', ENT_QUOTES, 'UTF-8');
+        $paymentMethod = htmlspecialchars($_POST['payment_method'] ?? '', ENT_QUOTES, 'UTF-8');
+        $transactionId = htmlspecialchars($_POST['transaction_id'] ?? '', ENT_QUOTES, 'UTF-8');
+        $status = htmlspecialchars($_POST['status'] ?? '', ENT_QUOTES, 'UTF-8');
+        $dueDate = htmlspecialchars($_POST['due_date'] ?? '', ENT_QUOTES, 'UTF-8');
+        $fromDate = htmlspecialchars($_POST['from_date'] ?? '', ENT_QUOTES, 'UTF-8');
+        $toDate = htmlspecialchars($_POST['to_date'] ?? '', ENT_QUOTES, 'UTF-8');
+        $description = htmlspecialchars($_POST['description'] ?? '', ENT_QUOTES, 'UTF-8');
+        $customerId = filter_input(INPUT_POST, 'customerName', FILTER_VALIDATE_INT);
+        $amount = filter_input(INPUT_POST, 'amount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+        $quantity = filter_input(INPUT_POST, 'quantity', FILTER_VALIDATE_INT);
+        $tax = filter_input(INPUT_POST, 'tax', FILTER_VALIDATE_INT);
+        $discount = filter_input(INPUT_POST, 'discount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+        $totalAmount = filter_input(INPUT_POST, 'total_amount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+
 
         $createdBy = base64_decode($_SESSION['admin_id']);
 
@@ -138,15 +144,15 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         $sql = "INSERT INTO `invoice` (
             `invoice_number`, `payment_method`, `transaction_id`, `status`, 
             `amount`, `quantity`, `tax`, `discount`, `total_amount`, 
-            `due_date`, `customer_id`, `service_id`, `description`,`created_by`
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)";
+            `due_date`, `from_date`,`to_date` , `customer_id`, `service_id`, `description`,`created_by`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?)";
 
         $stmt = $db->prepare($sql);
         if ($stmt === false) {
             throw new Exception('Prepare failed: ' . $db->error);
         }
         $stmt->bind_param(
-            'ssssdiiddsissi',
+            'ssssdiiddsssissi',
             $invoiceNumber,
             $paymentMethod,
             $transactionId,
@@ -157,6 +163,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
             $discount,
             $totalAmount,
             $dueDate,
+            $fromDate,
+            $toDate,
             $customerId,
             $serviceIdsJson,
             $description,
@@ -437,6 +445,22 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                             <?php } ?>
                                                         </select>
 
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-6 col-12">
+                                                    <div class="mb-3 add-product">
+                                                        <label class="form-label">From Date: <span> *</span></label>
+                                                        <input type="date" id="from_date" name="from_date"
+                                                            placeholder="Enter From Date" class="form-control"
+                                                            autocomplete="off" required>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-6 col-12">
+                                                    <div class="mb-3 add-product">
+                                                        <label class="form-label">To Date: <span> *</span></label>
+                                                        <input type="date" id="to_date" name="to_date"
+                                                            placeholder="Enter To Date" class="form-control"
+                                                            autocomplete="off" required>
                                                     </div>
                                                 </div>
 
