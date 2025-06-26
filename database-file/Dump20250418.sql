@@ -106,7 +106,7 @@ CREATE TABLE `company_settings` (
 
 LOCK TABLES `company_settings` WRITE;
 /*!40000 ALTER TABLE `company_settings` DISABLE KEYS */;
-INSERT INTO `company_settings` VALUES (1,'Vibrantick Infotech','info@vibrantick.in','123456789','https://docs.google.com/document/d/1lkF7fZRKAtkg_VVLm2XoBuR8W0Nx_ZZuHyfhV4jBr0o/edit?tab=t.0','public/upload/company/images/img_684fd33c372989.25844299.png','public/upload/company/images/img_684fd449336be5.53385055.png','D-185 Mohali Phase 8','India','Punjab','Mohali','160062','2025-06-16 06:49:16','2025-06-16 08:22:33');
+INSERT INTO `company_settings` VALUES (1,'Vibrantick Infotech Solutions Pvt Ltd.','info@vibrantick.in','123456789','https://vibrantick.in/','public/upload/company/images/img_684fd33c372989.25844299.png','public/upload/company/images/img_684fd449336be5.53385055.png','D-185 Mohali Phase 8','India','Punjab','Mohali','160062','2025-06-16 06:49:16','2025-06-24 07:20:30');
 /*!40000 ALTER TABLE `company_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -212,10 +212,11 @@ CREATE TABLE `invoice` (
   `created_by` int NOT NULL,
   `from_date` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `to_date` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `invoice_type` enum('FIXED','RECURSIVE') COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`invoice_id`),
   UNIQUE KEY `invoice_number_UNIQUE` (`invoice_number`),
   UNIQUE KEY `transaction_id_UNIQUE` (`transaction_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=197 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=198 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -224,7 +225,7 @@ CREATE TABLE `invoice` (
 
 LOCK TABLES `invoice` WRITE;
 /*!40000 ALTER TABLE `invoice` DISABLE KEYS */;
-INSERT INTO `invoice` VALUES (195,'VIS-20250624-00004','CASH','TX-20250624-19380-AG4P','PENDING',514.00,1,12,0.00,606.52,'2025-07-05',83,'[2]','This shows you&#039;ve been operating since 2021 till now.\r\nLet me know if you want the PHP code to handle that automatically too.','2025-06-24 05:33:56','2025-06-24 05:33:56',1,0,0,1,'2025-06-01','2025-06-30'),(196,'VIS-20250624-00005','CASH','TX-20250624-53815-NJAV','CANCELLED',5000.00,1,8,0.00,5750.00,'2025-07-11',78,'[2]','This is testing','2025-06-24 05:47:10','2025-06-24 05:47:10',1,0,0,1,'2025-06-01','2025-06-30');
+INSERT INTO `invoice` VALUES (195,'VIS-20250624-00004','CASH','TX-20250624-19380-AG4P','PENDING',514.00,1,12,0.00,606.52,'2025-07-05',83,'[2]','This shows you&amp;amp;#039;ve been operating since 2021 till now.\r\nLet me know if you want the PHP code to handle that automatically too.','2025-06-24 05:33:56','2025-06-24 11:55:51',1,0,0,1,'2025-06-10','2025-06-25','RECURSIVE'),(196,'VIS-20250624-00005','CASH','TX-20250624-53815-NJAV','CANCELLED',5000.00,1,8,0.00,5750.00,'2025-07-11',78,'[2]','This is testing','2025-06-24 05:47:10','2025-06-24 11:29:53',1,0,0,1,'2025-06-01','2025-06-30','RECURSIVE'),(197,'VIS-20250624-00029','CASH','TX-20250624-89682-SE1A','PAID',120000.00,1,8,0.00,138000.00,'2025-06-25',77,'[2]','Description','2025-06-24 11:36:17','2025-06-24 11:36:17',1,0,0,1,'','','FIXED');
 /*!40000 ALTER TABLE `invoice` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -252,7 +253,7 @@ CREATE TABLE `invoice_sequence` (
 
 LOCK TABLES `invoice_sequence` WRITE;
 /*!40000 ALTER TABLE `invoice_sequence` DISABLE KEYS */;
-INSERT INTO `invoice_sequence` VALUES (3,'20250606',19,'2025-06-06 07:17:17','2025-06-06 08:47:30'),(4,'20250613',1,'2025-06-13 09:47:44','2025-06-13 09:47:44'),(5,'20250617',1,'2025-06-17 06:49:58','2025-06-17 06:49:58'),(6,'20250623',1,'2025-06-23 05:39:12','2025-06-23 05:39:12'),(7,'20250624',8,'2025-06-24 05:10:24','2025-06-24 06:35:03');
+INSERT INTO `invoice_sequence` VALUES (3,'20250606',19,'2025-06-06 07:17:17','2025-06-06 08:47:30'),(4,'20250613',1,'2025-06-13 09:47:44','2025-06-13 09:47:44'),(5,'20250617',1,'2025-06-17 06:49:58','2025-06-17 06:49:58'),(6,'20250623',1,'2025-06-23 05:39:12','2025-06-23 05:39:12'),(7,'20250624',29,'2025-06-24 05:10:24','2025-06-24 11:30:58');
 /*!40000 ALTER TABLE `invoice_sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -489,4 +490,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-06-24 12:17:26
+-- Dump completed on 2025-06-24 18:01:19

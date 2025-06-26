@@ -138,17 +138,27 @@ try {
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($serviceIds as $id):
+                <?php
+                // Build the list of service names
+                $serviceList = '';
+                foreach ($serviceIds as $id) {
                     $service = $services[$id] ?? ['name' => 'Unknown Service', 'sac_code' => 'N/A'];
-                    $pricePerService = $invoice['quantity'] > 0 ? $invoice['total_amount'] / $invoice['quantity'] : 0;
+                    $serviceList .= '<li>' . htmlspecialchars($service['name']) . '</li>';
                     $hsnCode = $service['sac_code'];
-                    ?>
-                    <tr>
-                        <td><?= htmlspecialchars($service['name']) ?></td>
-                        <td class="amount-cell">Rs. <?= number_format($pricePerService, 2) ?></td>
-                        <td class="amount-cell">Rs. <?= number_format($pricePerService, 2) ?></td>
-                    </tr>
-                <?php endforeach; ?>
+                }
+
+                // Calculate price per service
+                $pricePerService = $invoice['quantity'] > 0 ? $invoice['total_amount'] / $invoice['quantity'] : 0;
+                ?>
+                <tr>
+                    <td>
+                        <ul>
+                            <?= trim($serviceList) ?>
+                        </ul>
+                    </td>
+                    <td class="amount-cell">Rs. <?= number_format($pricePerService, 2) ?></td>
+                    <td class="amount-cell">Rs. <?= number_format($pricePerService, 2) ?></td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -271,7 +281,7 @@ try {
 
 
     // Start Y position for first line
-    $summaryStartY = 152;
+    $summaryStartY = 170;
     $lineHeight = 6;
 
     // Line 1: Discount
@@ -301,7 +311,7 @@ try {
 
 
     // Position the cursor for the first line
-    $pdf->SetXY(20, 145);
+    $pdf->SetXY(20, $summaryStartY);
 
     // Write the first line of the message
     $pdf->Cell(0, 10, 'Thank you and looking forward to a', 0, 1); // Move to the next line after writing

@@ -7,26 +7,27 @@ if (!isset($_SESSION["admin_id"])) {
 require "./database/config.php";
 require 'vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
+// error_reporting(E_ALL);
+// ini_set('display_errors', '1');
 
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
     try {
 
-        $customerName = filter_input(INPUT_POST, 'customerName', FILTER_SANITIZE_STRING);
+        $customerName = filter_input(INPUT_POST, 'customerName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $customerPhone = filter_input(INPUT_POST, 'customerPhone', FILTER_SANITIZE_NUMBER_INT);
-        $customerEmail = filter_input(INPUT_POST, 'customerEmail', FILTER_SANITIZE_STRING);
-        $customerAddress = filter_input(INPUT_POST, 'customerAddress', FILTER_SANITIZE_STRING);
+        $customerEmail = filter_input(INPUT_POST, 'customerEmail', FILTER_SANITIZE_EMAIL);
+        $customerAddress = filter_input(INPUT_POST, 'customerAddress', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $shippingName = filter_input(INPUT_POST, 'shippingName', FILTER_SANITIZE_STRING);
+        $shippingName = filter_input(INPUT_POST, 'shippingName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $shippingPhone = filter_input(INPUT_POST, 'shippingPhone', FILTER_SANITIZE_NUMBER_INT);
-        $shippingEmail = filter_input(INPUT_POST, 'shippingEmail', FILTER_SANITIZE_STRING);
-        $shippingAddress = filter_input(INPUT_POST, 'shippingAddress', FILTER_SANITIZE_STRING);
+        $shippingEmail = filter_input(INPUT_POST, 'shippingEmail', FILTER_SANITIZE_EMAIL);
+        $shippingAddress = filter_input(INPUT_POST, 'shippingAddress', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $customerState = filter_input(INPUT_POST, 'customerState', FILTER_SANITIZE_STRING);
+        $customerState = filter_input(INPUT_POST, 'customerState', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $customerCity = filter_input(INPUT_POST, 'customerCity', FILTER_SANITIZE_NUMBER_INT);
-
-        $gstNumber = filter_input(INPUT_POST, 'gstNumber', FILTER_SANITIZE_STRING);
+        $gstNumber = filter_input(INPUT_POST, 'gstNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         // echo "<pre>";
         // print_r($_POST);
@@ -79,20 +80,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editCustomerId'])) {
     try {
         $editCustomerId = filter_input(INPUT_POST, 'editCustomerId', FILTER_SANITIZE_NUMBER_INT);
-        $editCustomerName = filter_input(INPUT_POST, 'editCustomerName', FILTER_SANITIZE_STRING);
+        $editCustomerName = filter_input(INPUT_POST, 'editCustomerName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $editCustomerPhone = filter_input(INPUT_POST, 'editCustomerPhone', FILTER_SANITIZE_NUMBER_INT);
-        $editCustomerEmail = filter_input(INPUT_POST, 'editCustomerEmail', FILTER_SANITIZE_STRING);
-        $editCustomerAddress = filter_input(INPUT_POST, 'editCustomerAddress', FILTER_SANITIZE_STRING);
-        $editShippingName = filter_input(INPUT_POST, 'editShippingName', FILTER_SANITIZE_STRING);
+        $editCustomerEmail = filter_input(INPUT_POST, 'editCustomerEmail', FILTER_SANITIZE_EMAIL);
+        $editCustomerAddress = filter_input(INPUT_POST, 'editCustomerAddress', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $editShippingName = filter_input(INPUT_POST, 'editShippingName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $editShippingPhone = filter_input(INPUT_POST, 'editShippingPhone', FILTER_SANITIZE_NUMBER_INT);
-        $editShippingEmail = filter_input(INPUT_POST, 'editShippingEmail', FILTER_SANITIZE_STRING);
-        $editShippingAddress = filter_input(INPUT_POST, 'editShippingAddress', FILTER_SANITIZE_STRING);
+        $editShippingEmail = filter_input(INPUT_POST, 'editShippingEmail', FILTER_SANITIZE_EMAIL);
+        $editShippingAddress = filter_input(INPUT_POST, 'editShippingAddress', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
         $editCustomerStatus = filter_input(INPUT_POST, 'editCustomerStatus', FILTER_SANITIZE_NUMBER_INT);
 
-        $editCustomerState = filter_input(INPUT_POST, 'editCustomerState', FILTER_SANITIZE_STRING);
+        $editCustomerState = filter_input(INPUT_POST, 'editCustomerState', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $editCustomerCity = filter_input(INPUT_POST, 'editCustomerCity', FILTER_SANITIZE_NUMBER_INT);
 
-        $editGstNumber = filter_input(INPUT_POST, 'editGstNumber', FILTER_SANITIZE_STRING);
+        $editGstNumber = filter_input(INPUT_POST, 'editGstNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 
         // Debug
@@ -180,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerId'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['stateCode'])) {
 
     try {
-        $stateCode = filter_input(INPUT_POST, 'stateCode', FILTER_SANITIZE_STRING);
+        $stateCode = filter_input(INPUT_POST, 'stateCode', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $stmtFetchCities = $db->prepare("SELECT * FROM cities WHERE state_code = ?");
         $stmtFetchCities->bind_param('s', $stateCode);
 
@@ -224,11 +227,11 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_FILES['excel_file'])) {
             continue;
         }
 
-        $customerName = filter_var($row[0], FILTER_SANITIZE_STRING);
-        $customerPhone = preg_replace('/\D/', '', $row[1]); // Remove all non-digit chars
+        $customerName = filter_var($row[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $customerPhone = preg_replace('/\D/', '', $row[1]); // Keeps only digits
         $customerEmail = filter_var($row[2], FILTER_SANITIZE_EMAIL);
-        $customerAddress = filter_var($row[3], FILTER_SANITIZE_STRING);
-        $gstNumber = filter_var($row[4], FILTER_SANITIZE_STRING);
+        $customerAddress = filter_var($row[3], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $gstNumber = filter_var($row[4], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         // Basic validation
         if (empty($customerPhone) || empty($customerEmail)) {
