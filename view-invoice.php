@@ -147,8 +147,18 @@ try {
                     $hsnCode = $service['sac_code'];
                 }
 
-                // Calculate price per service
+                // Given values
                 $pricePerService = $invoice['quantity'] > 0 ? $invoice['total_amount'] / $invoice['quantity'] : 0;
+                $taxRateStr = $invoice['tax_rate']; // "18%"
+            
+                // Convert tax rate string to integer (remove % and convert to int)
+                $taxRate = intval(str_replace('%', '', $taxRateStr)); // Converts "18%" to 18
+            
+                // Calculate price without tax
+                $priceWithoutTax = $taxRate > 0 ? $pricePerService / (1 + $taxRate / 100) : $pricePerService;
+
+                // Calculate tax amount per unit
+                $taxAmount = $pricePerService - $priceWithoutTax;
                 ?>
                 <tr>
                     <td class="amount-cell"> <?= isset($invoice['invoice_title']) ? $invoice['invoice_title'] : "" ?></td>
@@ -157,7 +167,7 @@ try {
                             <?= trim($serviceList) ?>
                         </ul>
                     </td>
-                    <td class="amount-cell">Rs. <?= number_format($pricePerService, 2) ?></td>
+                    <td class="amount-cell">Rs. <?= number_format($priceWithoutTax, 2) ?></td>
                 </tr>
             </tbody>
         </table>
