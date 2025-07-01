@@ -155,6 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         }
 
         $invoiceType = htmlspecialchars($_POST['invoice_type'] ?? '', ENT_QUOTES, 'UTF-8');
+        $invoiceTitle = htmlspecialchars($_POST["invoice_title"], ENT_QUOTES, 'UTF-8');
 
         $customerId = filter_input(INPUT_POST, 'customerName', FILTER_SANITIZE_NUMBER_INT) ?? 0;
         // Ensure customerId is a positive integer
@@ -179,6 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         $totalAmount = (float) $totalAmount;
 
         $setReminder = isset($_POST['setReminder']) ? (int) $_POST['setReminder'] : 0;
+
 
 
         // Handle serviceName array
@@ -232,7 +234,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         `service_id` = ?, 
         `description` = ?,
         `reminder_enabled` = ?,
-        `invoice_type` = ?
+        `invoice_type` = ?,
+        `invoice_title` = ?
         WHERE `invoice_id` = ?";
 
         $stmt = $db->prepare($sql);
@@ -241,7 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         }
 
         $stmt->bind_param(
-            'ssssdiiddsssissisi',
+            'ssssdiiddsssississi',
             $invoiceNumber,
             $paymentMethod,
             $transactionId,
@@ -259,6 +262,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
             $description,
             $setReminder,
             $invoiceType,
+            $invoiceTitle,
             $invoiceId,
         );
         // Execute the query
@@ -441,6 +445,15 @@ ob_end_flush();
                                         <div class="accordion-body">
                                             <div class="row">
 
+                                                <div class="col-lg-4 col-sm-6 col-12">
+                                                    <div class="input-blocks add-product list">
+                                                        <label class="form-label">Invoice Title </label>
+                                                        <input type="text" id="invoice_title"
+                                                            value="<?= isset($invoices['0']['invoice_title']) ? $invoices['0']['invoice_title'] : ""  ?>"
+                                                            name="invoice_title" placeholder="Enter Invoice Title"
+                                                            class="form-control">
+                                                    </div>
+                                                </div>
 
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="input-blocks add-product list">
@@ -578,7 +591,7 @@ ob_end_flush();
                                                         <input type="date" id="from_date"
                                                             value="<?php echo $invoices[0]['from_date'] ?>"
                                                             name="from_date" placeholder="Enter From Date"
-                                                            class="form-control" autocomplete="off" >
+                                                            class="form-control" autocomplete="off">
                                                     </div>
                                                 </div>
                                                 <div
@@ -588,7 +601,7 @@ ob_end_flush();
                                                         <input type="date" id="to_date"
                                                             value="<?php echo $invoices[0]['to_date'] ?>" name="to_date"
                                                             placeholder="Enter To Date" class="form-control"
-                                                            autocomplete="off" >
+                                                            autocomplete="off">
                                                     </div>
                                                 </div>
 

@@ -146,7 +146,7 @@ CREATE TABLE `customer` (
 
 LOCK TABLES `customer` WRITE;
 /*!40000 ALTER TABLE `customer` DISABLE KEYS */;
-INSERT INTO `customer` VALUES (77,'John Doe','+12025550123','john.doe@example.com','123 Main St, Springfield, IL 62701','Jane Doe','+12025550124','jane.doe@example.com','456 Oak Ave, Springfield, IL 62702',1,'2025-04-01 04:30:00','2025-04-24 08:23:08',NULL,NULL,'27ABCDE1234F1Z1'),(78,'Alice Smith','+12025550125','yashdeep@vibrantick.in','789 Pine Rd, Chicago, IL 60601',NULL,NULL,NULL,NULL,1,'2025-04-02 07:00:00','2025-04-24 08:23:02',NULL,NULL,'27ABCDE1234F1Z0'),(79,'Bob\"JJohnson','+12025550126',NULL,NULL,NULL,NULL,NULL,NULL,0,'2025-04-03 10:15:00','2025-04-24 08:22:58',NULL,NULL,'27ABCDE1234F1Z9'),(80,'Emma Wilson','+12025550127','emma.wilson@example.com','321 Elm St, Boston, MA 02108','Emma Wilson','+12025550128','emma.ship@example.com','321 Elm St, Boston, MA 02108',1,'2025-04-04 03:45:00','2025-04-24 08:22:53',NULL,NULL,'27ABCDE1234F1Z8'),(83,'Yashdeep','6239334177','ydeep9073@gmail.com','Phase-8, D-185,Mohali ','Yashdeep','6239334177','yashdeep@vibrantick.in','yashdeep@vibrantick.in',1,'2025-04-21 06:49:57','2025-04-24 08:22:45','PB',3298,'27ABCDE1234F1Z7'),(84,'Test','1234567890','test@gmail.com','Phase-8, D-185,Mohali ','Test','1234567890','test@gmail.com','test@gmail.com',1,'2025-04-24 08:21:47','2025-04-24 08:32:52','HP',387,'27ABCDE1234F1X5'),(85,'John Doe','9876543210','john@example.com','123 Main St, Delhi',NULL,NULL,NULL,NULL,1,'2025-06-06 09:35:23',NULL,NULL,NULL,'22AAAAA0000A1Z5'),(86,'Jane Smith','9123456789','jane@example.com','456 Park Ave, Mumbai',NULL,NULL,NULL,NULL,1,'2025-06-06 09:35:23',NULL,NULL,NULL,'27BBBBB1111B2Z6');
+INSERT INTO `customer` VALUES (77,'John Doe','+12025550123','john.doe@example.com','123 Main St, Springfield, IL 62701','Jane Doe','+12025550124','jane.doe@example.com','456 Oak Ave, Springfield, IL 62702',1,'2025-04-01 04:30:00','2025-04-24 08:23:08',NULL,NULL,'27ABCDE1234F1Z1'),(78,'Alice Smith','+12025550125','yashdeep@vibrantick.in','789 Pine Rd, Chicago, IL 60601',NULL,NULL,NULL,NULL,1,'2025-04-02 07:00:00','2025-04-24 08:23:02',NULL,NULL,'27ABCDE1234F1Z0'),(79,'Bob\"JJohnson','+12025550126',NULL,NULL,NULL,NULL,NULL,NULL,0,'2025-04-03 10:15:00','2025-04-24 08:22:58',NULL,NULL,'27ABCDE1234F1Z9'),(80,'Emma Wilson','+12025550127','emma.wilson@example.com','321 Elm St, Boston, MA 02108','Emma Wilson','+12025550128','emma.ship@example.com','321 Elm St, Boston, MA 02108',1,'2025-04-04 03:45:00','2025-04-24 08:22:53',NULL,NULL,'27ABCDE1234F1Z8'),(83,'Yashdeep','6239334177','ydeep9073@gmail.com','Phase-8, D-185,Mohali ','Yashdeep','6239334177','yashdeep@vibrantick.in','yashdeep@vibrantick.in',1,'2025-04-21 06:49:57','2025-06-30 15:17:12','PB',269,'27ABCDE1234F1Z7'),(84,'Test','1234567890','test@gmail.com','Phase-8, D-185,Mohali ','Test','1234567890','test@gmail.com','test@gmail.com',1,'2025-04-24 08:21:47','2025-04-24 08:32:52','HP',387,'27ABCDE1234F1X5'),(85,'John Doe','9876543210','john@example.com','123 Main St, Delhi',NULL,NULL,NULL,NULL,1,'2025-06-06 09:35:23',NULL,NULL,NULL,'22AAAAA0000A1Z5'),(86,'Jane Smith','9123456789','jane@example.com','456 Park Ave, Mumbai',NULL,NULL,NULL,NULL,1,'2025-06-06 09:35:23',NULL,NULL,NULL,'27BBBBB1111B2Z6');
 /*!40000 ALTER TABLE `customer` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -213,10 +213,11 @@ CREATE TABLE `invoice` (
   `from_date` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `to_date` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `invoice_type` enum('FIXED','RECURSIVE') COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `invoice_title` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`invoice_id`),
   UNIQUE KEY `invoice_number_UNIQUE` (`invoice_number`),
   UNIQUE KEY `transaction_id_UNIQUE` (`transaction_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=198 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=199 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -225,7 +226,7 @@ CREATE TABLE `invoice` (
 
 LOCK TABLES `invoice` WRITE;
 /*!40000 ALTER TABLE `invoice` DISABLE KEYS */;
-INSERT INTO `invoice` VALUES (195,'VIS-20250624-00004','CASH','TX-20250624-19380-AG4P','PENDING',514.00,1,12,0.00,606.52,'2025-07-05',83,'[2]','This shows you&amp;amp;#039;ve been operating since 2021 till now.\r\nLet me know if you want the PHP code to handle that automatically too.','2025-06-24 05:33:56','2025-06-24 11:55:51',1,0,0,1,'2025-06-10','2025-06-25','RECURSIVE'),(196,'VIS-20250624-00005','CASH','TX-20250624-53815-NJAV','CANCELLED',5000.00,1,8,0.00,5750.00,'2025-07-11',78,'[2]','This is testing','2025-06-24 05:47:10','2025-06-24 11:29:53',1,0,0,1,'2025-06-01','2025-06-30','RECURSIVE'),(197,'VIS-20250624-00029','CASH','TX-20250624-89682-SE1A','PAID',120000.00,1,8,0.00,138000.00,'2025-06-25',77,'[2]','Description','2025-06-24 11:36:17','2025-06-24 11:36:17',1,0,0,1,'','','FIXED');
+INSERT INTO `invoice` VALUES (195,'VIS-20250624-00004','CASH','TX-20250624-19380-AG4P','PENDING',514.00,1,12,0.00,606.52,'2025-07-05',83,'[2, 3, 7, 8]','This shows you&amp;amp;amp;amp;amp;amp;#039;ve been operating since 2021 till now.\r\nLet me know if you want the PHP code to handle that automatically too.','2025-06-24 05:33:56','2025-06-30 15:05:15',1,0,0,1,'2025-06-10','2025-06-25','RECURSIVE','App Service'),(196,'VIS-20250624-00005','CASH','TX-20250624-53815-NJAV','CANCELLED',5000.00,1,8,0.00,5750.00,'2025-07-11',78,'[2]','This is testing','2025-06-24 05:47:10','2025-06-24 11:29:53',1,0,0,1,'2025-06-01','2025-06-30','RECURSIVE',NULL),(197,'VIS-20250624-00029','CASH','TX-20250624-89682-SE1A','PAID',120000.00,1,8,0.00,138000.00,'2025-06-25',77,'[2]','Description','2025-06-24 11:36:17','2025-06-24 11:36:17',1,0,0,1,'','','FIXED',NULL),(198,'VIS-20250630-00001','PAYPAL','TX-20250630-16563-23A8','PENDING',5000.00,1,8,0.00,5750.00,'2025-06-30',83,'[2, 3, 7]','This is testing invoice seo service ','2025-06-30 14:28:11','2025-06-30 14:28:11',1,0,0,1,'','','FIXED','Seo Service');
 /*!40000 ALTER TABLE `invoice` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -244,7 +245,7 @@ CREATE TABLE `invoice_sequence` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `date` (`date`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -253,7 +254,7 @@ CREATE TABLE `invoice_sequence` (
 
 LOCK TABLES `invoice_sequence` WRITE;
 /*!40000 ALTER TABLE `invoice_sequence` DISABLE KEYS */;
-INSERT INTO `invoice_sequence` VALUES (3,'20250606',19,'2025-06-06 07:17:17','2025-06-06 08:47:30'),(4,'20250613',1,'2025-06-13 09:47:44','2025-06-13 09:47:44'),(5,'20250617',1,'2025-06-17 06:49:58','2025-06-17 06:49:58'),(6,'20250623',1,'2025-06-23 05:39:12','2025-06-23 05:39:12'),(7,'20250624',29,'2025-06-24 05:10:24','2025-06-24 11:30:58');
+INSERT INTO `invoice_sequence` VALUES (3,'20250606',19,'2025-06-06 07:17:17','2025-06-06 08:47:30'),(4,'20250613',1,'2025-06-13 09:47:44','2025-06-13 09:47:44'),(5,'20250617',1,'2025-06-17 06:49:58','2025-06-17 06:49:58'),(6,'20250623',1,'2025-06-23 05:39:12','2025-06-23 05:39:12'),(7,'20250624',29,'2025-06-24 05:10:24','2025-06-24 11:30:58'),(8,'20250630',1,'2025-06-30 14:26:46','2025-06-30 14:26:46');
 /*!40000 ALTER TABLE `invoice_sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -387,7 +388,7 @@ CREATE TABLE `services` (
   `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `isActive` int DEFAULT '1',
   PRIMARY KEY (`service_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -396,7 +397,7 @@ CREATE TABLE `services` (
 
 LOCK TABLES `services` WRITE;
 /*!40000 ALTER TABLE `services` DISABLE KEYS */;
-INSERT INTO `services` VALUES (2,'Website Development ',998314,'2025-04-16 11:53:29','2025-04-21 13:10:13',1),(3,'App Development ',998314,'2025-04-16 11:53:39','2025-04-21 13:10:13',1),(7,'Graphic Designing',998391,'2025-04-21 13:15:15','2025-04-21 13:23:20',1);
+INSERT INTO `services` VALUES (2,'Website Development ',998314,'2025-04-16 11:53:29','2025-04-21 13:10:13',1),(3,'App Development ',998314,'2025-04-16 11:53:39','2025-04-21 13:10:13',1),(7,'Graphic Designing',998391,'2025-04-21 13:15:15','2025-04-21 13:23:20',1),(8,'Digital Marketing ',998365,'2025-06-30 14:58:57',NULL,1);
 /*!40000 ALTER TABLE `services` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -490,4 +491,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-06-24 18:01:19
+-- Dump completed on 2025-07-01 12:24:11

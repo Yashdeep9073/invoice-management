@@ -132,8 +132,8 @@ try {
         <table class="invoice-table">
             <thead>
                 <tr>
+                    <th>DESCRIPTION</th>
                     <th>SERVICES</th>
-                    <th>PRICE</th>
                     <th>TOTAL</th>
                 </tr>
             </thead>
@@ -151,12 +151,12 @@ try {
                 $pricePerService = $invoice['quantity'] > 0 ? $invoice['total_amount'] / $invoice['quantity'] : 0;
                 ?>
                 <tr>
+                    <td class="amount-cell"> <?= isset($invoice['invoice_title']) ? $invoice['invoice_title'] : "" ?></td>
                     <td>
                         <ul>
                             <?= trim($serviceList) ?>
                         </ul>
                     </td>
-                    <td class="amount-cell">Rs. <?= number_format($pricePerService, 2) ?></td>
                     <td class="amount-cell">Rs. <?= number_format($pricePerService, 2) ?></td>
                 </tr>
             </tbody>
@@ -370,7 +370,7 @@ try {
 
 
     // Output final PDF
-    $pdf->Output('D', 'Final_Invoice_' . $invoiceId . '.pdf');
+    $pdf->Output('D', ucfirst(str_replace(" ", "-", $invoice['invoice_title'])) . "-" . $invoice['invoice_number'] . '.pdf');
 
 } catch (Exception $e) {
     echo "Error: " . htmlspecialchars($e->getMessage());

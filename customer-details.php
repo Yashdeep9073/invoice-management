@@ -80,73 +80,125 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editCustomerId'])) {
     try {
         $editCustomerId = filter_input(INPUT_POST, 'editCustomerId', FILTER_SANITIZE_NUMBER_INT);
+
+        // Initialize arrays for query fields and values
+        $fields = [];
+        $values = [];
+        $types = '';
+
+        // Check each field and add to update if not empty
         $editCustomerName = filter_input(INPUT_POST, 'editCustomerName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (!empty($editCustomerName)) {
+            $fields[] = 'customer_name = ?';
+            $values[] = $editCustomerName;
+            $types .= 's';
+        }
+
         $editCustomerPhone = filter_input(INPUT_POST, 'editCustomerPhone', FILTER_SANITIZE_NUMBER_INT);
+        if (!empty($editCustomerPhone)) {
+            $fields[] = 'customer_phone = ?';
+            $values[] = $editCustomerPhone;
+            $types .= 's';
+        }
+
         $editCustomerEmail = filter_input(INPUT_POST, 'editCustomerEmail', FILTER_SANITIZE_EMAIL);
+        if (!empty($editCustomerEmail)) {
+            $fields[] = 'customer_email = ?';
+            $values[] = $editCustomerEmail;
+            $types .= 's';
+        }
+
         $editCustomerAddress = filter_input(INPUT_POST, 'editCustomerAddress', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (!empty($editCustomerAddress)) {
+            $fields[] = 'customer_address = ?';
+            $values[] = $editCustomerAddress;
+            $types .= 's';
+        }
 
         $editShippingName = filter_input(INPUT_POST, 'editShippingName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $editShippingPhone = filter_input(INPUT_POST, 'editShippingPhone', FILTER_SANITIZE_NUMBER_INT);
-        $editShippingEmail = filter_input(INPUT_POST, 'editShippingEmail', FILTER_SANITIZE_EMAIL);
-        $editShippingAddress = filter_input(INPUT_POST, 'editShippingAddress', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (!empty($editShippingName)) {
+            $fields[] = 'ship_name = ?';
+            $values[] = $editShippingName;
+            $types .= 's';
+        }
 
-        $editCustomerStatus = filter_input(INPUT_POST, 'editCustomerStatus', FILTER_SANITIZE_NUMBER_INT);
+        $editShippingPhone = filter_input(INPUT_POST, 'editShippingPhone', FILTER_SANITIZE_NUMBER_INT);
+        if (!empty($editShippingPhone)) {
+            $fields[] = 'ship_phone = ?';
+            $values[] = $editShippingPhone;
+            $types .= 's';
+        }
+
+        $editShippingEmail = filter_input(INPUT_POST, 'editShippingEmail', FILTER_SANITIZE_EMAIL);
+        if (!empty($editShippingEmail)) {
+            $fields[] = 'ship_email = ?';
+            $values[] = $editShippingEmail;
+            $types .= 's';
+        }
+
+        $editShippingAddress = filter_input(INPUT_POST, 'editShippingAddress', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (!empty($editShippingAddress)) {
+            $fields[] = 'ship_address = ?';
+            $values[] = $editShippingAddress;
+            $types .= 's';
+        }
 
         $editCustomerState = filter_input(INPUT_POST, 'editCustomerState', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $editCustomerCity = filter_input(INPUT_POST, 'editCustomerCity', FILTER_SANITIZE_NUMBER_INT);
+        if (!empty($editCustomerState)) {
+            $fields[] = 'customer_state = ?';
+            $values[] = $editCustomerState;
+            $types .= 's';
+        }
+
+        $editCustomerCity = filter_input(INPUT_POST, 'editCustomerCity', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (!empty($editCustomerCity)) {
+            $fields[] = 'customer_city = ?';
+            $values[] = $editCustomerCity;
+            $types .= 's';
+        }
+
+        $editCustomerStatus = filter_input(INPUT_POST, 'editCustomerStatus', FILTER_SANITIZE_NUMBER_INT);
+        if (!empty($editCustomerStatus)) {
+            $fields[] = 'isActive = ?';
+            $values[] = $editCustomerStatus;
+            $types .= 'i';
+        }
 
         $editGstNumber = filter_input(INPUT_POST, 'editGstNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (!empty($editGstNumber)) {
+            $fields[] = 'gst_number = ?';
+            $values[] = $editGstNumber;
+            $types .= 's';
+        }
 
+        // Add customer_id to the values and types
+        $values[] = $editCustomerId;
+        $types .= 'i';
 
-        // Debug
-        // echo "<pre>";
-        // print_r($_POST);
-        // exit();
+        // If there are fields to update, build and execute the query
+        if (!empty($fields)) {
+            $query = 'UPDATE customer SET ' . implode(', ', $fields) . ' WHERE customer_id = ?';
+            $stmtUpdate = $db->prepare($query);
+            $stmtUpdate->bind_param($types, ...$values);
 
-        $stmtUpdate = $db->prepare('UPDATE customer SET 
-            customer_name = ?, 
-            customer_phone = ?, 
-            customer_email = ?, 
-            customer_address = ?, 
-            ship_name = ?, 
-            ship_phone = ?, 
-            ship_email = ?, 
-            ship_address = ?,
-            customer_state = ?,
-            customer_city = ?, 
-            isActive = ?,
-            gst_number = ?
-            WHERE customer_id = ?
-        ');
-
-        $stmtUpdate->bind_param(
-            'sssssssssiisi',
-            $editCustomerName,
-            $editCustomerPhone,
-            $editCustomerEmail,
-            $editCustomerAddress,
-            $editShippingName,
-            $editShippingPhone,
-            $editShippingEmail,
-            $editShippingAddress,
-            $editCustomerState,
-            $editCustomerCity,
-            $editCustomerStatus,
-            $editGstNumber,
-            $editCustomerId
-        );
-
-        if ($stmtUpdate->execute()) {
-            $_SESSION['success'] = 'Customer Updated Successfully';
-            header("Location: customer-details.php");
-            exit();
+            if ($stmtUpdate->execute()) {
+                $_SESSION['success'] = 'Customer Updated Successfully';
+                header("Location: customer-details.php");
+                exit();
+            } else {
+                $_SESSION['error'] = 'Error while updating customer';
+                header("Location: customer-details.php");
+                exit();
+            }
         } else {
-            $_SESSION['error'] = 'Error while updating customer';
+            $_SESSION['error'] = 'No fields to update';
             header("Location: customer-details.php");
             exit();
         }
     } catch (Exception $e) {
         $_SESSION['error'] = 'Exception: ' . $e->getMessage();
+        header("Location: customer-details.php");
+        exit();
     }
 }
 
@@ -740,8 +792,7 @@ ob_end_flush();
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer City</label>
-                                            <select class=" form-select" id="editCustomerCity" name="editCustomerCity"
-                                                required>
+                                            <select class=" form-select" id="editCustomerCity" name="editCustomerCity">
 
                                             </select>
                                         </div>

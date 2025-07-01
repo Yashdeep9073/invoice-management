@@ -253,12 +253,12 @@ ob_end_flush();
                                 <div class="form-login authentication-check">
                                     <div class="row">
                                         <div class="col-12 d-flex align-items-center justify-content-between">
-                                            <div class="custom-control custom-checkbox">
+                                            <!-- <div class="custom-control custom-checkbox">
                                                 <label class="checkboxs ps-4 mb-0 pb-0 line-height-1">
                                                     <input type="checkbox" class="form-control">
                                                     <span class="checkmarks"></span> Remember me
                                                 </label>
-                                            </div>
+                                            </div> -->
                                             <div class="text-end">
                                                 <a class="forgot-link" href="forgot-password.php">Forgot Password?</a>
                                             </div>

@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         $tax = filter_input(INPUT_POST, 'tax', FILTER_VALIDATE_INT);
         $discount = filter_input(INPUT_POST, 'discount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $totalAmount = filter_input(INPUT_POST, 'total_amount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-
+        $invoiceTitle = htmlspecialchars($_POST["invoice_title"], ENT_QUOTES, 'UTF-8');
 
         $createdBy = base64_decode($_SESSION['admin_id']);
 
@@ -159,15 +159,15 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         $sql = "INSERT INTO `invoice` (
             `invoice_number`, `payment_method`, `transaction_id`, `status`, 
             `amount`, `quantity`, `tax`, `discount`, `total_amount`, 
-            `due_date`, `from_date`,`to_date` , `customer_id`, `service_id`, `description`,`created_by`,`invoice_type`
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?)";
+            `due_date`, `from_date`,`to_date` , `customer_id`, `service_id`, `description`,`created_by`,`invoice_type`,`invoice_title`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?)";
 
         $stmt = $db->prepare($sql);
         if ($stmt === false) {
             throw new Exception('Prepare failed: ' . $db->error);
         }
         $stmt->bind_param(
-            'ssssdiiddsssissis',
+            'ssssdiiddsssississ',
             $invoiceNumber,
             $paymentMethod,
             $transactionId,
@@ -184,7 +184,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
             $serviceIdsJson,
             $description,
             $createdBy,
-            $invoiceType
+            $invoiceType,
+            $invoiceTitle
         );
 
         // Execute the query
@@ -364,6 +365,13 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                         <div class="accordion-body">
                                             <div class="row">
 
+                                                <div class="col-lg-4 col-sm-6 col-12">
+                                                    <div class="input-blocks add-product list">
+                                                        <label class="form-label">Invoice Title </label>
+                                                        <input type="text" id="invoice_title" name="invoice_title"
+                                                            placeholder="Enter Invoice Title" class="form-control">
+                                                    </div>
+                                                </div>
 
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="input-blocks add-product list">
@@ -377,6 +385,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                         </button>
                                                     </div>
                                                 </div>
+
 
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="mb-3 add-product">

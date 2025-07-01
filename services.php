@@ -16,15 +16,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
         if ($stmtInsert->execute()) {
             $_SESSION['success'] = 'Service Added Successfully';
+            header("Location: services.php");
+            exit;
         } else {
             $_SESSION['error'] = 'Error While adding service';
+            header("Location: services.php");
+            exit;
         }
-
-        $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
-        $stmtFetchCompanySettings->execute();
-        $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
     } catch (Exception $e) {
         $_SESSION['error'] = $e;
+        header("Location: services.php");
+        exit;
     }
 
 }
@@ -53,11 +55,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editServiceId'])) {
         );
         if ($stmtUpdate->execute()) {
             $_SESSION['success'] = 'Service Updated Successfully';
+            header("Location: services.php");
+            exit;
         } else {
             $_SESSION['error'] = 'Error While updating service';
+            header("Location: services.php");
+            exit;
         }
     } catch (Exception $e) {
         $_SESSION['error'] = $e;
+        header("Location: services.php");
+        exit;
     }
 }
 
@@ -96,6 +104,10 @@ try {
     $stmtFetch = $db->prepare("SELECT * FROM services");
     $stmtFetch->execute();
     $services = $stmtFetch->get_result();
+
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 } catch (Exception $e) {
     $_SESSION['error'] = $e;
 }
