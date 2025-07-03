@@ -475,7 +475,7 @@ try {
 
     // Split into words and group every 3 words
     $words = explode(' ', $amountInWords);
-    $groupedWords = array_chunk($words, 5);
+    $groupedWords = array_chunk($words, 4);
 
     // Output each line
     $currentY = $summaryStartY + $lineHeight + 34;
