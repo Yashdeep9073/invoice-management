@@ -212,6 +212,15 @@ try {
             font-weight: 600;
         }
 
+        .invoice-table td.services-cell {
+            text-align: left;
+            padding-left: 20px;
+        }
+
+        .invoice-table .services-list {
+            white-space: nowrap;
+        }
+
         .invoice-table tr:nth-child(even) {
             background-color: #f5f5f5;
         }
@@ -273,12 +282,15 @@ try {
                 ?>
                 <tr>
                     <td class="amount-cell"> <?= isset($invoice['invoice_title']) ? $invoice['invoice_title'] : "" ?></td>
-                    <td>
-                        <ul>
-                            <?= trim($serviceList) ?>
-                        </ul>
+                    <td class="services-cell">
+                        <div class="services-list">
+                            <?php $counter = 1;
+                            foreach ($serviceIds as $id): ?>
+                                <?= $counter . "." . htmlspecialchars($services[$id]['name'] ?? 'Unknown Service') ?><br>
+                                <?php $counter++; endforeach; ?>
+                        </div>
                     </td>
-                    <td class="amount-cell">₹<?= number_format($priceWithoutTax, 2) ?>/-</td>
+                    <td class="amount-cell">Rs.<?= number_format($priceWithoutTax, 2) ?></td>
                 </tr>
             </tbody>
         </table>
