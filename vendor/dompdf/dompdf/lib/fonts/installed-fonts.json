@@ -1,0 +1,22 @@
+{
+    "montserrat": {
+        "100_italic": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_100_italic_22ba9a7e7da2fff227d626e02cd395a5",
+        "200_italic": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_200_italic_2982d6dc61e7366abdd79f21ea61efbd",
+        "300_italic": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_300_italic_7f5f2a442f985e943652191be917cc9c",
+        "italic": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_italic_7598367f70cc402ba71788ca1b660504",
+        "500_italic": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_500_italic_3e7f64b9d5b8806971a7b805f1f6b25b",
+        "600_italic": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_600_italic_2a228b0927e78bff23b5ee96112b1d78",
+        "bold_italic": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_bold_italic_04b89b88cf3593f8ba50072cce20bc3c",
+        "800_italic": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_800_italic_30b7fa42ec470496216291b4770cbbd1",
+        "900_italic": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_900_italic_d129432959f0fc4925e89709d43aec4e",
+        "100": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_100_004296b330740ee5991b9d48f1921df8",
+        "200": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_200_ed97b37f239c97f2790b320e4429de9e",
+        "300": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_300_78356432e21230d446535f8f1cd3d695",
+        "normal": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_normal_b26a9dda87c06da407186511df8eb0ff",
+        "500": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_500_d3ec4375b56833ef071b8749f8988a95",
+        "600": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_600_e7a8997830e4b51bb610222e25fab9e3",
+        "bold": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_bold_2d27f12dc5b9646bc5af3affbf0b8df4",
+        "800": "C:\\laragon\\www\\smart-sheet\\vendor\\dompdf\\dompdf\/lib\/fonts\/montserrat_800_777487bdb24134e482d0e05274b20d94",
+        "900": "montserrat_900_b77943a6e98c5cc431fc2167488f3b0b"
+    }
+}

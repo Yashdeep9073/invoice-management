@@ -16,6 +16,116 @@ if (!isset($_GET['id'])) {
 }
 
 try {
+
+    function numberToWords($number)
+    {
+        $ones = array(
+            0 => 'Zero',
+            1 => 'One',
+            2 => 'Two',
+            3 => 'Three',
+            4 => 'Four',
+            5 => 'Five',
+            6 => 'Six',
+            7 => 'Seven',
+            8 => 'Eight',
+            9 => 'Nine',
+            10 => 'Ten',
+            11 => 'Eleven',
+            12 => 'Twelve',
+            13 => 'Thirteen',
+            14 => 'Fourteen',
+            15 => 'Fifteen',
+            16 => 'Sixteen',
+            17 => 'Seventeen',
+            18 => 'Eighteen',
+            19 => 'Nineteen'
+        );
+        $tens = array(
+            2 => 'Twenty',
+            3 => 'Thirty',
+            4 => 'Forty',
+            5 => 'Fifty',
+            6 => 'Sixty',
+            7 => 'Seventy',
+            8 => 'Eighty',
+            9 => 'Ninety'
+        );
+        $units = array('Hundred', 'Thousand', 'Lakh', 'Crore');
+
+        // Format number to two decimal places
+        $number = number_format($number, 2, '.', '');
+        list($integerPart, $decimalPart) = explode('.', $number);
+
+        // Convert integer part (rupees)
+        $integerWords = '';
+        if ($integerPart == 0) {
+            $integerWords = 'Zero';
+        } else {
+            $integerPart = (int) $integerPart;
+            $parts = array();
+
+            // Crores
+            if ($integerPart >= 10000000) {
+                $crores = floor($integerPart / 10000000);
+                $parts[] = numberToWords($crores) . ' Crore';
+                $integerPart %= 10000000;
+            }
+            // Lakhs
+            if ($integerPart >= 100000) {
+                $lakhs = floor($integerPart / 100000);
+                $parts[] = numberToWords($lakhs) . ' Lakh';
+                $integerPart %= 100000;
+            }
+            // Thousands
+            if ($integerPart >= 1000) {
+                $thousands = floor($integerPart / 1000);
+                $parts[] = numberToWords($thousands) . ' Thousand';
+                $integerPart %= 1000;
+            }
+            // Hundreds
+            if ($integerPart >= 100) {
+                $hundreds = floor($integerPart / 100);
+                $parts[] = $ones[$hundreds] . ' Hundred';
+                $integerPart %= 100;
+            }
+            // Tens and Ones
+            if ($integerPart > 0) {
+                if ($integerPart < 20) {
+                    $parts[] = $ones[$integerPart];
+                } else {
+                    $tensVal = floor($integerPart / 10);
+                    $onesVal = $integerPart % 10;
+                    $parts[] = $tens[$tensVal] . ($onesVal > 0 ? ' ' . $ones[$onesVal] : '');
+                }
+            }
+
+            $integerWords = implode(' ', array_filter($parts));
+        }
+
+        // Convert decimal part (paise)
+        $decimalWords = '';
+        if ($decimalPart > 0) {
+            $decimalPart = (int) $decimalPart;
+            if ($decimalPart < 20) {
+                $decimalWords = $ones[$decimalPart];
+            } else {
+                $tensVal = floor($decimalPart / 10);
+                $onesVal = $decimalPart % 10;
+                $decimalWords = $tens[$tensVal] . ($onesVal > 0 ? ' ' . $ones[$onesVal] : '');
+            }
+            $decimalWords .= ' Paise';
+        }
+
+        // Combine rupees and paise
+        $result = $integerWords;
+        if ($decimalWords) {
+            $result .= ($result ? ' and ' : '') . $decimalWords;
+        }
+        $result = trim($result) . ' Only';
+        return $result;
+    }
+
     // Decode Invoice ID
     $invoiceId = intval(base64_decode($_GET['id']));
     if ($invoiceId <= 0)
@@ -24,7 +134,7 @@ try {
     // Fetch invoice data
     $stmtFetch = $db->prepare('
         SELECT invoice.*, tax.tax_rate, invoice.status AS paymentStatus,
-               customer.customer_name, customer.customer_address, customer.customer_phone, customer.customer_email,
+               customer.customer_name, customer.customer_address, customer.customer_phone, customer.customer_email,customer.gst_number,
                COALESCE(customer.ship_name, customer.customer_name) AS ship_name,
                COALESCE(customer.ship_address, customer.customer_address) AS ship_address,
                COALESCE(customer.ship_phone, customer.customer_phone) AS ship_phone,
@@ -73,7 +183,7 @@ try {
     ?>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Montserrat';
             margin: 0;
             padding: 20px;
         }
@@ -99,6 +209,7 @@ try {
             text-align: center;
             vertical-align: middle;
             border: 1px solid #e0e0e0;
+            font-weight: 600;
         }
 
         .invoice-table tr:nth-child(even) {
@@ -167,7 +278,7 @@ try {
                             <?= trim($serviceList) ?>
                         </ul>
                     </td>
-                    <td class="amount-cell">Rs. <?= number_format($priceWithoutTax, 2) ?></td>
+                    <td class="amount-cell">₹<?= number_format($priceWithoutTax, 2) ?>/-</td>
                 </tr>
             </tbody>
         </table>
@@ -194,6 +305,10 @@ try {
     $pageCount = $pdf->setSourceFile($templatePath);
     $templateId = $pdf->importPage(1);
     $pdf->AddPage();
+    // Register the font
+    $pdf->AddFont('montserratb', '', 'Montserrat-Bold.php');
+    $pdf->AddFont('FuturaMdBT-Bold', '', 'futuramdbt_bold.php');
+    $pdf->AddFont('FuturaBT-Medium', '', 'Futura Md Bt Medium.php');
     $pdf->useTemplate($templateId, 0, 0, 210);
 
     // Import DomPDF-generated table
@@ -202,85 +317,89 @@ try {
     $pdf->useTemplate($tableId, 5, 80, 200); // Adjust X,Y,width as needed
 
     // Invoice Info (top-right, adjust based on template)
-    $pdf->SetFont('Helvetica', '', 10); // Set font to normal Times
+    $pdf->SetFont('FuturaBT-Medium', '', 12); // Set font to normal Times
     $pdf->SetTextColor(0, 0, 0); // Set text color to black
     $pdf->SetXY(20, 45);
-    $pdf->Cell(20, 10, 'Invoice No: ', 0, 0); // Render "Invoice No:" in black, normal font
-    $pdf->SetFont('Helvetica', 'B', 10); // Set font to bold
+    $pdf->Cell(22, 10, 'Invoice No: ', 0, 0); // Render "Invoice No:" in black, normal font
+    $pdf->SetFont('FuturaBT-Medium', '', 12); // Set font to bold
     $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
     $pdf->Cell(0, 10, $invoice['invoice_number'], 0, 0); // Render invoice number in bold blue
     $pdf->SetTextColor(0, 0, 0); // Reset text color to black
-    $pdf->SetFont('Helvetica', '', 10); // Reset font to normal
+    $pdf->SetFont('FuturaBT-Medium', '', 12); // Reset font to normal
     $pdf->SetXY(150, 45);
     $labelWidth = $pdf->GetStringWidth('Date: ') + 1; // Calculate width of "Date:" with small padding
     $pdf->Cell($labelWidth, 10, 'Date: ', 0, 0); // Render "Date:" in black, normal font with exact width
-    $pdf->SetFont('Helvetica', 'B', 10); // Set font to bold
+    $pdf->SetFont('FuturaBT-Medium', '', 12); // Set font to bold
     $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
-    $pdf->Cell(0, 10, date('d-M-y', strtotime($invoice['created_at'])), 0, 1); // Render date in bold blue, no gap
+    $pdf->Cell(0, 10, date('d-M-Y', strtotime($invoice['created_at'])), 0, 1); // Render date in bold blue, no gap
     $pdf->SetTextColor(0, 0, 0); // Reset text color to black
-    $pdf->SetFont('Helvetica', '', 10); // Reset font to normal
+    $pdf->SetFont('FuturaBT-Medium', '', 12); // Reset font to normal
 
     // Add a horizontal line below the invoice info
     $pdf->SetLineWidth(0.2); // Set line thickness
     $pdf->Line(20, 55, 190, 55); // Draw a horizontal line from (20, 50) to (190, 50)
 
     // Bill To and Ship To (side by side, below header)
-    $pdf->SetFont('Helvetica', 'B', 10);
+    $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
     $pdf->SetXY(20, 55);
     $pdf->Cell(90, 10, 'Bill To:', 0, 0);
     $pdf->SetTextColor(0, 0, 0); // Reset text color to black
 
-    $pdf->SetFont('Helvetica', 'B', 12);
+    $pdf->SetFont('FuturaMdBT-Bold', '', 12);
     $pdf->SetXY(20, 60);
     $pdf->MultiCell(90, 8, $invoice['customer_name'] ?? 'N/A', 0, 'L');
 
+    $address = $invoice['customer_address'] ?? 'N/A';
+    $pdf->SetFont('FuturaMdBT-Bold', '', 12);
+    $width = $pdf->GetStringWidth($address) + 4; // Add padding
     $pdf->SetXY(20, 65);
-    $pdf->MultiCell(90, 8, $invoice['customer_address'] ?? 'N/A', 0, 'L');
+    $pdf->MultiCell(max($width, 90), 8, $address, 0, 'L'); // Cap minimum at 90
 
     $pdf->SetXY(20, 70);
     $pdf->Cell(90, 10, 'Phone: ' . ($invoice['customer_phone'] ?? 'N/A'), 0, 0);
 
+
     $pdf->SetXY(20, 75);
-    $pdf->Cell(90, 10, 'Email: ' . ($invoice['customer_email'] ?? 'N/A'), 0, 0);
+    $pdf->Cell(90, 10, 'GST: ' . ($invoice['gst_number'] ?? 'N/A'), 0, 0);
     $pdf->SetLineWidth(0.2); // Set line thickness
     $pdf->Line(20, 85, 190, 85); // Draw a horizontal line from (20, 50) to (190, 50)
 
     if ($invoiceSettings['is_show_hsn'] === 1) {
         // Bill To and Ship To (side by side, below header)
-        $pdf->SetFont('Helvetica', '', 10);
+        $pdf->SetFont('FuturaBT-Medium', '', 12);
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
         $pdf->SetXY(150, 55);
         $pdf->Cell(90, 10, 'HSN Code:', 0, 0);
         $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
-        $pdf->SetXY(170, 55);
-        $pdf->SetFont('Helvetica', 'B', 10);
+        $pdf->SetXY(172, 55);
+        $pdf->SetFont('FuturaBT-Medium', '', 12);
         $pdf->Cell(90, 10, $hsnCode, 0, 0);
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
     }
 
     if ($invoiceSettings['is_show_bill_date'] === 1) {
         // Bill To and Ship To (side by side, below header)
-        $pdf->SetFont('Helvetica', '', 10);
+        $pdf->SetFont('FuturaBT-Medium', '', 12);
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
-        $pdf->SetXY(150, 85);
-        $pdf->Cell(15, 10, 'From:', 0, 0); // Narrower cell for label
+        $pdf->SetXY(115, 85);
+        $pdf->Cell(15, 10, 'Bill Duration:', 0, 0); // Narrower cell for label
         $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
-        $pdf->SetXY(160, 85);
-        $pdf->SetFont('Helvetica', 'B', 10);
-        $fromDate = date('d M', strtotime(trim($invoice['from_date'])));
-        $toDate = date('d M y', strtotime(trim($invoice['to_date'])));
-        $pdf->Cell(90, 10, $fromDate . ' - ' . $toDate, 0, 0);
+        $pdf->SetXY(142, 85);
+        $pdf->SetFont('FuturaBT-Medium', '', 12);
+        $fromDate = date('M d', strtotime(trim($invoice['from_date'])));
+        $toDate = date('M d, Y', strtotime(trim($invoice['to_date'])));
+        $pdf->Cell(90, 10, $fromDate . ' To ' . $toDate, 0, 0);
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
 
     }
 
     // Bill To and Ship To (side by side, below header)
-    $pdf->SetFont('Helvetica', 'B', 10);
+    $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(20, 85);
     $pdf->Cell(90, 10, 'Kindly/Attention,', 0, 0);
     // Bill To and Ship To (side by side, below header)
-    $pdf->SetFont('Helvetica', '', 12);
+    $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(20, 90);
     $pdf->Cell(90, 10, 'Dear Mam/Sir,', 0, 0);
 
@@ -291,34 +410,72 @@ try {
 
 
     // Start Y position for first line
-    $summaryStartY = 170;
+    $summaryStartY = 180;
     $lineHeight = 6;
 
-    // Line 1: Discount
+    // Line 1: Total
     $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
-    $pdf->SetFont('Helvetica', 'B', 12);
+    $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(130, $summaryStartY);
-    $pdf->Cell(0, $lineHeight, 'Discount: ' . $discount . "%", 0, 1);
+    $pdf->Cell(0, $lineHeight, 'Total: Rs.' . $priceWithoutTax . "/-", 0, 1);
+    // $pdf->Cell(0, $lineHeight, 'Total:  ₹' . $priceWithoutTax, 0, 1);
 
     // HR Line below Discount
     $pdf->SetLineWidth(0.2);
     $pdf->Line(130, $summaryStartY + $lineHeight + 0.5, 200, $summaryStartY + $lineHeight + 0.5);
 
-    // Line 2: Tax
+    // Line 2: Discount
+    $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+    $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(130, $summaryStartY + $lineHeight + 2);
-    $pdf->Cell(0, $lineHeight, 'Tax: ' . $tax, 0, 1);
+    $pdf->Cell(0, $lineHeight, 'Discount: ' . $discount . "%", 0, 1);
 
-    // HR Line below Tax
+    // HR Line below Discount
+    $pdf->SetLineWidth(0.2);
     $pdf->Line(130, $summaryStartY + $lineHeight * 2 + 1.5, 200, $summaryStartY + $lineHeight * 2 + 1.5);
 
-    // Line 3: Total Amount
+    // Line 3: Tax
     $pdf->SetXY(130, $summaryStartY + $lineHeight + 8);
-    $pdf->SetFont('Helvetica', 'B', 12);
-    $pdf->Cell(0, $lineHeight, 'Total Amount: Rs. ' . number_format($finalTotal, 2), 0, 1);
-    // Set font for the thank-you message
-    $pdf->SetFont('Helvetica', '', 10);
-    $pdf->SetTextColor(0, 0, 0); // Reset text color to black
+    $pdf->Cell(0, $lineHeight, 'GST Slab: ' . $tax, 0, 1);
 
+    // HR Line below Tax
+    $pdf->Line(130, $summaryStartY + $lineHeight * 3 + 2.5, 200, $summaryStartY + $lineHeight * 3 + 2.5);
+
+    // Line 4: Total Amount
+    $pdf->SetXY(130, $summaryStartY + $lineHeight + 16);
+    $pdf->SetFont('FuturaMdBT-Bold', '', 12);
+    $pdf->Cell(0, $lineHeight, 'Total Amount: Rs. ' . number_format($finalTotal, 2) . "/-", 0, 1);
+
+    // Line 5: Total Amount In Words
+    $pdf->SetXY(130, $summaryStartY + $lineHeight + 26);
+    $pdf->SetFont('FuturaMdBT-Bold', '', 12);
+    $pdf->Cell(0, $lineHeight, 'Total Amount In Words:', 0, 1);
+
+    // HR Line below Tax
+    $pdf->Line(130, $summaryStartY + $lineHeight * 6 + 3, 200, $summaryStartY + $lineHeight * 6 + 3);
+
+    $pdf->SetXY(130, $summaryStartY + $lineHeight + 34);
+    $pdf->SetTextColor(0, 0, 0); // Reset text color to black
+    $pdf->SetFont('FuturaMdBT-Bold', '', 12);
+
+    // Convert number to words
+    $amountInWords = numberToWords($finalTotal); // "Six Hundred Six and Fifty Two Paise O"
+
+    // Split into words and group every 3 words
+    $words = explode(' ', $amountInWords);
+    $groupedWords = array_chunk($words, 5);
+
+    // Output each line
+    $currentY = $summaryStartY + $lineHeight + 34;
+    foreach ($groupedWords as $wordGroup) {
+        $pdf->SetXY(130, $currentY);
+        $pdf->Cell(0, $lineHeight, implode(' ', $wordGroup), 0, 1);
+        $currentY += $lineHeight; // Move down for next line
+    }
+
+    // Set font for the thank-you message
+    $pdf->SetFont('FuturaBT-Medium', '', 10);
+    $pdf->SetTextColor(0, 0, 0); // Reset text color to black
 
     // Position the cursor for the first line
     $pdf->SetXY(20, $summaryStartY);
@@ -334,6 +491,7 @@ try {
 
     // Write the second line of the message
     $pdf->Cell(0, 0, 'fruitful relationship with our company', 0, 1);
+
 
     // // Payment Information Section
     // $pdf->SetFont('Helvetica', 'B', 12);
