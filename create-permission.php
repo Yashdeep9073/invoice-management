@@ -40,7 +40,7 @@ try {
 
     // Handle GET request to fetch roleId
     if (isset($_GET['id'])) {
-        $encryptedId = filter_input(INPUT_GET, "id", FILTER_SANITIZE_STRING);
+        $encryptedId = $_GET['id'];
         if ($encryptedId === null || $encryptedId === false) {
             throw new Exception("Invalid role ID provided");
         }
@@ -69,16 +69,33 @@ try {
 
     // Handle POST request for deleting a permission
     if ($_SERVER['REQUEST_METHOD'] === "POST" && isset($_POST['permissionId']) && !isset($_POST['submit'])) {
-        $permissionId = filter_input(INPUT_POST, 'permissionId', FILTER_SANITIZE_NUMBER_INT);
-        $stmtDelete = $pdo->prepare("DELETE FROM role_permissions WHERE role_permission_id = :permissionId");
-        $stmtDelete->bindParam(':permissionId', $permissionId, PDO::PARAM_INT);
-        if ($stmtDelete->execute()) {
-            $_SESSION['success'] = "Permission deleted successfully.";
-            header("Location: create-permission.php?id=" . base64_encode($roleId));
-            exit();
-        } else {
-            throw new Exception("Failed to delete permission");
+
+        try {
+            $permissionId = filter_input(INPUT_POST, 'permissionId', FILTER_SANITIZE_NUMBER_INT);
+
+            $stmtDelete = $db->prepare("DELETE FROM role_permissions WHERE role_permission_id = ?");
+            $stmtDelete->bind_param('i', $permissionId);
+            if (!$stmtDelete->execute()) {
+                throw new Exception("Failed to delete permission");
+            }
+
+            //throw $th;
+            echo json_encode([
+                "status" => 200,
+                "message" => "Permission deleted successfully",
+            ]);
+            exit;
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            echo json_encode([
+                "status" => 500,
+                "message" => "Error:" . $th->getMessage(),
+            ]);
+            exit;
         }
+
+
     }
 
     // Handle POST request for assigning permissions
@@ -129,7 +146,7 @@ ob_end_flush();
     <meta name="robots" content="noindex, nofollow">
     <title><?php echo $roles[0]['role_name'] ?></title>
 
- <link rel="shortcut icon" type="image/x-icon"
+    <link rel="shortcut icon" type="image/x-icon"
         href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
@@ -363,19 +380,8 @@ ob_end_flush();
     </div>
 
 
-
-
-
-
-
     <script src="assets/js/moment.min.js" type="9700fb0e03ee09216bc68fe3-text/javascript"></script>
     <script src="assets/js/bootstrap-datetimepicker.min.js" type="9700fb0e03ee09216bc68fe3-text/javascript"></script>
-
-
-    <script src="assets/plugins/sweetalert/sweetalert2.all.min.js"
-        type="9700fb0e03ee09216bc68fe3-text/javascript"></script>
-    <script src="assets/plugins/sweetalert/sweetalerts.min.js" type="9700fb0e03ee09216bc68fe3-text/javascript"></script>
-
 
 
     <script src="assets/js/jquery-3.7.1.min.js"></script>
@@ -385,6 +391,9 @@ ob_end_flush();
     <script src="assets/js/jquery.slimscroll.min.js" type="85b95337cd86ef30623c36b5-text/javascript"></script>
 
     <script src="assets/plugins/select2/js/select2.min.js" type="85b95337cd86ef30623c36b5-text/javascript"></script>
+
+    <script src="assets/plugins/sweetalert/sweetalert2.all.min.js"></script>
+    <script src="assets/plugins/sweetalert/sweetalerts.min.js"></script>
 
     <script src="assets/js/jquery.dataTables.min.js" type="85b95337cd86ef30623c36b5-text/javascript"></script>
     <script src="assets/js/dataTables.bootstrap5.min.js" type="85b95337cd86ef30623c36b5-text/javascript"></script>
@@ -404,6 +413,9 @@ ob_end_flush();
             $('.deleteButton').on('click', function (event) {
                 let permissionId = $(this).data('permission-id');
 
+                console.log("Id is ->" + permissionId);
+
+
                 Swal.fire({
                     title: "Are you sure?",
                     text: "You won't be able to revert this!",
@@ -415,14 +427,15 @@ ob_end_flush();
                     if (result.isConfirmed) {
                         // Send AJAX request to delete the record from the database
                         $.ajax({
-                            url: 'create-permission.php', // The PHP file that will handle the deletion
+                            url: window.location.href, // The PHP file that will handle the deletion
                             type: 'POST',
                             data: { permissionId: permissionId },
                             success: function (response) {
+
                                 // Show success message and reload the page
                                 Swal.fire(
                                     'Deleted!',
-                                    'The vendor has been deleted.',
+                                    'The Permission has been deleted.',
                                 ).then(() => {
                                     // Reload the page or remove the deleted row from the UI
                                     location.reload();

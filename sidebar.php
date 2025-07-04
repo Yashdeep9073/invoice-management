@@ -165,7 +165,7 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
             <?php endif; ?>
 
 
-            <?php if ($isAdmin || hasPermission('Utility', $privileges, $roleData['0']['role_name'])): ?>
+            <?php if ($isAdmin || hasPermission('Reports', $privileges, $roleData['0']['role_name'])): ?>
                 <li class="submenu-open">
                     <h6 class="submenu-hdr">Reports</h6>
                     <ul>

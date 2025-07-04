@@ -232,10 +232,13 @@ try {
                         </div>
                     </div>
 
-                    <div class="page-btn">
-                        <a href="#" class="btn btn-added" data-bs-toggle="modal" data-bs-target="#add-units"><i
-                                data-feather="plus-circle" class="me-2"></i>Add New Service</a>
-                    </div>
+                    <?php if ($isAdmin || hasPermission('Add Service', $privileges, $roleData['0']['role_name'])): ?>
+                        <div class="page-btn">
+                            <a href="#" class="btn btn-added" data-bs-toggle="modal" data-bs-target="#add-units"><i
+                                    data-feather="plus-circle" class="me-2"></i>Add New Service</a>
+                        </div>
+                    <?php endif; ?>
+
                 </div>
 
                 <div class="card table-list-card">
@@ -294,23 +297,28 @@ try {
                                                     <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
                                                 </a>
                                                 <ul class="dropdown-menu">
+                                                    <?php if ($isAdmin || hasPermission('Edit Service', $privileges, $roleData['0']['role_name'])): ?>
 
-                                                    <li>
-                                                        <a data-bs-toggle="modal" data-bs-target="#edit-units"
-                                                            data-service-id="<?php echo $service['service_id'] ?>"
-                                                            data-service-name="<?php echo $service['service_name'] ?>"
-                                                            data-service-code="<?php echo $service['sac_code'] ?>"
-                                                            data-service-status="<?php echo $service['isActive'] ?>"
-                                                            class="editButton dropdown-item"><i data-feather="edit"
-                                                                class="info-img"></i>Edit
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="javascript:void(0);"
-                                                            data-service-id="<?php echo $service['service_id'] ?>"
-                                                            class="dropdown-item deleteButton mb-0"><i
-                                                                data-feather="trash-2" class="info-img"></i>Delete </a>
-                                                    </li>
+                                                        <li>
+                                                            <a data-bs-toggle="modal" data-bs-target="#edit-units"
+                                                                data-service-id="<?php echo $service['service_id'] ?>"
+                                                                data-service-name="<?php echo $service['service_name'] ?>"
+                                                                data-service-code="<?php echo $service['sac_code'] ?>"
+                                                                data-service-status="<?php echo $service['isActive'] ?>"
+                                                                class="editButton dropdown-item"><i data-feather="edit"
+                                                                    class="info-img"></i>Edit
+                                                            </a>
+                                                        </li>
+                                                    <?php endif; ?>
+
+                                                    <?php if ($isAdmin || hasPermission('Delete Service', $privileges, $roleData['0']['role_name'])): ?>
+                                                        <li>
+                                                            <a href="javascript:void(0);"
+                                                                data-service-id="<?php echo $service['service_id'] ?>"
+                                                                class="dropdown-item deleteButton mb-0"><i
+                                                                    data-feather="trash-2" class="info-img"></i>Delete </a>
+                                                        </li>
+                                                    <?php endif; ?>
                                                 </ul>
                                             </td>
                                         </tr>

@@ -52,12 +52,15 @@ try {
             // Prepare SQL with conditions
             $query = "SELECT 
             invoice.*,
+            invoice.status as invoiceStatus,
             customer.customer_id,
             customer.customer_name,
-            admin.admin_username
+            admin.admin_username,
+            tax.tax_rate
             FROM invoice 
             INNER JOIN customer ON customer.customer_id = invoice.customer_id
             LEFT JOIN admin ON admin.admin_id = invoice.created_by 
+             INNER JOIN tax ON tax.tax_id = invoice.tax
             WHERE invoice.is_active = 1";
 
             $conditions = [];
@@ -110,14 +113,17 @@ try {
         } else {
             $stmtFetchInvoices = $db->prepare("SELECT 
                 invoice.*,
+                invoice.status as invoiceStatus,
                 customer.customer_id,
                 customer.customer_name,
-                admin.admin_username
+                admin.admin_username,
+                tax.tax_rate
                 FROM invoice 
                 INNER JOIN customer
                 ON customer.customer_id = invoice.customer_id
                 LEFT JOIN admin
                 ON admin.admin_id = invoice.created_by 
+                  INNER JOIN tax ON tax.tax_id = invoice.tax
                 WHERE invoice.is_active = 1
                 ");
             if ($stmtFetchInvoices->execute()) {
@@ -651,10 +657,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                         </div>
                     </div>
                     <ul class="table-top-head">
-                        <li>
-                            <a data-bs-toggle="tooltip" class="multi-delete-button" data-bs-placement="top"
-                                title="Delete"><img src="assets/img/icons/delete.png" alt="img" /></a>
-                        </li>
+                        <?php if ($isAdmin || hasPermission('Delete Invoice', $privileges, $roleData['0']['role_name'])): ?>
+                            <li>
+                                <a data-bs-toggle="tooltip" class="multi-delete-button" data-bs-placement="top"
+                                    title="Delete"><img src="assets/img/icons/delete.png" alt="img" /></a>
+                            </li>
+                        <?php endif; ?>
                         <li>
                             <a data-bs-toggle="tooltip" onclick="exportToPDF()" data-bs-placement="top" title="Pdf"><img
                                     src="assets/img/icons/pdf.svg" alt="img" /></a>
@@ -761,13 +769,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         <th>Due Date</th>
                                         <th>Created Date</th>
                                         <th>Amount</th>
+                                        <th>GST Amount</th>
                                         <th>Created By</th>
                                         <th>Status</th>
                                         <th class="no-sort text-center">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($invoices->fetch_all(MYSQLI_ASSOC) as $invoice) { ?>
+                                    <?php
+                                    $totalTaxAmount = 0;
+                                    foreach ($invoices->fetch_all(MYSQLI_ASSOC) as $invoice) { ?>
                                         <tr>
                                             <td>
                                                 <label class="checkboxs">
@@ -785,15 +796,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                             echo $date->format('d M Y') ?>
                                             </td>
                                             <td>₹<?php echo $invoice['total_amount'] ?></td>
+                                            <td>₹<?php
+                                            $taxRateStr = $invoice['tax_rate'];
+                                            $taxRate = intval(str_replace('%', '', $taxRateStr));
+                                            $priceWithoutTax = $taxRate > 0 ? $invoice['total_amount'] / (1 + $taxRate / 100) : $invoice['total_amount'];
+                                            $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
+                                            echo $taxAmount;
+                                            $totalTaxAmount += $taxAmount;
+                                            ?>
+                                            </td>
                                             <td><?php echo $invoice['admin_username'] ?></td>
                                             <td>
-                                                <?php if ($invoice['status'] == 'PAID') { ?>
+                                                <?php if ($invoice['invoiceStatus'] == 'PAID') { ?>
                                                     <span class="badge badge-lg bg-success">Paid</span>
-                                                <?php } elseif ($invoice['status'] == 'CANCELLED') { ?>
+                                                <?php } elseif ($invoice['invoiceStatus'] == 'CANCELLED') { ?>
                                                     <span class="badge badge-lg bg-danger">Cancelled</span>
-                                                <?php } elseif ($invoice['status'] == 'PENDING') { ?>
+                                                <?php } elseif ($invoice['invoiceStatus'] == 'PENDING') { ?>
                                                     <span class="badge badge-lg bg-warning">Pending</span>
-                                                <?php } elseif ($invoice['status'] == 'REFUNDED') { ?>
+                                                <?php } elseif ($invoice['invoiceStatus'] == 'REFUNDED') { ?>
                                                     <span class="badge badge-lg bg-primary">Refunded</span>
                                                 <?php } ?>
                                             </td>
@@ -848,6 +868,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         </tr>
                                     <?php } ?>
                                 </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="6"></td>
+                                        <td><strong><span class="text-danger">Total:
+                                                    ₹<?php echo number_format($totalTaxAmount, 2); ?></span></strong>
+                                        </td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>

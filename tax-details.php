@@ -269,10 +269,13 @@ ob_end_flush();
                                     data-feather="chevron-up" class="feather-chevron-up"></i></a>
                         </li>
                     </ul>
-                    <div class="page-btn">
-                        <a href="#" class="btn btn-added" data-bs-toggle="modal" data-bs-target="#add-tax"><i
-                                data-feather="plus-circle" class="me-2"></i>Add Tax </a>
-                    </div>
+
+                    <?php if ($isAdmin || hasPermission('Add Tax', $privileges, $roleData['0']['role_name'])): ?>
+                        <div class="page-btn">
+                            <a href="#" class="btn btn-added" data-bs-toggle="modal" data-bs-target="#add-tax"><i
+                                    data-feather="plus-circle" class="me-2"></i>Add Tax </a>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="card table-list-card">
@@ -400,22 +403,27 @@ ob_end_flush();
                                                 </a>
                                                 <ul class="dropdown-menu">
 
-                                                    <li>
-                                                        <a data-bs-toggle="modal" data-bs-target="#edit-tax"
-                                                            data-tax-id="<?php echo $tax['tax_id'] ?>"
-                                                            data-tax-name="<?php echo $tax['tax_name'] ?>"
-                                                            data-tax-value="<?php echo $tax['tax_rate'] ?>"
-                                                            data-tax-status="<?php echo $tax['status'] ?>"
-                                                            class="editButton dropdown-item"><i data-feather="edit"
-                                                                class="info-img"></i>Edit
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="javascript:void(0);"
-                                                            data-tax-id="<?php echo $tax['tax_id'] ?>"
-                                                            class="dropdown-item deleteButton mb-0"><i
-                                                                data-feather="trash-2" class="info-img"></i>Delete </a>
-                                                    </li>
+                                                    <?php if ($isAdmin || hasPermission('Edit Tax', $privileges, $roleData['0']['role_name'])): ?>
+                                                        <li>
+                                                            <a data-bs-toggle="modal" data-bs-target="#edit-tax"
+                                                                data-tax-id="<?php echo $tax['tax_id'] ?>"
+                                                                data-tax-name="<?php echo $tax['tax_name'] ?>"
+                                                                data-tax-value="<?php echo $tax['tax_rate'] ?>"
+                                                                data-tax-status="<?php echo $tax['status'] ?>"
+                                                                class="editButton dropdown-item"><i data-feather="edit"
+                                                                    class="info-img"></i>Edit
+                                                            </a>
+                                                        </li>
+                                                    <?php endif; ?>
+
+                                                    <?php if ($isAdmin || hasPermission('Delete Tax', $privileges, $roleData['0']['role_name'])): ?>
+                                                        <li>
+                                                            <a href="javascript:void(0);"
+                                                                data-tax-id="<?php echo $tax['tax_id'] ?>"
+                                                                class="dropdown-item deleteButton mb-0"><i
+                                                                    data-feather="trash-2" class="info-img"></i>Delete </a>
+                                                        </li>
+                                                    <?php endif; ?>
                                                 </ul>
                                             </td>
                                         </tr>

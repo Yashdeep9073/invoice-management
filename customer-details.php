@@ -492,14 +492,16 @@ ob_end_flush();
                                     data-feather="chevron-up" class="feather-chevron-up"></i></a>
                         </li>
                     </ul>
-                    <div class="page-btn">
-                        <a href="#" class="btn btn-added" data-bs-toggle="modal" data-bs-target="#add-units"><i
-                                data-feather="plus-circle" class="me-2"></i>Add Customer</a>
-                    </div>
-                    <div class="page-btn import">
-                        <a href="javascript:void(0);" class="btn btn-added color" data-bs-toggle="modal"
-                            data-bs-target="#view-notes"><i data-feather="download" class="me-2"></i>Import Customer</a>
-                    </div>
+                    <?php if ($isAdmin || hasPermission('Add Customer', $privileges, $roleData['0']['role_name'])): ?>
+                        <div class="page-btn">
+                            <a href="#" class="btn btn-added" data-bs-toggle="modal" data-bs-target="#add-units"><i
+                                    data-feather="plus-circle" class="me-2"></i>Add Customer</a>
+                        </div>
+                        <div class="page-btn import">
+                            <a href="javascript:void(0);" class="btn btn-added color" data-bs-toggle="modal"
+                                data-bs-target="#view-notes"><i data-feather="download" class="me-2"></i>Import Customer</a>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="card table-list-card">
@@ -572,32 +574,35 @@ ob_end_flush();
                                                     <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
                                                 </a>
                                                 <ul class="dropdown-menu">
-
-                                                    <li>
-                                                        <a data-bs-toggle="modal" data-bs-target="#edit-units"
-                                                            data-customer-id="<?php echo $customer['customer_id'] ?>"
-                                                            data-customer-name="<?php echo $customer['customer_name'] ?>"
-                                                            data-customer-phone="<?php echo $customer['customer_phone'] ?>"
-                                                            data-customer-email="<?php echo $customer['customer_email'] ?>"
-                                                            data-customer-address="<?php echo $customer['customer_address'] ?>"
-                                                            data-shipping-name="<?php echo $customer['ship_name'] ?>"
-                                                            data-shipping-phone="<?php echo $customer['ship_phone'] ?>"
-                                                            data-shipping-email="<?php echo $customer['ship_email'] ?>"
-                                                            data-shipping-address="<?php echo $customer['ship_email'] ?>"
-                                                            data-customer-status="<?php echo $customer['isActive'] ?>"
-                                                            data-customer-state="<?php echo $customer['customer_state'] ?>"
-                                                            data-customer-city="<?php echo $customer['customer_city'] ?>"
-                                                            data-gst-number="<?php echo $customer['gst_number'] ?>"
-                                                            class="editButton dropdown-item"><i data-feather="edit"
-                                                                class="info-img"></i>Edit
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="javascript:void(0);"
-                                                            data-customer-id="<?php echo $customer['customer_id'] ?>"
-                                                            class="dropdown-item deleteButton mb-0"><i
-                                                                data-feather="trash-2" class="info-img"></i>Delete </a>
-                                                    </li>
+                                                    <?php if ($isAdmin || hasPermission('Edit Customer', $privileges, $roleData['0']['role_name'])): ?>
+                                                        <li>
+                                                            <a data-bs-toggle="modal" data-bs-target="#edit-units"
+                                                                data-customer-id="<?php echo $customer['customer_id'] ?>"
+                                                                data-customer-name="<?php echo $customer['customer_name'] ?>"
+                                                                data-customer-phone="<?php echo $customer['customer_phone'] ?>"
+                                                                data-customer-email="<?php echo $customer['customer_email'] ?>"
+                                                                data-customer-address="<?php echo $customer['customer_address'] ?>"
+                                                                data-shipping-name="<?php echo $customer['ship_name'] ?>"
+                                                                data-shipping-phone="<?php echo $customer['ship_phone'] ?>"
+                                                                data-shipping-email="<?php echo $customer['ship_email'] ?>"
+                                                                data-shipping-address="<?php echo $customer['ship_email'] ?>"
+                                                                data-customer-status="<?php echo $customer['isActive'] ?>"
+                                                                data-customer-state="<?php echo $customer['customer_state'] ?>"
+                                                                data-customer-city="<?php echo $customer['customer_city'] ?>"
+                                                                data-gst-number="<?php echo $customer['gst_number'] ?>"
+                                                                class="editButton dropdown-item"><i data-feather="edit"
+                                                                    class="info-img"></i>Edit
+                                                            </a>
+                                                        </li>
+                                                    <?php endif; ?>
+                                                    <?php if ($isAdmin || hasPermission('Delete Customer', $privileges, $roleData['0']['role_name'])): ?>
+                                                        <li>
+                                                            <a href="javascript:void(0);"
+                                                                data-customer-id="<?php echo $customer['customer_id'] ?>"
+                                                                class="dropdown-item deleteButton mb-0"><i
+                                                                    data-feather="trash-2" class="info-img"></i>Delete </a>
+                                                        </li>
+                                                    <?php endif; ?>
                                                 </ul>
                                             </td>
                                         </tr>

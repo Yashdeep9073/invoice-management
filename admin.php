@@ -347,10 +347,13 @@ try {
                   data-feather="chevron-up" class="feather-chevron-up"></i></a>
             </li>
           </ul>
-          <div class="page-btn">
-            <a href="#" class="btn btn-added" data-bs-toggle="modal" data-bs-target="#add-units"><i
-                data-feather="plus-circle" class="me-2"></i>Add Admin</a>
-          </div>
+
+          <?php if ($isAdmin || hasPermission('Add User', $privileges, $roleData['0']['role_name'])): ?>
+            <div class="page-btn">
+              <a href="#" class="btn btn-added" data-bs-toggle="modal" data-bs-target="#add-units"><i
+                  data-feather="plus-circle" class="me-2"></i>Add Admin</a>
+            </div>
+          <?php endif; ?>
         </div>
 
         <div class="card table-list-card">
@@ -418,23 +421,28 @@ try {
                           <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
                         </a>
                         <ul class="dropdown-menu">
+                          <?php if ($isAdmin || hasPermission('Edit User', $privileges, $roleData['0']['role_name'])): ?>
+                            <li>
+                              <a data-bs-toggle="modal" data-bs-target="#edit-units"
+                                data-admin-id="<?php echo $admin['admin_id'] ?>"
+                                data-admin-name="<?php echo $admin['admin_username'] ?>"
+                                data-admin-phone="<?php echo $admin['admin_phone_number'] ?>"
+                                data-admin-email="<?php echo $admin['admin_email'] ?>"
+                                data-admin-role="<?php echo $admin['admin_role'] ?>"
+                                data-admin-status="<?php echo $admin['is_active'] ?>" class="editButton dropdown-item"><i
+                                  data-feather="edit" class="info-img"></i>Edit
+                              </a>
+                            </li>
+                          <?php endif; ?>
 
-                          <li>
-                            <a data-bs-toggle="modal" data-bs-target="#edit-units"
-                              data-admin-id="<?php echo $admin['admin_id'] ?>"
-                              data-admin-name="<?php echo $admin['admin_username'] ?>"
-                              data-admin-phone="<?php echo $admin['admin_phone_number'] ?>"
-                              data-admin-email="<?php echo $admin['admin_email'] ?>"
-                              data-admin-role="<?php echo $admin['admin_role'] ?>"
-                              data-admin-status="<?php echo $admin['is_active'] ?>" class="editButton dropdown-item"><i
-                                data-feather="edit" class="info-img"></i>Edit
-                            </a>
-                          </li>
-                          <li>
-                            <a href="javascript:void(0);" data-admin-id="<?php echo $admin['admin_id'] ?>"
-                              class="dropdown-item deleteButton mb-0"><i data-feather="trash-2"
-                                class="info-img"></i>Delete </a>
-                          </li>
+                          <?php if ($isAdmin || hasPermission('Delete User', $privileges, $roleData['0']['role_name'])): ?>
+
+                            <li>
+                              <a href="javascript:void(0);" data-admin-id="<?php echo $admin['admin_id'] ?>"
+                                class="dropdown-item deleteButton mb-0"><i data-feather="trash-2"
+                                  class="info-img"></i>Delete </a>
+                            </li>
+                          <?php endif; ?>
                         </ul>
                       </td>
                     </tr>
