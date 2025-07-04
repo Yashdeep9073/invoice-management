@@ -146,46 +146,6 @@ try {
 }
 
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['invoiceId'])) {
-
-    $invoiceId = intval($_POST['invoiceId']);
-
-    if ($invoiceId <= 0) {
-        echo json_encode([
-            'status' => 400,
-            'message' => 'Invalid invoice ID.'
-        ]);
-        exit;
-    }
-
-    try {
-        $stmt = $db->prepare("UPDATE invoice SET is_active = 0 WHERE invoice_id = ?");
-        $stmt->bind_param("i", $invoiceId);
-
-        if ($stmt->execute()) {
-            echo json_encode([
-                'status' => 200,
-                'message' => 'Selected invoice deleted successfully.'
-            ]);
-        } else {
-            echo json_encode([
-                'status' => 400,
-                'message' => $stmt->error
-            ]);
-        }
-
-    } catch (Exception $e) {
-        echo json_encode([
-            'status' => 500,
-            'message' => 'Server error: ' . $e->getMessage()
-        ]);
-    }
-
-    exit;
-}
-
-
-
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForMail'])) {
 
     try {
@@ -478,48 +438,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForMail'])) {
     }
 }
 
-// delete multiple invoice
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
 
-
-    $invoiceIds = $_POST['invoiceIds'];
-
-    // Validate: Must be an array of integers
-    if (!is_array($invoiceIds)) {
-        echo json_encode([
-            'status' => 400,
-            'message' => 'Invalid data format.'
-        ]);
-        exit;
-    }
+// Gst status update
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
 
     try {
-        // Prepare the SQL dynamically
-        $placeholders = implode(',', array_fill(0, count($invoiceIds), '?'));
-        $types = str_repeat('i', count($invoiceIds)); // All integers
+        $gstStatus = $_POST['gstStatus'];
+        $invoiceId = $_POST['invoiceId'];
 
-        $stmt = $db->prepare("UPDATE invoice SET is_active = 0 WHERE invoice_id IN ($placeholders)");
-        $stmt->bind_param($types, ...$invoiceIds);
+        $stmtUpdate = $db->prepare("UPDATE invoice SET gst_status = ? WHERE invoice_id = ?");
+        $stmtUpdate->bind_param("si", $gstStatus, $invoiceId);
+        $stmtUpdate->execute();
 
-        if ($stmt->execute()) {
-            echo json_encode([
-                'status' => 200,
-                'message' => 'Selected invoices deleted successfully.',
-                'deleted_ids' => $invoiceIds
-            ]);
-        } else {
-            echo json_encode([
-                'status' => 400,
-                'message' => $stmt->error
-            ]);
-        }
-
+        $_SESSION['success'] = "GST Status updated successfully";
+        header("Location: manage-gst.php");
         exit;
-    } catch (Exception $e) {
-        echo json_encode([
-            'status' => 500,
-            'message' => $e->getMessage()
-        ]);
+    } catch (\Throwable $th) {
+        $_SESSION['error'] = $th->getMessage();
+        header("Location: manage-gst.php");
         exit;
     }
 }
@@ -538,7 +474,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
         content="admin, estimates, bootstrap, business, corporate, creative, invoice, html5, responsive, Projects">
     <meta name="author" content="Dreamguys - Bootstrap Admin Template">
     <meta name="robots" content="noindex, nofollow">
-    <title>Manage Invoice</title>
+    <title>Manage GST</title>
 
     <link rel="shortcut icon" type="image/x-icon"
         href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
@@ -653,16 +589,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                     <div class="add-item d-flex">
                         <div class="page-title">
                             <h4>Invoice Report </h4>
-                            <h6>Manage Your Invoice Report</h6>
+                            <h6>Manage Your GST Report</h6>
                         </div>
                     </div>
                     <ul class="table-top-head">
-                        <?php if ($isAdmin || hasPermission('Delete Invoice', $privileges, $roleData['0']['role_name'])): ?>
-                            <li>
-                                <a data-bs-toggle="tooltip" class="multi-delete-button" data-bs-placement="top"
-                                    title="Delete"><img src="assets/img/icons/delete.png" alt="img" /></a>
-                            </li>
-                        <?php endif; ?>
+
                         <li>
                             <a data-bs-toggle="tooltip" onclick="exportToPDF()" data-bs-placement="top" title="Pdf"><img
                                     src="assets/img/icons/pdf.svg" alt="img" /></a>
@@ -681,14 +612,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                     data-feather="chevron-up" class="feather-chevron-up"></i></a>
                         </li>
                     </ul>
-                    <div class="page-btn">
-                        <?php if ($isAdmin || hasPermission('Add Invoice', $privileges, $roleData['0']['role_name'])): ?>
-
-                            <a href="add-invoice.php" class="btn btn-added"><i data-feather="plus-circle"
-                                    class="me-2"></i>Add Invoice
-                            </a>
-                        <?php endif; ?>
-                    </div>
                 </div>
 
                 <div class="card table-list-card">
@@ -771,7 +694,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         <th>Amount</th>
                                         <th>GST Amount</th>
                                         <th>Created By</th>
-                                        <th>Status</th>
+                                        <th>GST Status</th>
                                         <th class="no-sort text-center">Action</th>
                                     </tr>
                                 </thead>
@@ -807,15 +730,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                             </td>
                                             <td><?php echo $invoice['admin_username'] ?></td>
                                             <td>
-                                                <?php if ($invoice['invoiceStatus'] == 'PAID') { ?>
+                                                <?php if ($invoice['gst_status'] == 'PAID') { ?>
                                                     <span class="badge badge-lg bg-success">Paid</span>
-                                                <?php } elseif ($invoice['invoiceStatus'] == 'CANCELLED') { ?>
+                                                <?php } elseif ($invoice['gst_status'] == 'HOLD') { ?>
+                                                    <span class="badge badge-lg bg-warning">Hold</span>
+                                                <?php } elseif ($invoice['gst_status'] == 'CANCELLED') { ?>
                                                     <span class="badge badge-lg bg-danger">Cancelled</span>
-                                                <?php } elseif ($invoice['invoiceStatus'] == 'PENDING') { ?>
-                                                    <span class="badge badge-lg bg-warning">Pending</span>
-                                                <?php } elseif ($invoice['invoiceStatus'] == 'REFUNDED') { ?>
-                                                    <span class="badge badge-lg bg-primary">Refunded</span>
                                                 <?php } ?>
+
                                             </td>
                                             <td class="text-center">
                                                 <a class="action-set" href="javascript:void(0);" data-bs-toggle="dropdown"
@@ -823,52 +745,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                     <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
                                                 </a>
                                                 <ul class="dropdown-menu">
-                                                    <li>
-                                                        <a target="_blank"
-                                                            href="view-invoice.php?id=<?php echo base64_encode($invoice['invoice_id']) ?>"
-                                                            class="editStatus dropdown-item" data-admin-id=""><i
-                                                                data-feather="eye" class="info-img"></i>Show
-                                                            Detail</a>
-                                                    </li>
-                                                    <?php if ($isAdmin || hasPermission('Edit Invoice', $privileges, $roleData['0']['role_name'])): ?>
+
+                                                    <?php if ($isAdmin || hasPermission('Edit GST', $privileges, $roleData['0']['role_name'])): ?>
 
                                                         <li>
-                                                            <a href="edit-invoice.php?id=<?php echo base64_encode($invoice['invoice_id']) ?>"
-                                                                class="editButton dropdown-item"><i data-feather="edit"
-                                                                    class="info-img"></i>Edit
+                                                            <a href="javascript:void(0);" data-bs-toggle="modal"
+                                                                data-bs-target="#edit-units" class="editButton dropdown-item"
+                                                                data-invoice-id="<?= $invoice['invoice_id'] ?>"
+                                                                data-gst-status="<?= $invoice['gst_status'] ?>"><i
+                                                                    data-feather="edit" class="info-img"></i>Edit
                                                             </a>
                                                         </li>
                                                     <?php endif; ?>
-                                                    <li>
-                                                        <a target="_blank"
-                                                            href="download-invoice.php?id=<?php echo base64_encode($invoice['invoice_id']) ?>"
-                                                            class="qrCode dropdown-item"><i data-feather="download"
-                                                                class="info-img"></i>Download
-                                                        </a>
-                                                    </li>
-                                                    <?php if ($isAdmin || hasPermission('Delete Invoice', $privileges, $roleData['0']['role_name'])): ?>
-                                                        <li>
-                                                            <a href="javascript:void(0);"
-                                                                data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
-                                                                class="dropdown-item deleteButton mb-0"><i
-                                                                    data-feather="trash-2" class="info-img"></i>Delete </a>
-                                                        </li>
-                                                    <?php endif; ?>
-                                                    <?php if ($isAdmin || hasPermission('Send Mail', $privileges, $roleData['0']['role_name'])): ?>
 
-                                                        <li>
-                                                            <a href="javascript:void(0);"
-                                                                data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
-                                                                class="dropdown-item sendMail mb-0"><i data-feather="send"
-                                                                    class="info-img"></i>Send Mail </a>
-                                                        </li>
-                                                    <?php endif; ?>
                                                 </ul>
                                             </td>
                                         </tr>
                                     <?php } ?>
                                 </tbody>
-                                <!-- <tfoot>
+                                <tfoot>
                                     <tr>
                                         <td colspan="6"></td>
                                         <td><strong><span class="text-danger">Total:
@@ -876,7 +771,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         </td>
                                         <td colspan="3"></td>
                                     </tr>
-                                </tfoot> -->
+                                </tfoot>
                             </table>
                         </div>
                     </div>
@@ -886,6 +781,48 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
         </div>
     </div>
 
+
+    <div class="modal fade" id="edit-units">
+        <div class="modal-dialog modal-dialog-centered custom-modal-two">
+            <div class="modal-content">
+                <div class="page-wrapper-new p-0">
+                    <div class="content">
+                        <div class="modal-header border-0 custom-modal-header">
+                            <div class="page-title">
+                                <h4>GST Status</h4>
+                            </div>
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body custom-modal-body">
+                            <form action="" method="post">
+                                <input type="hidden" name="invoiceId" id="invoiceId">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="input-blocks">
+                                            <label>GST Status</label>
+                                            <select class="form-select" name="gstStatus" id="gstStatus">
+                                                <option value="PAID">Paid</option>
+                                                <option value="HOLD">Hold</option>
+                                                <option value="CANCELLED">Cancelled</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer-btn">
+                                    <button type="button" class="btn btn-cancel me-2"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" name="gstStatusUpdate" class="btn btn-submit">Save
+                                        Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <script src="assets/js/jquery-3.7.1.min.js"></script>
@@ -944,202 +881,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                 ],
             });
 
-            // Handle the click event on the delete button
-            $(document).on('click', '.deleteButton', function (event) {
-                let invoiceId = $(this).data('invoice-id');
 
-                Swal.fire({
-                    title: "Are you sure?",
-                    text: "You won't be able to revert this!",
-                    showCancelButton: true,
-                    confirmButtonColor: "#ff9f43",
-                    cancelButtonColor: "#d33",
-                    confirmButtonText: "Yes, delete it!"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Send AJAX request to delete the record from the database
-                        $.ajax({
-                            url: 'manage-invoice.php',
-                            type: 'POST',
-                            data: { invoiceId: invoiceId },
-                            success: function (response) {
-                                let result;
+            $(document).on('click', '.editButton', function () {
 
-                                try {
-                                    result = JSON.parse(response);
-                                } catch (e) {
-                                    Swal.fire('Error!', 'Invalid server response.', 'error');
-                                    return;
-                                }
+                let invoiceId = $(this).data("invoice-id");
+                let gstStatus = $(this).data("gst-status");
 
-                                if (result.status === 200) {
-                                    Swal.fire(
-                                        'Deleted!',
-                                        'The invoice has been deleted.',
-                                        'success'
-                                    ).then(() => {
-                                        location.reload(); // Reload page after confirmation
-                                    });
-                                } else {
-                                    Swal.fire('Error!', result.message || 'Deletion failed.', 'error');
-                                }
-                            },
-                            error: function () {
-                                Swal.fire(
-                                    'Error!',
-                                    'There was an error contacting the server.',
-                                    'error'
-                                );
-                            }
-                        });
-                    }
-                });
+                $('#invoiceId').val(invoiceId);
+                $('#gstStatus').val(gstStatus);
             });
 
-            $(document).on('click', '.sendMail', function (e) {
-                e.preventDefault();
-
-                let invoiceId = $(this).data('invoice-id');
-
-
-                Swal.fire({
-                    title: "Are you sure?",
-                    text: "You won't be able to revert this!",
-                    showCancelButton: true,
-                    confirmButtonColor: "#ff9f43",
-                    cancelButtonColor: "#d33",
-                    confirmButtonText: "Yes, Send Mail!"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Send AJAX request to delete the record from the database
-                        $.ajax({
-                            url: 'manage-invoice.php', // The PHP file that will handle the deletion
-                            type: 'POST',
-                            data: { invoiceIdForMail: invoiceId },
-                            success: function (response) {
-                                let result = JSON.parse(response);
-                                console.log(result);
-
-                                if (result.status == 200) {
-                                    // Show success message and reload the page
-                                    Swal.fire(
-                                        'Send!',
-                                        result.message,
-                                        'success' // Added 'success' to show the success icon
-                                    ).then(() => {
-                                        // Reload the page
-                                        location.reload();
-                                    });
-                                }
-                                if (result.status == 404) {
-                                    // Show success message and reload the page
-                                    Swal.fire(
-                                        'Error!',
-                                        result.message,
-                                        'error' // Added 'success' to show the success icon
-                                    ).then(() => {
-                                        // Reload the page
-                                        location.reload();
-                                    });
-                                }
-
-                            },
-                            error: function (xhr, status, error) {
-                                // Show error message if the AJAX request fails
-                                Swal.fire(
-                                    'Error!',
-                                    'There was an error sending the mail.',
-                                    'error'
-                                );
-                            }
-                        });
-                    }
-                });
-
-
-
-            });
-
-            $(document).on('click', '.multi-delete-button', function (e) {
-                e.preventDefault();
-
-                let invoiceIds = [];
-                $('input[name="invoiceIds"]:checked').each(function () {
-                    invoiceIds.push(parseInt($(this).val()));
-                });
-
-                if (invoiceIds.length == 0) {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Oops...",
-                        text: "Please select invoice!",
-                    });
-                    return;
-                }
-
-                Swal.fire({
-                    title: "Are you sure?",
-                    text: "You won't be able to revert this!",
-                    showCancelButton: true,
-                    confirmButtonColor: "#ff9f43",
-                    cancelButtonColor: "#d33",
-                    confirmButtonText: "Yes, delete it!"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-
-                        $.ajax({
-                            url: "manage-invoice.php",
-                            type: "post",
-                            data: { invoiceIds: invoiceIds },
-                            success: function (response) {
-
-                                Swal.fire(
-                                    'Deleted!',
-                                    'The Invoice has been deleted.',
-                                    'success'
-                                ).then(() => {
-                                    // Reload the page
-                                    location.reload();
-                                });
-
-                            },
-                            error: function (error) {
-                                console.log(error);
-                            },
-                        });
-
-                    }
-                })
-
-
-            });
-
-            $(document).on("click", ".row .col-lg-3 .input-blocks .btn-filters", function (e) {
-                e.preventDefault();
-                let customerId = $(".input-blocks select[name='customerId']").val();
-                let fromDate = $(".row .col-lg-3 .input-blocks .daterange-wraper input[name='from']").val();
-                let toDate = $(".row .col-lg-3 .input-blocks .daterange-wraper input[name='to']").val();
-
-                // Check if customerId is missing or not a number
-                // if (!customerId || isNaN(customerId) || !Number.isInteger(Number(customerId))) {
-                //     notyf.error("Please select a valid customer");
-                //     return;
-                // }
-                if (!fromDate) {
-                    notyf.error("Please select from date");
-                    return;
-                }
-                if (!toDate) {
-                    notyf.error("Please select to date");
-                    return;
-                }
-
-                // Output
-                console.log("Customer ID -", customerId);
-                console.log("From Date -", fromDate);
-                console.log("To Date -", toDate);
-                window.location.href = `manage-invoice.php?customer=${customerId}&from=${fromDate}&to=${toDate}`;
-            });
         });
     </script>
 

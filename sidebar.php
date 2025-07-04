@@ -113,6 +113,26 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                 </li>
             <?php endif; ?>
 
+            <?php if ($isAdmin || hasPermission('GST', $privileges, $roleData['0']['role_name'])): ?>
+                <li class="submenu-open">
+                    <h6 class="submenu-hdr">GST</h6>
+                    <ul>
+
+                        <li class="submenu">
+                            <a href="javascript:void(0);"><i data-feather="file-text"></i><span>GST Slab</span><span
+                                    class="menu-arrow"></span></a>
+                            <ul>
+                                <?php if ($isAdmin || hasPermission('Manage GST', $privileges, $roleData['0']['role_name'])): ?>
+                                    <li><a href="manage-gst.php">Manage GST</a></li>
+                                <?php endif; ?>
+
+                            </ul>
+                        </li>
+
+                    </ul>
+                </li>
+            <?php endif; ?>
+
             <?php if ($isAdmin || hasPermission('Payments', $privileges, $roleData['0']['role_name'])): ?>
                 <li class="submenu-open">
                     <h6 class="submenu-hdr">Payments</h6>
