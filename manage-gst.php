@@ -689,8 +689,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                         </th>
                                         <th>Invoice No</th>
                                         <th>Customer</th>
-                                        <th>Due Date</th>
                                         <th>Created Date</th>
+                                        <th>Due Date</th>
                                         <th>Amount</th>
                                         <th>GST Amount</th>
                                         <th>Created By</th>
@@ -712,10 +712,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                             </td>
                                             <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
                                             <td><?php echo $invoice['customer_name'] ?></td>
-                                            <td><?php $date = new DateTime($invoice['due_date']);
+                                            <td><?php $date = new DateTime($invoice['created_at']);
                                             echo $date->format('d M Y') ?>
                                             </td>
-                                            <td><?php $date = new DateTime($invoice['created_at']);
+                                            <td><?php $date = new DateTime($invoice['due_date']);
                                             echo $date->format('d M Y') ?>
                                             </td>
                                             <td>₹<?php echo $invoice['total_amount'] ?></td>
@@ -881,16 +881,202 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                 ],
             });
 
+            // Handle the click event on the delete button
+            $(document).on('click', '.deleteButton', function (event) {
+                let invoiceId = $(this).data('invoice-id');
 
-            $(document).on('click', '.editButton', function () {
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "You won't be able to revert this!",
+                    showCancelButton: true,
+                    confirmButtonColor: "#ff9f43",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, delete it!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Send AJAX request to delete the record from the database
+                        $.ajax({
+                            url: 'manage-invoice.php',
+                            type: 'POST',
+                            data: { invoiceId: invoiceId },
+                            success: function (response) {
+                                let result;
 
-                let invoiceId = $(this).data("invoice-id");
-                let gstStatus = $(this).data("gst-status");
+                                try {
+                                    result = JSON.parse(response);
+                                } catch (e) {
+                                    Swal.fire('Error!', 'Invalid server response.', 'error');
+                                    return;
+                                }
 
-                $('#invoiceId').val(invoiceId);
-                $('#gstStatus').val(gstStatus);
+                                if (result.status === 200) {
+                                    Swal.fire(
+                                        'Deleted!',
+                                        'The invoice has been deleted.',
+                                        'success'
+                                    ).then(() => {
+                                        location.reload(); // Reload page after confirmation
+                                    });
+                                } else {
+                                    Swal.fire('Error!', result.message || 'Deletion failed.', 'error');
+                                }
+                            },
+                            error: function () {
+                                Swal.fire(
+                                    'Error!',
+                                    'There was an error contacting the server.',
+                                    'error'
+                                );
+                            }
+                        });
+                    }
+                });
             });
 
+            $(document).on('click', '.sendMail', function (e) {
+                e.preventDefault();
+
+                let invoiceId = $(this).data('invoice-id');
+
+
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "You won't be able to revert this!",
+                    showCancelButton: true,
+                    confirmButtonColor: "#ff9f43",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, Send Mail!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Send AJAX request to delete the record from the database
+                        $.ajax({
+                            url: 'manage-invoice.php', // The PHP file that will handle the deletion
+                            type: 'POST',
+                            data: { invoiceIdForMail: invoiceId },
+                            success: function (response) {
+                                let result = JSON.parse(response);
+                                console.log(result);
+
+                                if (result.status == 200) {
+                                    // Show success message and reload the page
+                                    Swal.fire(
+                                        'Send!',
+                                        result.message,
+                                        'success' // Added 'success' to show the success icon
+                                    ).then(() => {
+                                        // Reload the page
+                                        location.reload();
+                                    });
+                                }
+                                if (result.status == 404) {
+                                    // Show success message and reload the page
+                                    Swal.fire(
+                                        'Error!',
+                                        result.message,
+                                        'error' // Added 'success' to show the success icon
+                                    ).then(() => {
+                                        // Reload the page
+                                        location.reload();
+                                    });
+                                }
+
+                            },
+                            error: function (xhr, status, error) {
+                                // Show error message if the AJAX request fails
+                                Swal.fire(
+                                    'Error!',
+                                    'There was an error sending the mail.',
+                                    'error'
+                                );
+                            }
+                        });
+                    }
+                });
+
+
+
+            });
+
+            $(document).on('click', '.multi-delete-button', function (e) {
+                e.preventDefault();
+
+                let invoiceIds = [];
+                $('input[name="invoiceIds"]:checked').each(function () {
+                    invoiceIds.push(parseInt($(this).val()));
+                });
+
+                if (invoiceIds.length == 0) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: "Please select invoice!",
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "You won't be able to revert this!",
+                    showCancelButton: true,
+                    confirmButtonColor: "#ff9f43",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, delete it!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+
+                        $.ajax({
+                            url: "manage-gst.php",
+                            type: "post",
+                            data: { invoiceIds: invoiceIds },
+                            success: function (response) {
+
+                                Swal.fire(
+                                    'Deleted!',
+                                    'The Invoice has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    // Reload the page
+                                    location.reload();
+                                });
+
+                            },
+                            error: function (error) {
+                                console.log(error);
+                            },
+                        });
+
+                    }
+                })
+
+
+            });
+
+            $(document).on("click", ".row .col-lg-3 .input-blocks .btn-filters", function (e) {
+                e.preventDefault();
+                let customerId = $(".input-blocks select[name='customerId']").val();
+                let fromDate = $(".row .col-lg-3 .input-blocks .daterange-wraper input[name='from']").val();
+                let toDate = $(".row .col-lg-3 .input-blocks .daterange-wraper input[name='to']").val();
+
+                // Check if customerId is missing or not a number
+                // if (!customerId || isNaN(customerId) || !Number.isInteger(Number(customerId))) {
+                //     notyf.error("Please select a valid customer");
+                //     return;
+                // }
+                if (!fromDate) {
+                    notyf.error("Please select from date");
+                    return;
+                }
+                if (!toDate) {
+                    notyf.error("Please select to date");
+                    return;
+                }
+
+                // Output
+                console.log("Customer ID -", customerId);
+                console.log("From Date -", fromDate);
+                console.log("To Date -", toDate);
+                window.location.href = `manage-gst.php?customer=${customerId}&from=${fromDate}&to=${toDate}`;
+            });
         });
     </script>
 

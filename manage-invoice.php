@@ -766,8 +766,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         </th>
                                         <th>Invoice No</th>
                                         <th>Customer</th>
-                                        <th>Due Date</th>
                                         <th>Created Date</th>
+                                        <th>Due Date</th>
                                         <th>Amount</th>
                                         <th>GST Amount</th>
                                         <th>Created By</th>
@@ -789,12 +789,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                             </td>
                                             <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
                                             <td><?php echo $invoice['customer_name'] ?></td>
-                                            <td><?php $date = new DateTime($invoice['due_date']);
-                                            echo $date->format('d M Y') ?>
-                                            </td>
                                             <td><?php $date = new DateTime($invoice['created_at']);
                                             echo $date->format('d M Y') ?>
                                             </td>
+                                            <td><?php $date = new DateTime($invoice['due_date']);
+                                            echo $date->format('d M Y') ?>
+                                            </td>
+
                                             <td>₹<?php echo $invoice['total_amount'] ?></td>
                                             <td>₹<?php
                                             $taxRateStr = $invoice['tax_rate'];
