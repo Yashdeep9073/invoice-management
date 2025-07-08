@@ -426,13 +426,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdsDelete'])) {
                                                                 data-feather="eye" class="info-img"></i>Show
                                                             Detail</a>
                                                     </li>
-                                                    <!-- <li>
+                                                    <li>
                                                         <a href="javascript:void(0);"
                                                             data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
                                                             class="restoreButton dropdown-item"><i
                                                                 data-feather="corner-up-left" class="info-img"></i>Restore
                                                         </a>
-                                                    </li> -->
+                                                    </li>
                                                     <li>
                                                         <a target="_blank"
                                                             href="download-invoice.php?id=<?php echo base64_encode($invoice['invoice_id']) ?>"
@@ -440,12 +440,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdsDelete'])) {
                                                                 class="info-img"></i>Download
                                                         </a>
                                                     </li>
-                                                    <!-- <li>
+                                                    <li>
                                                         <a href="javascript:void(0);"
                                                             data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
                                                             class="dropdown-item deleteButton mb-0"><i
                                                                 data-feather="trash-2" class="info-img"></i>Delete </a>
-                                                    </li> -->
+                                                    </li>
                                                 </ul>
                                             </td>
                                         </tr>

@@ -12,11 +12,12 @@ try {
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
-    $stmtNumber = $db->prepare("SELECT COUNT(*) AS total_invoices FROM invoice  WHERE is_active = 1;");
+    $stmtNumber = $db->prepare("SELECT COUNT(*) AS total_invoices FROM invoice WHERE is_active = 1 AND status != 'CANCELLED';");
     $stmtNumber->execute();
     $totalNumberInvoice = $stmtNumber->get_result()->fetch_all(MYSQLI_ASSOC);
 
-    $stmtTotalAmount = $db->prepare('SELECT SUM(total_amount) AS total_payment FROM invoice WHERE is_active = 1');
+
+    $stmtTotalAmount = $db->prepare("SELECT SUM(total_amount) AS total_payment FROM invoice WHERE is_active = 1 AND status != 'CANCELLED'; ");
     $stmtTotalAmount->execute();
     $totalAmount = $stmtTotalAmount->get_result()->fetch_all(MYSQLI_ASSOC);
 
@@ -185,7 +186,7 @@ ob_end_flush();
     <meta name="robots" content="noindex, nofollow">
     <title>Dashboard</title>
 
- <link rel="shortcut icon" type="image/x-icon"
+    <link rel="shortcut icon" type="image/x-icon"
         href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
