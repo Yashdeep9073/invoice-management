@@ -158,6 +158,9 @@ try {
         }
     }
 
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
@@ -450,7 +453,7 @@ ob_end_clean();
                                                         <td class="ref-number">
                                                             <?php echo htmlspecialchars($paidInvoice['invoice_number']); ?>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($paidInvoice['total_amount']); ?>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($paidInvoice['total_amount']); ?>
                                                         </td>
 
                                                         <td>
@@ -477,7 +480,7 @@ ob_end_clean();
                                                 <tr>
                                                     <td colspan="5"></td>
                                                     <td><strong><span class="text-danger">Total:
-                                                                ₹<?php echo number_format($totalAmountSum, 2); ?></span></strong>
+                                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalAmountSum, 2); ?></span></strong>
                                                     </td>
                                                     <td colspan="4"></td>
                                                 </tr>
@@ -585,16 +588,24 @@ ob_end_clean();
                                                         </td>
                                                         <td><?php echo htmlspecialchars($pendingInvoice['customer_name']); ?>
                                                         </td>
-                                                        <td><?php $date = new DateTime($pendingInvoice['updated_at']);
-                                                        echo htmlspecialchars($date->format("d M Y h:i:A")); ?>
+                                                        <td>
+                                                            <?php
+                                                            if (!empty($pendingInvoice['updated_at'])) {
+                                                                $date = new DateTime($pendingInvoice['updated_at']);
+                                                                echo htmlspecialchars($date->format("d M Y h:i:A"));
+                                                            } else {
+                                                                echo "N/A"; // Or any default text
+                                                            }
+                                                            ?>
                                                         </td>
+
                                                         <td class="ref-number">
                                                             <?php echo htmlspecialchars($pendingInvoice['transaction_id']); ?>
                                                         </td>
                                                         <td class="ref-number">
                                                             <?php echo htmlspecialchars($pendingInvoice['invoice_number']); ?>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($pendingInvoice['total_amount']); ?>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($pendingInvoice['total_amount']); ?>
                                                         </td>
 
                                                         <td>
@@ -620,7 +631,7 @@ ob_end_clean();
                                                 <tr>
                                                     <td colspan="5"></td>
                                                     <td><strong><span class="text-danger">Total Pending:
-                                                                ₹<?php echo number_format($pendingAmountSum, 2); ?></span></strong>
+                                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($pendingAmountSum, 2); ?></span></strong>
                                                     </td>
                                                     <td colspan="4"></td>
                                                 </tr>
@@ -738,7 +749,7 @@ ob_end_clean();
                                                         <td class="ref-number">
                                                             <?php echo htmlspecialchars($cancelledInvoice['invoice_number']); ?>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($cancelledInvoice['total_amount']); ?>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($cancelledInvoice['total_amount']); ?>
                                                         </td>
 
                                                         <td>
@@ -767,7 +778,7 @@ ob_end_clean();
                                                 <tr>
                                                     <td colspan="5"></td>
                                                     <td><strong><span class="text-danger">Total Cancelled:
-                                                                ₹<?php echo number_format($cancelledAmountSum, 2); ?></span></strong>
+                                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($cancelledAmountSum, 2); ?></span></strong>
                                                     </td>
                                                     <td colspan="4"></td>
                                                 </tr>
@@ -883,7 +894,7 @@ ob_end_clean();
                                                         <td class="ref-number">
                                                             <?php echo htmlspecialchars($refundedInvoice['invoice_number']); ?>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($refundedInvoice['total_amount']); ?>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($refundedInvoice['total_amount']); ?>
                                                         </td>
 
                                                         <td>
@@ -911,7 +922,7 @@ ob_end_clean();
                                                 <tr>
                                                     <td colspan="5"></td>
                                                     <td><strong><span class="text-danger">Total Refunded:
-                                                                ₹<?php echo number_format($refundedAmountSum, 2); ?></span></strong>
+                                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($refundedAmountSum, 2); ?></span></strong>
                                                     </td>
                                                     <td colspan="4"></td>
                                                 </tr>

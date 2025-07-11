@@ -33,6 +33,10 @@ ORDER BY
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
 
 } catch (Exception $e) {
     $_SESSION['error'] = $e;
@@ -243,10 +247,10 @@ ob_end_flush();
                                                 <?php echo $customer['customer_email'] ?>
                                             </td>
                                             <td>
-                                                ₹<?php echo $customer['total_paid'] ?>
+                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $customer['total_paid'] ?>
                                             </td>
                                             <td>
-                                                ₹<?php echo $customer['total_pending'] ?>
+                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $customer['total_pending'] ?>
                                             </td>
                                         </tr>
                                     <?php } ?>

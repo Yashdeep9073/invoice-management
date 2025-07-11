@@ -198,9 +198,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['send-mail'])) {
     <meta name="robots" content="noindex, nofollow">
     <title>Email Settings</title>
 
- <link rel="shortcut icon" type="image/x-icon"
+    <link rel="shortcut icon" type="image/x-icon"
         href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
-        
+
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="assets/css/animate.css">
@@ -329,29 +329,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['send-mail'])) {
                                     <div id="sidebar-menu5" class="sidebar-menu">
                                         <ul>
                                             <li class="submenu-open">
-                                                <ul>
-
-                                                    <li class="submenu">
-                                                        <a href="javascript:void(0);" class="subdrop"><i
-                                                                data-feather="airplay"></i><span>System
-                                                                Settings</span><span class="menu-arrow"></span></a>
-                                                        <ul>
-                                                            <li><a href="system-settings.php">System
-                                                                    Settings</a></li>
-                                                            <li><a href="email-settings.php">Email</a>
-                                                            </li>
-                                                            <li><a href="company-settings.php">Company Settings</a>
-                                                            </li>
-
-                                                        </ul>
-                                                        <a href="javascript:void(0);"><i
-                                                                data-feather="archive"></i><span>App
-                                                                Settings</span><span class="menu-arrow"></span></a>
-                                                        <ul>
-                                                            <li><a href="invoice-settings.php">Invoice</a></li>
-                                                        </ul>
-                                                    </li>
-                                                </ul>
+                                                <?php
+                                                require("./settings-siderbar.php");
+                                                ?>
                                             </li>
                                         </ul>
                                     </div>

@@ -103,6 +103,10 @@ try {
     $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
 } catch (\Throwable $th) {
     //throw $th;
 }
@@ -336,11 +340,12 @@ ob_end_clean();
                                                                 data-service-id="<?php echo htmlspecialchars($paidInvoice['service_id']); ?>"
                                                                 data-status="<?php echo htmlspecialchars($paidInvoice['paymentStatus']); ?>"
                                                                 data-bs-target="#view-notes">View</a></td>
-                                                        <td>₹<?php echo htmlspecialchars($paidInvoice['amount']); ?></td>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($paidInvoice['amount']); ?>
+                                                        </td>
                                                         <td><?php echo htmlspecialchars($paidInvoice['discount']); ?>%</td>
                                                         <td><?php echo htmlspecialchars($paidInvoice['tax_name'] . "-" . $paidInvoice['tax_rate']); ?>
                                                         </td>
-                                                        <td>₹<?php echo htmlspecialchars($paidInvoice['total_amount']); ?>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($paidInvoice['total_amount']); ?>
                                                         </td>
                                                         <td>
                                                             <?php if ($paidInvoice['paymentStatus'] == 'PAID') { ?>
@@ -410,12 +415,13 @@ ob_end_clean();
                                                                 data-service-id="<?php echo htmlspecialchars($pendingInvoice['service_id']); ?>"
                                                                 data-status="<?php echo htmlspecialchars($pendingInvoice['paymentStatus']); ?>"
                                                                 data-bs-target="#view-notes">View</a></td>
-                                                        <td>₹<?php echo htmlspecialchars($pendingInvoice['amount']); ?></td>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($pendingInvoice['amount']); ?>
+                                                        </td>
                                                         <td><?php echo htmlspecialchars($pendingInvoice['discount']); ?>%
                                                         </td>
                                                         <td><?php echo htmlspecialchars($pendingInvoice['tax_name'] . "-" . $pendingInvoice['tax_rate']); ?>
                                                         </td>
-                                                        <td>₹<?php echo htmlspecialchars($pendingInvoice['total_amount']); ?>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($pendingInvoice['total_amount']); ?>
                                                         </td>
                                                         <td>
                                                             <?php if ($pendingInvoice['paymentStatus'] == 'PENDING') { ?>
@@ -485,13 +491,13 @@ ob_end_clean();
                                                                 data-service-id="<?php echo htmlspecialchars($cancelledInvoice['service_id']); ?>"
                                                                 data-status="<?php echo htmlspecialchars($cancelledInvoice['paymentStatus']); ?>"
                                                                 data-bs-target="#view-notes">View</a></td>
-                                                        <td>₹<?php echo htmlspecialchars($cancelledInvoice['amount']); ?>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($cancelledInvoice['amount']); ?>
                                                         </td>
                                                         <td><?php echo htmlspecialchars($cancelledInvoice['discount']); ?>%
                                                         </td>
                                                         <td><?php echo htmlspecialchars($cancelledInvoice['tax_name'] . "-" . $cancelledInvoice['tax_rate']); ?>
                                                         </td>
-                                                        <td>₹<?php echo htmlspecialchars($cancelledInvoice['total_amount']); ?>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($cancelledInvoice['total_amount']); ?>
                                                         </td>
                                                         <td>
                                                             <?php if ($cancelledInvoice['paymentStatus'] == 'CANCELLED') { ?>
@@ -562,13 +568,13 @@ ob_end_clean();
                                                                 data-service-id="<?php echo htmlspecialchars($refundedInvoice['service_id']); ?>"
                                                                 data-status="<?php echo htmlspecialchars($refundedInvoice['paymentStatus']); ?>"
                                                                 data-bs-target="#view-notes">View</a></td>
-                                                        <td>₹<?php echo htmlspecialchars($refundedInvoice['amount']); ?>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($refundedInvoice['amount']); ?>
                                                         </td>
                                                         <td><?php echo htmlspecialchars($refundedInvoice['discount']); ?>%
                                                         </td>
                                                         <td><?php echo htmlspecialchars($refundedInvoice['tax_name'] . "-" . $refundedInvoice['tax_rate']); ?>
                                                         </td>
-                                                        <td>₹<?php echo htmlspecialchars($refundedInvoice['total_amount']); ?>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($refundedInvoice['total_amount']); ?>
                                                         </td>
                                                         <td>
                                                             <?php if ($refundedInvoice['paymentStatus'] == 'REFUNDED') { ?>

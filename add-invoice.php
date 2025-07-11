@@ -33,6 +33,12 @@ try {
         $taxOptions = $stmtFetchTax->get_result();
     }
 
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+    $timezone = $localizationSettings["timezone"] ?? "UTC";
+
+
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
 }
@@ -100,9 +106,9 @@ if (isset($_POST['invoiceNumber']) && $_SERVER['REQUEST_METHOD'] == "POST") {
 
 if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
     try {
-        // echo "<pre>";
-        // print_r($_POST);
-        // exit();
+        echo "<pre>";
+        print_r($_POST);
+        exit();
 
         $invoiceNumber = htmlspecialchars($_POST['invoice_number'] ?? '', ENT_QUOTES, 'UTF-8');
         $paymentMethod = htmlspecialchars($_POST['payment_method'] ?? '', ENT_QUOTES, 'UTF-8');
@@ -120,6 +126,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         $discount = filter_input(INPUT_POST, 'discount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $totalAmount = filter_input(INPUT_POST, 'total_amount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $invoiceTitle = htmlspecialchars($_POST["invoice_title"], ENT_QUOTES, 'UTF-8');
+        $repeatCycle = htmlspecialchars($_POST["repeatCycle"], ENT_QUOTES, 'UTF-8');
+        $createBefore = htmlspecialchars($_POST["createBefore"], ENT_QUOTES, 'UTF-8');
 
         $createdBy = base64_decode($_SESSION['admin_id']);
 
@@ -159,15 +167,15 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         $sql = "INSERT INTO `invoice` (
             `invoice_number`, `payment_method`, `transaction_id`, `status`, 
             `amount`, `quantity`, `tax`, `discount`, `total_amount`, 
-            `due_date`, `from_date`,`to_date` , `customer_id`, `service_id`, `description`,`created_by`,`invoice_type`,`invoice_title`
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?)";
+            `due_date`, `from_date`,`to_date` , `customer_id`, `service_id`, `description`,`created_by`,`invoice_type`,`invoice_title`,`repeat_cycle`,`create_before`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?,?,?)";
 
         $stmt = $db->prepare($sql);
         if ($stmt === false) {
             throw new Exception('Prepare failed: ' . $db->error);
         }
         $stmt->bind_param(
-            'ssssdiiddsssississ',
+            'ssssdiiddsssississsi',
             $invoiceNumber,
             $paymentMethod,
             $transactionId,
@@ -185,7 +193,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
             $description,
             $createdBy,
             $invoiceType,
-            $invoiceTitle
+            $invoiceTitle,
+            $repeatCycle,
+            $createBefore
         );
 
         // Execute the query
@@ -485,8 +495,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                         </select>
                                                     </div>
                                                 </div>
-
-                                                <div class="col-lg-4 col-sm-6 col-12 from-date apexcharts-toolbar">
+                                                <!-- <div class="col-lg-4 col-sm-6 col-12 from-date apexcharts-toolbar">
                                                     <div class="mb-3 add-product">
                                                         <label class="form-label">From Date: <span> *</span></label>
                                                         <input type="date" id="from_date" name="from_date"
@@ -500,6 +509,33 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                         <input type="date" id="to_date" name="to_date"
                                                             placeholder="Enter To Date" class="form-control"
                                                             autocomplete="off">
+                                                    </div>
+                                                </div> -->
+                                                <div class="col-lg-4 col-sm-6 col-12 repeat-cycle apexcharts-toolbar">
+                                                    <div class="mb-3 add-product">
+                                                        <label class="form-label">Repeat Cycle: <span> *</span></label>
+                                                        <select class="form-select" name="repeatCycle" id="repeatCycle">
+                                                            <option>Select</option>
+                                                            <option value="DAILY">Every day (daily)</option>
+                                                            <option value="WEEKLY">Every 7 days (weekly)</option>
+                                                            <option value="MONTHLY">Every month (monthly)</option>
+                                                            <option value="QUARTERLY">Every 3 months (quarterly)
+                                                            </option>
+                                                            <option value="SEMIQUARTERLY">Every 6 months (semiannually)
+                                                            </option>
+                                                            <option value="ANNUALLY">Every year (annually)</option>
+                                                            <option value="BIENNIALLY">Every 2 years (biennially)
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-6 col-12 create-before apexcharts-toolbar">
+                                                    <div class="mb-3 add-product">
+                                                        <label class="form-label">Create before (days): <span>
+                                                                *</span></label>
+                                                        <input type="number" min="1" id="createBefore"
+                                                            name="createBefore" placeholder="Enter To Date"
+                                                            class="form-control" autocomplete="off">
                                                     </div>
                                                 </div>
 
@@ -809,9 +845,13 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                 if (selectedType === 'FIXED') {
                     $('.from-date').addClass('apexcharts-toolbar');
                     $('.to-date').addClass('apexcharts-toolbar');
+                    $('.repeat-cycle').addClass('apexcharts-toolbar');
+                    $('.create-before').addClass('apexcharts-toolbar');
                 } else if (selectedType === 'RECURSIVE') {
                     $('.from-date').removeClass('apexcharts-toolbar');
                     $('.to-date').removeClass('apexcharts-toolbar');
+                    $('.repeat-cycle').removeClass('apexcharts-toolbar');
+                    $('.create-before').removeClass('apexcharts-toolbar');
                 }
             })
         });

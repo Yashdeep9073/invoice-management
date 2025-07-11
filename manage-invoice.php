@@ -17,6 +17,9 @@ if (!isset($_SESSION["admin_id"])) {
 
 try {
 
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
     $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
     $stmtFetchCompanySettings->execute();
@@ -796,13 +799,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                             echo $date->format('d M Y') ?>
                                             </td>
 
-                                            <td>₹<?php echo $invoice['total_amount'] ?></td>
-                                            <td>₹<?php
+                                            <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
+                                            </td>
+                                            <td><?php
                                             $taxRateStr = $invoice['tax_rate'];
                                             $taxRate = intval(str_replace('%', '', $taxRateStr));
                                             $priceWithoutTax = $taxRate > 0 ? $invoice['total_amount'] / (1 + $taxRate / 100) : $invoice['total_amount'];
                                             $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
-                                            echo $taxAmount;
+                                            echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $taxAmount;
                                             $totalTaxAmount += $taxAmount;
                                             ?>
                                             </td>
@@ -873,7 +877,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                     <tr>
                                         <td colspan="6"></td>
                                         <td><strong><span class="text-danger">Total:
-                                                    ₹<?php echo number_format($totalTaxAmount, 2); ?></span></strong>
+                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalTaxAmount, 2); ?></span></strong>
                                         </td>
                                         <td colspan="3"></td>
                                     </tr>

@@ -371,29 +371,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                                     <div id="sidebar-menu5" class="sidebar-menu">
                                         <ul>
                                             <li class="submenu-open">
-                                                <ul>
-
-                                                    <li class="submenu">
-                                                        <a href="javascript:void(0);" class="subdrop"><i
-                                                                data-feather="airplay"></i><span>System
-                                                                Settings</span><span class="menu-arrow"></span></a>
-                                                        <ul>
-                                                            <li><a href="system-settings.php">System
-                                                                    Settings</a></li>
-                                                            <li><a href="email-settings.php">Email</a>
-                                                            </li>
-                                                            <li><a href="company-settings.php">Company Settings</a>
-                                                            </li>
-
-                                                        </ul>
-                                                        <a href="javascript:void(0);"><i
-                                                                data-feather="archive"></i><span>App
-                                                                Settings</span><span class="menu-arrow"></span></a>
-                                                        <ul>
-                                                            <li><a href="invoice-settings.php">Invoice</a></li>
-                                                        </ul>
-                                                    </li>
-                                                </ul>
+                                                <?php
+                                                require("./settings-siderbar.php");
+                                                ?>
                                             </li>
                                         </ul>
                                     </div>

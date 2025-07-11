@@ -28,6 +28,12 @@ try {
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
+
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
 }
@@ -401,7 +407,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdsDelete'])) {
                                             <td><?php $date = new DateTime($invoice['created_at']);
                                             echo $date->format('d M Y') ?>
                                             </td>
-                                            <td>₹<?php echo $invoice['total_amount'] ?></td>
+                                            <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
+                                            </td>
                                             <td>
                                                 <?php if ($invoice['status'] == 'PAID') { ?>
                                                     <span class="badge badge-lg bg-success">Paid</span>

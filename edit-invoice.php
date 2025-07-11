@@ -18,6 +18,10 @@ try {
     if ($stmtInvoice->execute()) {
         $result = $stmtInvoice->get_result();
         $invoices = $result->fetch_all(MYSQLI_ASSOC);
+
+        // echo "<pre>";
+        // print_r($invoices[0]['repeat_cycle']);
+        // exit;
     }
 
 
@@ -181,6 +185,10 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
 
         $setReminder = isset($_POST['setReminder']) ? (int) $_POST['setReminder'] : 0;
 
+        $repeatCycle = htmlspecialchars($_POST["repeatCycle"], ENT_QUOTES, 'UTF-8');
+        $createBefore = htmlspecialchars($_POST["createBefore"], ENT_QUOTES, 'UTF-8');
+
+
 
 
         // Handle serviceName array
@@ -235,7 +243,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         `description` = ?,
         `reminder_enabled` = ?,
         `invoice_type` = ?,
-        `invoice_title` = ?
+        `invoice_title` = ?,
+        `repeat_cycle` = ?,
+        `create_before` = ?
         WHERE `invoice_id` = ?";
 
         $stmt = $db->prepare($sql);
@@ -244,7 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         }
 
         $stmt->bind_param(
-            'ssssdiiddsssississi',
+            'ssssdiiddsssississsii',
             $invoiceNumber,
             $paymentMethod,
             $transactionId,
@@ -263,6 +273,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
             $setReminder,
             $invoiceType,
             $invoiceTitle,
+            $repeatCycle,
+            $createBefore,
             $invoiceId,
         );
         // Execute the query
@@ -449,7 +461,7 @@ ob_end_flush();
                                                     <div class="input-blocks add-product list">
                                                         <label class="form-label">Invoice Title </label>
                                                         <input type="text" id="invoice_title"
-                                                            value="<?= isset($invoices['0']['invoice_title']) ? $invoices['0']['invoice_title'] : ""  ?>"
+                                                            value="<?= isset($invoices['0']['invoice_title']) ? $invoices['0']['invoice_title'] : "" ?>"
                                                             name="invoice_title" placeholder="Enter Invoice Title"
                                                             class="form-control">
                                                     </div>
@@ -600,6 +612,42 @@ ob_end_flush();
                                                         <label class="form-label">To Date: <span> *</span></label>
                                                         <input type="date" id="to_date"
                                                             value="<?php echo $invoices[0]['to_date'] ?>" name="to_date"
+                                                            placeholder="Enter To Date" class="form-control"
+                                                            autocomplete="off">
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="col-lg-4 col-sm-6 col-12 repeat-cycle <?php echo $invoices['0']['invoice_type'] == "RECURSIVE" ? "" : "apexcharts-toolbar" ?>">
+                                                    <div class="mb-3 add-product">
+                                                        <label class="form-label">Repeat Cycle: <span> *</span></label>
+                                                        <select class="form-select" name="repeatCycle" id="repeatCycle">
+                                                            <option>Select</option>
+                                                            <option <?php echo $invoices['0']['repeat_cycle'] == "DAILY" ? "selected" : "" ?> value="DAILY">Every day (daily)
+                                                            </option>
+                                                            <option <?php echo $invoices['0']['repeat_cycle'] == "WEEKLY" ? "selected" : "" ?> value="WEEKLY">Every 7 days
+                                                                (weekly)</option>
+                                                            <option <?php echo $invoices['0']['repeat_cycle'] == "MONTHLY" ? "selected" : "" ?> value="MONTHLY">Every month
+                                                                (monthly)</option>
+                                                            <option <?php echo $invoices['0']['repeat_cycle'] == "QUARTERLY" ? "selected" : "" ?> value="QUARTERLY">Every 3 months (quarterly)
+                                                            </option>
+                                                            <option <?php echo $invoices['0']['repeat_cycle'] == "SEMIQUARTERLY" ? "selected" : "" ?> value="SEMIQUARTERLY">Every 6 months
+                                                                (semiannually)
+                                                            </option>
+                                                            <option <?php echo $invoices['0']['repeat_cycle'] == "ANNUALLY" ? "selected" : "" ?> value="ANNUALLY">Every year (annually)</option>
+                                                            <option <?php echo $invoices['0']['repeat_cycle'] == "BIENNIALLY" ? "selected" : "" ?> value="BIENNIALLY">Every 2 years
+                                                                (biennially)
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="col-lg-4 col-sm-6 col-12 create-before <?php echo $invoices['0']['invoice_type'] == "RECURSIVE" ? "" : "apexcharts-toolbar" ?>">
+                                                    <div class="mb-3 add-product">
+                                                        <label class="form-label">Create before (days): <span>
+                                                                *</span></label>
+                                                        <input type="number"
+                                                            value="<?php echo $invoices[0]['create_before'] ?>" min="1"
+                                                            id="createBefore" name="createBefore"
                                                             placeholder="Enter To Date" class="form-control"
                                                             autocomplete="off">
                                                     </div>
@@ -905,9 +953,13 @@ ob_end_flush();
                 if (selectedType === 'FIXED') {
                     $('.from-date').addClass('apexcharts-toolbar');
                     $('.to-date').addClass('apexcharts-toolbar');
+                    $('.repeat-cycle').addClass('apexcharts-toolbar');
+                    $('.create-before').addClass('apexcharts-toolbar');
                 } else if (selectedType === 'RECURSIVE') {
                     $('.from-date').removeClass('apexcharts-toolbar');
                     $('.to-date').removeClass('apexcharts-toolbar');
+                    $('.repeat-cycle').removeClass('apexcharts-toolbar');
+                    $('.create-before').removeClass('apexcharts-toolbar');
                 }
             })
         });

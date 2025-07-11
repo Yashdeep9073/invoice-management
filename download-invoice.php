@@ -2,6 +2,7 @@
 ob_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+header('Content-Type: text/html; charset=utf-8');
 
 require "./database/config.php";
 require 'vendor/autoload.php';
@@ -149,6 +150,7 @@ try {
     $result = $stmtFetch->get_result();
     $invoice = $result->fetch_assoc();
 
+
     if (!$invoice)
         throw new Exception("Invoice not found.");
 
@@ -177,6 +179,17 @@ try {
     $stmtFetch = $db->prepare("SELECT * FROM invoice_settings");
     $stmtFetch->execute();
     $invoiceSettings = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
+
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+    $currencySymbol = $localizationSettings["currency_code"] ?? "$";
+
+
+
+    // echo "<pre>";
+    // print_r($localizationSettings);
+    // exit;
 
     // Step 1: Generate stylized Service Table using DomPDF
     ob_start();
@@ -290,7 +303,9 @@ try {
                                 <?php $counter++; endforeach; ?>
                         </div>
                     </td>
-                    <td class="amount-cell">Rs.<?= number_format($priceWithoutTax, 2) ?></td>
+                    <td class="amount-cell">
+                        <?= $currencySymbol . ". " . number_format($priceWithoutTax, 2) ?>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -429,8 +444,8 @@ try {
     $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(130, $summaryStartY);
-    $pdf->Cell(0, $lineHeight, 'Total: Rs.' . $priceWithoutTax . "/-", 0, 1);
-    // $pdf->Cell(0, $lineHeight, 'Total:  ₹' . $priceWithoutTax, 0, 1);
+    $formattedAmount = number_format($priceWithoutTax, 2);
+    $pdf->Cell(0, $lineHeight, "Total: {$currencySymbol}. {$formattedAmount}/-", 0, 1);    // $pdf->Cell(0, $lineHeight, 'Total:  ₹' . $priceWithoutTax, 0, 1);
 
     // HR Line below Discount
     $pdf->SetLineWidth(0.2);
@@ -456,7 +471,7 @@ try {
     // Line 4: Total Amount
     $pdf->SetXY(130, $summaryStartY + $lineHeight + 16);
     $pdf->SetFont('FuturaMdBT-Bold', '', 12);
-    $pdf->Cell(0, $lineHeight, 'Total Amount: Rs. ' . number_format($finalTotal, 2) . "/-", 0, 1);
+    $pdf->Cell(0, $lineHeight, "Total Amount: {$currencySymbol}. " . number_format($finalTotal, 2) . "/-", 0, 1);
 
     // Line 5: Total Amount In Words
     $pdf->SetXY(130, $summaryStartY + $lineHeight + 26);
@@ -503,7 +518,6 @@ try {
 
     // Write the second line of the message
     $pdf->Cell(0, 0, 'fruitful relationship with our company', 0, 1);
-
 
     // // Payment Information Section
     // $pdf->SetFont('Helvetica', 'B', 12);

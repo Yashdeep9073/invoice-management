@@ -28,6 +28,11 @@ try {
     $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
 } catch (Exception $e) {
     $_SESSION['error'] = $e;
 }
@@ -227,7 +232,7 @@ try {
                                                 <?php echo $invoice['customer_name'] ?>
                                             </td>
                                             <td>
-                                                ₹<?php echo $invoice['total_amount'] ?>
+                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
                                             </td>
                                             <td class="payment-info">
                                                 <?php if ($invoice['payment_method'] == 'CREDIT_CARD') { ?>

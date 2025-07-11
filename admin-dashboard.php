@@ -8,6 +8,15 @@ require './utility/env.php';
 
 try {
 
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+
+    // echo "<pre>";
+    // print_r($localizationSettings);
+    // exit;
+
     $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
@@ -294,7 +303,10 @@ ob_end_flush();
                     <div class="col-xl-3 col-sm-6 col-12 d-flex">
                         <div class="dash-count das1">
                             <div class="dash-counts">
-                                <h4>₹ <?php echo $totalAmount['0']['total_payment'] ?></h4>
+                                <h4>
+                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $totalAmount[0]['total_payment'];
+                                    ?>
+                                </h4>
                                 <h5><a class="text-white" href="reports.php">Total Payment</a></h5>
                             </div>
                             <div class="dash-imgs">
@@ -305,7 +317,8 @@ ob_end_flush();
                     <div class="col-xl-3 col-sm-6 col-12 d-flex">
                         <div class="dash-count das2">
                             <div class="dash-counts">
-                                <h4>₹ <?php echo $totalPaidAmount['0']['total_paid_payment']; ?></h4>
+                                <h4> <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $totalPaidAmount['0']['total_paid_payment']; ?>
+                                </h4>
                                 <h5><a class="text-white" href="reports.php">Received</a></h5>
                             </div>
                             <div class="dash-imgs">
@@ -316,7 +329,8 @@ ob_end_flush();
                     <div class="col-xl-3 col-sm-6 col-12 d-flex">
                         <div class="dash-count das3">
                             <div class="dash-counts">
-                                <h4>₹ <?php echo $totalDueAmount['0']['total_due_payment']; ?></h4>
+                                <h4> <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $totalDueAmount['0']['total_due_payment']; ?>
+                                </h4>
                                 <h5><a class="text-white" href="reports.php">Due Payment</a></h5>
                             </div>
                             <div class="dash-imgs">
@@ -396,7 +410,7 @@ ob_end_flush();
                                             <td><?php $date = new DateTime($invoice['created_at']);
                                             echo $date->format('d M Y') ?></td>
                                             <td class="text-primary">
-                                                ₹<?php echo $invoice['total_amount'] ?>
+                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
                                             </td>
                                             <td>
                                                 <?php if ($invoice['status'] == 'PAID') { ?>
@@ -534,13 +548,13 @@ ob_end_flush();
                         },
                         yaxis: {
                             title: {
-                                text: 'Total Amount (₹)'
+                                text: 'Total Amount (<?= (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") ?>)'
                             }
                         },
                         tooltip: {
                             y: {
                                 formatter: function (val) {
-                                    return '₹' + val.toFixed(2);
+                                    return '<?= (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") ?>' + val.toFixed(2);
                                 }
                             }
                         }
