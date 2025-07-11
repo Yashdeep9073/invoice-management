@@ -495,7 +495,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                         </select>
                                                     </div>
                                                 </div>
-                                                <!-- <div class="col-lg-4 col-sm-6 col-12 from-date apexcharts-toolbar">
+                                                <div class="col-lg-4 col-sm-6 col-12 from-date apexcharts-toolbar">
                                                     <div class="mb-3 add-product">
                                                         <label class="form-label">From Date: <span> *</span></label>
                                                         <input type="date" id="from_date" name="from_date"
@@ -510,7 +510,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                             placeholder="Enter To Date" class="form-control"
                                                             autocomplete="off">
                                                     </div>
-                                                </div> -->
+                                                </div>
                                                 <div class="col-lg-4 col-sm-6 col-12 repeat-cycle apexcharts-toolbar">
                                                     <div class="mb-3 add-product">
                                                         <label class="form-label">Repeat Cycle: <span> *</span></label>
