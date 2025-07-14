@@ -285,14 +285,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                                 </div>
                                                 <div class="col-sm-4">
                                                     <div class="localization-select">
-                                                        <select class="select" name="language">
-                                                            <option value="en" <?php echo $localizationSettings['language'] == "en" ? "selected" : "" ?>>English
-                                                            </option>
-                                                            <option value="ja" <?php echo $localizationSettings['language'] == "ja" ? "selected" : "" ?>>Japanese (日本語)</option>
-                                                            <option value="es" <?php echo $localizationSettings['language'] == "es" ? "selected" : "" ?>>Spanish (Español)</option>
-                                                            <option value="fr" <?php echo $localizationSettings['language'] == "fr" ? "selected" : "" ?>>French (Français)</option>
-                                                            <!-- Add more languages as needed -->
-                                                        </select>
+                                                        <div id="google_translate_element"></div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -430,6 +423,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     <script src="assets/plugins/sweetalert/sweetalerts.min.js" type="dbd761c2ff900fd50c30f6a7-text/javascript"></script>
     <script src="assets/js/script.js" type="dbd761c2ff900fd50c30f6a7-text/javascript"></script>
     <script src="assets/js/rocket-loader-min.js" data-cf-settings="dbd761c2ff900fd50c30f6a7-|49" defer=""></script>
+
+    <!-- <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,fr,es,de,it,hi,ja', // Add more languages if required
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+            document.body.appendChild(script);
+        });
+    </script> -->
 </body>
 
 </html>

@@ -1592,3 +1592,68 @@ $(document).ready(function () {
     });
   });
 });
+
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement(
+    {
+      pageLanguage: "en",
+      includedLanguages: "en,fr,es,de,it,hi,ja", // Add more languages if required
+      layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+    },
+    "google_translate_element"
+  );
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const script = document.createElement("script");
+  script.type = "text/javascript";
+  script.src =
+    "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+  document.body.appendChild(script);
+});
+
+$(document).ready(function () {
+        // Wait until the Google Translate widget is loaded
+        setTimeout(function () {
+            // Select the dynamically loaded Google Translate widget
+            let translateWidget = $('.goog-te-gadget-simple');
+
+            // Add Bootstrap classes for styling
+            translateWidget.addClass('form-control d-inline-block w-auto');
+            translateWidget.css({
+                'padding': '5px',
+                'background-color': '#f8f9fa', // Light background
+                'border': '1px solid #ced4da', // Border style
+                'border-radius': '5px',       // Rounded corners
+                'font-size': '14px',
+                'color': '#333',
+                'display': 'inline-flex',    // Flex for proper alignment
+                'align-items': 'center'
+            });
+
+            // Remove the border from the specific span
+            $('.VIpgJd-ZVi9od-xl07Ob-lTBxed span').css({
+                'border-left': 'none'
+            });
+
+
+
+            // Style the "Select Language" text
+            $('.VIpgJd-ZVi9od-xl07Ob-lTBxed span:first-child').css({
+                'font-weight': '',
+                'color': '#67748e', // Bootstrap primary color
+                'margin-right': '10px'
+            });
+
+            // Hide the dropdown arrow
+            $('.VIpgJd-ZVi9od-xl07Ob-lTBxed span[aria-hidden="true"]').hide();
+            $('.VIpgJd-ZVi9od-xl07Ob-lTBxed span:first').text("English");
+
+            // Style the Google Translate icon for better alignment
+            $('.goog-te-gadget-icon').css({
+                'margin-right': '10px',
+                'height': '20px',
+                'width': '20px'
+            });
+        }, 1000); // Adjust delay if needed
+    });
