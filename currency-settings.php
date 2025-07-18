@@ -442,13 +442,15 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
                                     <div class="col-lg-12">
                                         <div class="mb-3">
                                             <label class="form-label">Currency Symbol <span> *</span></label>
-                                            <input type="text" class="form-control" name="currencySymbol" required>
+                                            <input type="text" class="form-control" name="currencySymbol"
+                                                placeholder="Enter Currency Symbol" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-12">
                                         <div class="mb-3">
                                             <label class="form-label">Currency Code <span> *</span></label>
-                                            <input type="text" class="form-control" name="currencyCode" required>
+                                            <input type="text" class="form-control" placeholder="Enter Currency Code"
+                                                name="currencyCode" required>
                                         </div>
                                     </div>
 
