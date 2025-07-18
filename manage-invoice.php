@@ -204,6 +204,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForMail'])) {
         $title = !empty($emailSettingData[0]['email_from_title']) ? $emailSettingData[0]['email_from_title'] : "Vibrantick InfoTech Solution";
 
 
+        //   echo json_encode([
+//             'status' => 500,
+//             'host' => $host,
+//             'userName' => $userName,
+//             'password' => $password,
+//             'port' => $port,
+//             'title' => $title,
+//         ]);
+//         exit;
         $invoiceId = intval($_POST['invoiceIdForMail']);
         $stmtFetchCustomer = $db->prepare("SELECT invoice.*, customer.*, tax.* FROM invoice 
         INNER JOIN customer
@@ -475,7 +484,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForMail'])) {
     } catch (Exception $e) {
         echo json_encode([
             'status' => 500,
-            'error' => $e->getMessage()
+            'error' => $e->getMessage(),
         ]);
         exit;
     }
@@ -793,10 +802,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                             <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
                                             <td><?php echo $invoice['customer_name'] ?></td>
                                             <td><?php $date = new DateTime($invoice['created_at']);
-                                            echo $date->format('d M Y') ?>
+                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
                                             </td>
                                             <td><?php $date = new DateTime($invoice['due_date']);
-                                            echo $date->format('d M Y') ?>
+                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
                                             </td>
 
                                             <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>

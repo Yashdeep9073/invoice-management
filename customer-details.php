@@ -332,6 +332,12 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_FILES['excel_file'])) {
 
 
 try {
+
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+
     $stmtFetch = $db->prepare("SELECT * FROM customer");
     $stmtFetch->execute();
     $customers = $stmtFetch->get_result();
@@ -558,7 +564,7 @@ ob_end_flush();
                                             </td>
                                             <td class="ref-number"><?php echo $customer['gst_number'] ?></td>
                                             <td><?php $date = new DateTime($customer['created_at']);
-                                            echo $date->format('d M Y') ?>
+                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
                                             </td>
                                             <td>
                                                 <?php if ($customer['isActive'] == 1) { ?>

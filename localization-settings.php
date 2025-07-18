@@ -322,11 +322,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                                 <div class="col-sm-4">
                                                     <div class="localization-select">
                                                         <select class="select" name="date_format">
-                                                            <option value="d M Y" <?php echo $localizationSettings['date_format'] == "d M Y" ? "selected" : "" ?>>22 Jul 2023</option>
-                                                            <option value="M d Y" <?php echo $localizationSettings['date_format'] == "M d Y" ? "selected" : "" ?>>Jul 22 2023</option>
-                                                            <option value="Y-m-d" <?php echo $localizationSettings['date_format'] == "Y-m-d" ? "selected" : "" ?>>2023-07-22</option>
-                                                            <option value="d/m/Y" <?php echo $localizationSettings['date_format'] == "d/m/Y" ? "selected" : "" ?>>22/07/2023</option>
-                                                            <option value="Y年m月d日" <?php echo $localizationSettings['date_format'] == "Y年m月d日" ? "selected" : "" ?>>2023年07月22日</option>
+                                                            <!-- 24-hour format options -->
+                                                            <option value="d M Y H:i" <?php echo $localizationSettings['date_format'] == "d M Y H:i" ? "selected" : "" ?>>22 Jul 2023 14:30</option>
+                                                            <option value="M d Y H:i" <?php echo $localizationSettings['date_format'] == "M d Y H:i" ? "selected" : "" ?>>Jul 22 2023 14:30</option>
+                                                            <option value="Y-m-d H:i" <?php echo $localizationSettings['date_format'] == "Y-m-d H:i" ? "selected" : "" ?>>2023-07-22 14:30</option>
+                                                            <option value="d/m/Y H:i" <?php echo $localizationSettings['date_format'] == "d/m/Y H:i" ? "selected" : "" ?>>22/07/2023 14:30</option>
+                                                            <option value="Y年m月d日 H:i" <?php echo $localizationSettings['date_format'] == "Y年m月d日 H:i" ? "selected" : "" ?>>2023年07月22日 14:30</option>
+
+                                                            <!-- 12-hour format options -->
+                                                            <option value="d M Y h:i A" <?php echo $localizationSettings['date_format'] == "d M Y h:i A" ? "selected" : "" ?>>22 Jul 2023 02:30 PM</option>
+                                                            <option value="M d Y h:i A" <?php echo $localizationSettings['date_format'] == "M d Y h:i A" ? "selected" : "" ?>>Jul 22 2023 02:30 PM</option>
+                                                            <option value="Y-m-d h:i A" <?php echo $localizationSettings['date_format'] == "Y-m-d h:i A" ? "selected" : "" ?>>2023-07-22 02:30 PM</option>
+                                                            <option value="d/m/Y h:i A" <?php echo $localizationSettings['date_format'] == "d/m/Y h:i A" ? "selected" : "" ?>>22/07/2023 02:30 PM</option>
+                                                            <option value="Y年m月d日 h:i A" <?php echo $localizationSettings['date_format'] == "Y年m月d日 h:i A" ? "selected" : "" ?>>2023年07月22日 02:30 PM</option>
                                                         </select>
                                                     </div>
                                                 </div>

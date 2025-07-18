@@ -121,7 +121,6 @@ try {
                 invoice.status as invoiceStatus,
                 customer.customer_id,
                 customer.customer_name,
-                customer.gst_number,
                 admin.admin_username,
                 tax.tax_rate
                 FROM invoice 
@@ -693,12 +692,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                                 <span class="checkmarks"></span>
                                             </label>
                                         </th>
-                                        <th>Date</th>
-                                        <th>GST No</th>
-                                        <th>Party Name</th>
-                                        <th>Bill No</th>
-                                        <th>Taxable Value</th>
-                                        <th>GST</th>
+                                        <th>Invoice No</th>
+                                        <th>Customer</th>
+                                        <th>Created Date</th>
+                                        <th>Due Date</th>
+                                        <th>Amount</th>
+                                        <th>GST Amount</th>
                                         <th>Created By</th>
                                         <th>GST Status</th>
                                         <th class="no-sort text-center">Action</th>
@@ -716,14 +715,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                                     <span class="checkmarks"></span>
                                                 </label>
                                             </td>
-                                            <td><?php $date = new DateTime($invoice['created_at']);
-                                            echo $date->format('M Y') ?>
-                                            </td>
-                                            <td><?php echo $invoice['gst_number'] ?></td>
-                                            <td><?php echo $invoice['customer_name'] ?></td>
                                             <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
-
-                                            
+                                            <td><?php echo $invoice['customer_name'] ?></td>
+                                            <td><?php $date = new DateTime($invoice['created_at']);
+                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
+                                            </td>
+                                            <td><?php $date = new DateTime($invoice['due_date']);
+                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
+                                            </td>
                                             <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
                                             </td>
                                             <td><?php

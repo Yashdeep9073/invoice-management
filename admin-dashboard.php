@@ -6,6 +6,7 @@ require './database/config.php';
 require './utility/env.php';
 
 
+
 try {
 
     $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
@@ -406,9 +407,11 @@ ob_end_flush();
                                                     href="view-customer-report.php?id=<?= base64_encode($invoice['customer_id']) ?>"><?php echo $invoice['customer_name'] ?></a>
                                             </td>
                                             <td><?php $date = new DateTime($invoice['due_date']);
-                                            echo $date->format('d M Y') ?></td>
+                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
+                                            </td>
                                             <td><?php $date = new DateTime($invoice['created_at']);
-                                            echo $date->format('d M Y') ?></td>
+                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
+                                            </td>
                                             <td class="text-primary">
                                                 <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
                                             </td>

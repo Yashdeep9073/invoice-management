@@ -117,6 +117,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['taxId'])) {
 
 
 try {
+
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+
     $stmtFetch = $db->prepare("SELECT * FROM tax");
     $stmtFetch->execute();
     $taxes = $stmtFetch->get_result();
@@ -394,7 +400,8 @@ ob_end_flush();
 
                                             </td>
                                             <td><?php $date = new DateTime($tax['created_at']);
-                                            echo $date->format('d M Y') ?></td>
+                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
+                                            </td>
 
                                             <td class="text-center">
                                                 <a class="action-set" href="javascript:void(0);" data-bs-toggle="dropdown"

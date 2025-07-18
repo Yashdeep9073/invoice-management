@@ -445,7 +445,7 @@ ob_end_clean();
                                                         <td><?php echo htmlspecialchars($paidInvoice['customer_name']); ?>
                                                         </td>
                                                         <td><?php $date = new DateTime($paidInvoice['updated_at']);
-                                                        echo htmlspecialchars($date->format("d M Y h:i:A")); ?>
+                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
                                                         </td>
                                                         <td class="ref-number">
                                                             <?php echo htmlspecialchars($paidInvoice['transaction_id']); ?>
@@ -592,7 +592,7 @@ ob_end_clean();
                                                             <?php
                                                             if (!empty($pendingInvoice['updated_at'])) {
                                                                 $date = new DateTime($pendingInvoice['updated_at']);
-                                                                echo htmlspecialchars($date->format("d M Y h:i:A"));
+                                                                echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y"));
                                                             } else {
                                                                 echo "N/A"; // Or any default text
                                                             }
@@ -622,7 +622,7 @@ ob_end_clean();
                                                         <td><?php echo $pendingInvoice['discount']; ?>%</td>
                                                         <td><?php echo $pendingInvoice['tax_rate']; ?></td>
                                                         <td><?php $date = new DateTime($pendingInvoice['created_at']);
-                                                        echo htmlspecialchars($date->format("d M Y h:i:A")); ?>
+                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
                                                         </td>
                                                     </tr>
                                                 <?php } ?>
@@ -741,7 +741,7 @@ ob_end_clean();
                                                         <td><?php echo htmlspecialchars($cancelledInvoice['customer_name']); ?>
                                                         </td>
                                                         <td><?php $date = new DateTime($cancelledInvoice['updated_at']);
-                                                        echo htmlspecialchars($date->format("d M Y h:i:A")); ?>
+                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
                                                         </td>
                                                         <td class="ref-number">
                                                             <?php echo htmlspecialchars($cancelledInvoice['transaction_id']); ?>
@@ -768,7 +768,7 @@ ob_end_clean();
                                                         <td><?php echo htmlspecialchars($cancelledInvoice['tax_rate']); ?>
                                                         </td>
                                                         <td><?php $date = new DateTime($cancelledInvoice['created_at']);
-                                                        echo htmlspecialchars($date->format("d M Y h:i:A")); ?>
+                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
                                                         </td>
 
                                                     </tr>
@@ -886,7 +886,7 @@ ob_end_clean();
                                                         <td><?php echo htmlspecialchars($refundedInvoice['customer_name']); ?>
                                                         </td>
                                                         <td><?php $date = new DateTime($refundedInvoice['updated_at']);
-                                                        echo htmlspecialchars($date->format("d M Y h:i:A")); ?>
+                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
                                                         </td>
                                                         <td class="ref-number">
                                                             <?php echo htmlspecialchars($refundedInvoice['transaction_id']); ?>
@@ -913,7 +913,7 @@ ob_end_clean();
                                                         <td><?php echo htmlspecialchars($refundedInvoice['tax_rate']); ?>
                                                         </td>
                                                         <td><?php $date = new DateTime($refundedInvoice['created_at']);
-                                                        echo htmlspecialchars($date->format("d M Y h:i:A")); ?>
+                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
                                                         </td>
                                                     </tr>
                                                 <?php } ?>

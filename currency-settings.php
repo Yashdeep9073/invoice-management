@@ -17,6 +17,11 @@ try {
     $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
 }
@@ -371,7 +376,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
 
                                                                     </td>
                                                                     <td><?php $date = new DateTime($currency['created_at']);
-                                                                    echo $date->format('d M Y') ?>
+                                                                    echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
                                                                     </td>
                                                                     <td class="action-table-data justify-content-end">
                                                                         <div class="edit-delete-action">

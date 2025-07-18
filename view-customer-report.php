@@ -330,7 +330,9 @@ ob_end_clean();
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($paidInvoice['due_date']); ?></td>
+                                                        <td><?php $date = new DateTime($paidInvoice['due_date']);
+                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
+                                                        </td>
                                                         <td>
                                                             <a
                                                                 href="javascript:void(0);"><?php echo htmlspecialchars($paidInvoice['customer_name']); ?></a>
@@ -404,7 +406,9 @@ ob_end_clean();
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($pendingInvoice['due_date']); ?>
+                                                        <td><?php $date = new DateTime($pendingInvoice['due_date']);
+                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
+                                                        </td>
                                                         </td>
                                                         <td>
                                                             <a
@@ -480,7 +484,8 @@ ob_end_clean();
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($cancelledInvoice['due_date']); ?>
+                                                        <td><?php $date = new DateTime($cancelledInvoice['due_date']);
+                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
                                                         </td>
                                                         <td>
                                                             <a
@@ -557,7 +562,9 @@ ob_end_clean();
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($refundedInvoice['due_date']); ?>
+
+                                                        <td><?php $date = new DateTime($refundedInvoice['due_date']);
+                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
                                                         </td>
                                                         <td>
                                                             <a

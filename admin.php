@@ -174,6 +174,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['adminIdForDelete'])) {
 
 
 try {
+
+  $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+  $stmtFetchLocalizationSettings->execute();
+  $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+
   $stmtFetch = $db->prepare("SELECT * FROM admin");
   $stmtFetch->execute();
   $admins = $stmtFetch->get_result();
@@ -405,8 +411,9 @@ try {
                       <td>
                         <?php echo $admin['admin_email'] ?>
                       </td>
-                      <td><?php $date = new DateTime($admin['created_at']);
-                      echo $date->format('d M Y') ?>
+                      <td>
+                        <?php $date = new DateTime($admin['created_at']);
+                        echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
                       </td>
                       <td>
                         <?php if ($admin['is_active'] == 1) { ?>

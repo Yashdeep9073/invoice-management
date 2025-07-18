@@ -14,6 +14,12 @@ if (!isset($_SESSION["admin_id"])) {
 
 
 try {
+
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+
     $stmtRole = $db->prepare("Select * from roles");
     $stmtRole->execute();
     $roles = $stmtRole->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -311,7 +317,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['update'])) {
                                                     <span class="badge badge-lg bg-danger">Inactive</span>
                                                 <?php } ?>
                                             </td>
-                                            <td><?php $date = date_create($role['created_at'])->format("d-m-Y");
+                                            <td><?php $date = date_create($role['created_at'])->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y");
                                             echo $date; ?></td>
 
                                             <td class="text-center">

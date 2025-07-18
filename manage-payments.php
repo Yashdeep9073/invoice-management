@@ -223,7 +223,8 @@ try {
                                                 </label>
                                             </td>
                                             <td><?php $date = new DateTime($invoice['due_date']);
-                                            echo $date->format('d M Y') ?></td>
+                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
+                                            </td>
                                             <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
                                             <td>
                                                 <?php echo $invoice['customer_name'] ?>

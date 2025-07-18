@@ -16,6 +16,10 @@ if (!isset($_SESSION["admin_id"])) {
 
 
 try {
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
 
     $stmtFetch = $db->prepare('SELECT * FROM permissions ');
     if ($stmtFetch->execute()) {
@@ -334,7 +338,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['update'])) {
                                                     <span class="badge badge-lg bg-danger">Inactive</span>
                                                 <?php } ?>
                                             </td>
-                                            <td><?php $date = date_create($permission['created_at'])->format("d-m-Y");
+                                            <td><?php $date = date_create($permission['created_at'])->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y");
                                             echo $date; ?></td>
                                             <td class="action-table-data">
                                                 <div class="edit-delete-action">
