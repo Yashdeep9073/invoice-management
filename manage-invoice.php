@@ -25,6 +25,27 @@ try {
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
+    $stmtFetch = $db->prepare("SELECT * FROM email_settings WHERE is_active = 1 LIMIT 1");
+    $stmtFetch->execute();
+    $emailSettingData = $stmtFetch->get_result()->fetch_assoc();
+
+    // === Email Settings Fallbacks ===
+    $host = $emailSettingData['email_host'] ?? getenv("SMTP_HOST");
+    $userName = $emailSettingData['email_address'] ?? getenv('SMTP_USER_NAME');
+    $password = $emailSettingData['email_password'] ?? getenv('SMTP_PASSCODE');
+    $port = $emailSettingData['email_port'] ?? getenv('SMTP_PORT');
+    $fromTitle = $emailSettingData['email_from_title'] ?? "Vibrantick InfoTech Solution";
+    $logoUrl = getenv("BASE_URL") . $emailSettingData['logo_url'] ?? 'https://vibrantick.in/assets/images/logo/footer.png ';
+
+    $supportEmail = $emailSettingData['support_email'] ?? 'support@vibrantick.org';
+    $phone = $emailSettingData['phone'] ?? '+919870443528';
+    $address1 = $emailSettingData['address_line1'] ?? 'Vibrantick InfoTech Solution | D-185, Phase 8B, Sector 74, SAS Nagar';
+    $linkedin = $emailSettingData['linkedin_url'] ?? 'https://www.linkedin.com/company/vibrantick-infotech-solutions/posts/?feedView=all';
+    $instagram = $emailSettingData['ig_url'] ?? ' https://www.instagram.com/vibrantickinfotech/ ';
+    $facebook = $emailSettingData['fb_url'] ?? 'https://www.facebook.com/vibranticksolutions/ ';
+    $currentYear = date("Y");
+
+
     if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         // Define the expected query parameters
         $params = [
@@ -188,32 +209,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['invoiceId'])) {
 }
 
 
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForMail'])) {
+// send reminder
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForReminder'])) {
 
     try {
 
-        $stmtFetch = $db->prepare("SELECT * FROM email_settings WHERE is_active = 1");
-        $stmtFetch->execute();
-        $emailSettingData = $stmtFetch->get_result()->fetch_all(MYSQLI_ASSOC);
-
-        $host = !empty($emailSettingData[0]['email_host']) ? $emailSettingData[0]['email_host'] : getenv("SMTP_HOST");
-        $userName = !empty($emailSettingData[0]['email_address']) ? $emailSettingData[0]['email_address'] : getenv('SMTP_USER_NAME');
-        $password = !empty($emailSettingData[0]['email_password']) ? $emailSettingData[0]['email_password'] : getenv('SMTP_PASSCODE');
-        $port = !empty($emailSettingData[0]['email_port']) ? $emailSettingData[0]['email_port'] : getenv('SMTP_PORT');
-        $title = !empty($emailSettingData[0]['email_from_title']) ? $emailSettingData[0]['email_from_title'] : "Vibrantick InfoTech Solution";
-
-
-        //   echo json_encode([
-//             'status' => 500,
-//             'host' => $host,
-//             'userName' => $userName,
-//             'password' => $password,
-//             'port' => $port,
-//             'title' => $title,
-//         ]);
-//         exit;
-        $invoiceId = intval($_POST['invoiceIdForMail']);
+        $invoiceId = intval($_POST['invoiceIdForReminder']);
         $stmtFetchCustomer = $db->prepare("SELECT invoice.*, customer.*, tax.* FROM invoice 
         INNER JOIN customer
         ON customer.customer_id = invoice.customer_id
@@ -224,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForMail'])) {
         $stmtFetchCustomer->bind_param('i', $invoiceId);
 
         if ($stmtFetchCustomer->execute()) {
-            $invoices = $stmtFetchCustomer->get_result()->fetch_all(MYSQLI_ASSOC);
+            $invoices = $stmtFetchCustomer->get_result()->fetch_assoc();
 
             // Check if the invoice exists
             if (empty($invoices)) {
@@ -243,6 +244,37 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForMail'])) {
             exit;
         }
 
+        $stmtFetchEmailTemplates = $db->prepare("SELECT * FROM email_template WHERE is_active = 1 AND type = 'REMINDER' ");
+        $stmtFetchEmailTemplates->execute();
+        $emailTemplate = $stmtFetchEmailTemplates->get_result()->fetch_array(MYSQLI_ASSOC);
+
+        // === Email Template Fallbacks ===
+        $templateTitle = $emailTemplate['email_template_title'] ?? 'Payment Reminder';
+        $emailSubject = $emailTemplate['email_template_subject'] ?? 'Payment Reminder: Overdue Invoices';
+
+        $content1 = !empty($emailTemplate['content_1'])
+            ? nl2br(trim($emailTemplate['content_1']))
+            : '<p>We hope this message finds you well. The following invoice(s) are overdue. Kindly make the payment at your earliest convenience to avoid any service interruptions.</p>';
+
+        $content2 = !empty($emailTemplate['content_2'])
+            ? nl2br(trim($emailTemplate['content_2']))
+            : '
+        <p>Please settle the outstanding amount at your earliest convenience. For any questions or assistance, contact our support team at <a href="mailto:support@vibrantick.org">support@vibrantick.org</a> or call <a href="tel:+919870443528">+91-9870443528</a>.</p>
+        <p>Thank you for your prompt attention to this matter.</p>
+        <p>Best regards,<br>Vibrantick InfoTech Solution Team</p>';
+
+
+
+
+        $customerName = htmlspecialchars($invoices['customer_name']);
+        $customerEmail = htmlspecialchars($invoices['customer_email']);
+        $invoiceNumber = htmlspecialchars($invoices['invoice_number']);
+        $dueDate = htmlspecialchars($invoices['due_date']);
+        $amount = number_format((float) $invoices['amount'], 2);
+        $taxRate = htmlspecialchars($invoices['tax_rate']) ?: '0';
+        $discount = number_format((float) $invoices['discount'], 2);
+        $totalAmount = number_format((float) $invoices['total_amount'], 2);
+
         // Initialize PHPMailer
         $mail = new PHPMailer(true);
         $mail->SMTPDebug = 0; // Set to 2 for debugging
@@ -253,231 +285,200 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForMail'])) {
         $mail->Password = $password;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // 'ssl'
         $mail->Port = $port;
-        $mail->setFrom($userName, $title);
+        $mail->setFrom($userName, $fromTitle);
         $mail->isHTML(true);
 
         // Prepare statement for updating reminder_count
         $stmtUpdate = $db->prepare('UPDATE invoice SET reminder_count = reminder_count + 1 WHERE invoice_id = ?');
 
-        $emailBody = '
-        <!DOCTYPE html>
-        <html lang="en">
-
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Payment Reminder</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 0;
-                    background-color: #f4f4f4;
-                }
-
-                .container {
-                    max-width: 600px;
-                    margin: 20px auto;
-                    background-color: #ffffff;
-                    border-radius: 8px;
-                    overflow: hidden;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                }
-
-                .header {
-                    background-color: #007bff;
-                    padding: 20px;
-                    text-align: center;
-                    color: #ffffff;
-                }
-
-                .header img {
-                    max-width: 150px;
-                    height: auto;
-                    background-color: #fff;
-                }
-
-                .header h1 {
-                    margin: 10px 0;
-                    font-size: 24px;
-                }
-
-                .content {
-                    padding: 20px;
-                }
-
-                .content p {
-                    line-height: 1.6;
-                    color: #333333;
-                }
-
-                .invoice-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin: 20px 0;
-                }
-
-                .invoice-table th,
-                .invoice-table td {
-                    border: 1px solid #dddddd;
-                    padding: 12px;
-                    text-align: left;
-                }
-
-                .invoice-table th {
-                    background-color: #007bff;
-                    color: #ffffff;
-                    font-weight: bold;
-                }
-
-                .invoice-table tr:nth-child(even) {
-                    background-color: #f9f9f9;
-                }
-
-                .invoice-table tr:hover {
-                    background-color: #f1f1f1;
-                }
-
-                .footer {
-                    background-color: #f4f4f4;
-                    padding: 15px;
-                    text-align: center;
-                    font-size: 12px;
-                    color: #666666;
-                }
-
-                .footer a {
-                    color: #007bff;
-                    text-decoration: none;
-                    margin: 0 10px;
-                }
-
-                .footer img {
-                    width: 24px;
-                    height: 24px;
-                    vertical-align: middle;
-                }
-
-                .button {
-                    display: inline-block;
-                    padding: 10px 20px;
-                    background-color: #007bff;
-                    color: #ffffff;
-                    text-decoration: none;
-                    border-radius: 5px;
-                    margin-top: 20px;
-                }
-
-                @media only screen and (max-width: 600px) {
+        $emailBody = <<<HTML
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>{$templateTitle}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        background-color: #f4f4f4;
+                    }
                     .container {
-                        width: 100%;
-                        margin: 10px;
+                        max-width: 600px;
+                        margin: 20px auto;
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                     }
-
+                    .header {
+                        background-color: #007bff;
+                        padding: 20px;
+                        text-align: center;
+                        color: #ffffff;
+                    }
                     .header img {
-                        max-width: 120px;
+                        max-width: 150px;
+                        height: auto;
+                        background-color: #fff;
+                        border-radius: 4px;
                     }
-
                     .header h1 {
-                        font-size: 20px;
+                        margin: 10px 0;
+                        font-size: 24px;
                     }
-
+                    .content {
+                        padding: 20px;
+                    }
+                    .content p {
+                        line-height: 1.6;
+                        color: #333333;
+                    }
+                    .invoice-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 20px 0;
+                    }
                     .invoice-table th,
                     .invoice-table td {
-                        font-size: 14px;
-                        padding: 8px;
+                        border: 1px solid #dddddd;
+                        padding: 12px;
+                        text-align: left;
                     }
-                }
-            </style>
-        </head>
+                    .invoice-table th {
+                        background-color: #007bff;
+                        color: #ffffff;
+                        font-weight: bold;
+                    }
+                    .invoice-table tr:nth-child(even) {
+                        background-color: #f9f9f9;
+                    }
+                    .invoice-table tr:hover {
+                        background-color: #f1f1f1;
+                    }
+                    .footer {
+                        background-color: #f4f4f4;
+                        padding: 15px;
+                        text-align: center;
+                        font-size: 12px;
+                        color: #666666;
+                    }
+                    .footer a {
+                        color: #007bff;
+                        text-decoration: none;
+                        margin: 0 10px;
+                    }
+                    .footer img {
+                        width: 24px;
+                        height: 24px;
+                        vertical-align: middle;
+                    }
+                    .button {
+                        display: inline-block;
+                        padding: 10px 20px;
+                        background-color: #007bff;
+                        color: #ffffff;
+                        text-decoration: none;
+                        border-radius: 5px;
+                        margin-top: 20px;
+                    }
+                    @media only screen and (max-width: 600px) {
+                        .container {
+                            width: 100%;
+                            margin: 10px;
+                        }
+                        .header img {
+                            max-width: 120px;
+                        }
+                        .header h1 {
+                            font-size: 20px;
+                        }
+                        .invoice-table th,
+                        .invoice-table td {
+                            font-size: 14px;
+                            padding: 8px;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <!-- Header -->
+                    <div class="header">
+                        <img src="{$logoUrl}" alt="Logo" />
+                        <h1>{$templateTitle}</h1>
+                    </div>
 
-        <body>
-            <div class="container">
-                <!-- Header with Logo -->
-                <div class="header">
-                    <img src="https://vibrantick.in/assets/images/logo/footer.png" alt="Vibrantick InfoTech Solution Logo">
-                    <h1>Payment Reminder</h1>
-                </div>
-                <!-- Content -->
-                <div class="content">
-                    <p>Dear ' . $invoices['0']['customer_name'] . ',</p>
-                    <p>We hope this message finds you well. The following invoice(s) are overdue. Kindly make the payment at
-                        your earliest convenience to avoid any service interruptions.</p>
-                    <!-- Invoice Table -->
-                    <table class="invoice-table">
-                        <thead>
-                            <tr>
-                                <th>Invoice Number</th>
-                                <th>Due Date</th>
-                                <th>Amount</th>
-                                <th>Tax</th>
-                                <th>Discount</th>
-                                <th>Total Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>' . $invoices['0']['invoice_number'] . '</td>
-                                <td>' . $invoices['0']['due_date'] . '</td>
-                                <td>Rs: ' . $invoices['0']['amount'] . '</td>
-                                <td>' . $invoices['0']['tax_rate'] . '</td>
-                                <td>' . $invoices['0']['discount'] . '</td>
-                                <td>Rs: ' . $invoices['0']['total_amount'] . '</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <!-- Call to Action -->
-                    <p>Please settle the outstanding amount at your earliest convenience. For any questions or assistance,
-                        contact our support team at <a href="mailto:support@vibrantick.org">support@vibrantick.org</a> or call
-                        <a href="tel:+919870443528">+91-9870443528</a>.</p>
-                    <p>Thank you for your prompt attention to this matter.</p>
-                    <p>Best regards,<br>Vibrantick InfoTech Solution Team</p>
-                </div>
-                <!-- Footer -->
-                <div class="footer">
-                    <p>© 2025 Vibrantick InfoTech Solution. All rights reserved.</p>
-                    <p>Vibrantick InfoTech Solution | D-185, Phase 8B, Sector 74, SAS Nagar | <a
-                            href="mailto:support@vibrantick.org">support@vibrantick.org</a></p>
-                    <p>
-                        <a href="https://www.linkedin.com/company/vibrantick-infotech-solutions/posts/?feedView=all"
-                            target="_blank">
-                            <img src="https://cdn-icons-png.flaticon.com/24/174/174857.png" alt="LinkedIn">
-                        </a>
-                        <a href="https://www.instagram.com/vibrantickinfotech/" target="_blank">
-                            <img src="https://cdn-icons-png.flaticon.com/24/2111/2111463.png" alt="Instagram">
-                        </a>
-                        <a href="https://www.facebook.com/vibranticksolutions/" target="_blank">
-                            <img src="https://cdn-icons-png.flaticon.com/24/733/733547.png" alt="Facebook">
-                        </a>
-                    </p>
-                </div>
-            </div>
-        </body>
+                    <!-- Content -->
+                    <div class="content">
+                        <p>Dear {$customerName},</p>
+                        {$content1}
 
-        </html>
-        ';
+                        <!-- Invoice Table -->
+                        <table class="invoice-table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice Number</th>
+                                    <th>Due Date</th>
+                                    <th>Amount</th>
+                                    <th>Tax</th>
+                                    <th>Discount</th>
+                                    <th>Total Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{$invoiceNumber}</td>
+                                    <td>{$dueDate}</td>
+                                    <td>Rs: {$amount}</td>
+                                    <td>{$taxRate}</td>
+                                    <td>Rs: {$discount}</td>
+                                    <td><strong>Rs: {$totalAmount}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        {$content2}
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="footer">
+                        <p>&copy; {$currentYear} {$fromTitle}. All rights reserved.</p>
+                        <p>{$address1} <a href='mailto:{$supportEmail}'>{$supportEmail}</a></p>
+                        <p>
+                            <a href='{$linkedin}' target='_blank'><img src='https://cdn-icons-png.flaticon.com/24/174/174857.png ' alt='LinkedIn'></a>
+                            <a href='{$instagram}' target='_blank'><img src='https://cdn-icons-png.flaticon.com/24/2111/2111463.png ' alt='Instagram'></a>
+                            <a href='{$facebook}' target='_blank'><img src='https://cdn-icons-png.flaticon.com/24/733/733547.png ' alt='Facebook'></a>
+                        </p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            HTML;
 
         $mail->clearAddresses();
-        $mail->addAddress($invoices['0']['customer_email'], $invoices['0']['customer_name']);
-        $mail->Subject = 'Payment Reminder: Overdue Invoices';
+        $mail->addAddress($customerEmail, $customerName);
+        $mail->Subject = $emailSubject;
         $mail->Body = $emailBody;
 
         if ($mail->send()) {
 
             $stmtUpdate->bind_param('i', $invoiceId);
             if (!$stmtUpdate->execute()) {
-                echo "Failed to update reminder_count for invoice {$invoice['invoice_id']}\n";
+                echo "Failed to update reminder_count for invoice {$invoiceId}\n";
             }
             echo json_encode([
                 'status' => 200,
-                'message' => 'The Mail has been send to ' . $invoices['0']['customer_name'],
-                'data' => $invoices['0']['customer_email']
+                'message' => 'The Mail has been send to ' . $customerName,
+                'data' => $logoUrl
             ]);
             exit;
         } else {
             echo json_encode([
                 'status' => 403,
-                'message' => 'Unable to Send Mail to ' . $invoices['0']['customer_name'],
+                'message' => 'Unable to Send Mail to ' . $customerName,
             ]);
             exit;
         }
@@ -489,6 +490,307 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForMail'])) {
         exit;
     }
 }
+
+// send invoice
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForSend'])) {
+
+    try {
+
+        $invoiceId = intval($_POST['invoiceIdForSend']);
+        $stmtFetchCustomer = $db->prepare("SELECT invoice.*, customer.*, tax.* FROM invoice 
+        INNER JOIN customer
+        ON customer.customer_id = invoice.customer_id
+        INNER JOIN tax
+        ON tax.tax_id = invoice.tax
+        WHERE invoice.is_active = 1 AND invoice.invoice_id = ? AND invoice.status = 'PENDING'");
+
+        $stmtFetchCustomer->bind_param('i', $invoiceId);
+
+        if ($stmtFetchCustomer->execute()) {
+            $invoices = $stmtFetchCustomer->get_result()->fetch_assoc();
+
+            // Check if the invoice exists
+            if (empty($invoices)) {
+                echo json_encode([
+                    'status' => 404,
+                    'message' => "Invoice Status is Not Pending"
+                ]);
+                exit; // Stop further execution
+            }
+
+        } else {
+            echo json_encode([
+                'status' => 500,
+                'message' => "Database Query Execution Failed"
+            ]);
+            exit;
+        }
+
+        //GENERATE PDF CONTENT FROM download-invoice.php
+        ob_start(); // Capture any output
+
+        // Simulate GET request to download-invoice.php
+        $_GET['id'] = base64_encode($invoiceId); // Match how download-invoice.php expects it
+
+        // Include the file – it will generate PDF in memory
+        require './download-invoice.php'; // This calls $pdf->Output() internally
+
+        $pdfContent = ob_get_clean(); // Capture raw PDF output
+
+        if (empty($pdfContent)) {
+            echo json_encode(['status' => 500, 'message' => 'Failed to generate PDF']);
+            exit;
+        }
+
+        $stmtFetchEmailTemplates = $db->prepare("SELECT * FROM email_template WHERE is_active = 1 AND type = 'ISSUED' ");
+        $stmtFetchEmailTemplates->execute();
+        $emailTemplate = $stmtFetchEmailTemplates->get_result()->fetch_array(MYSQLI_ASSOC);
+
+        // === Email Template Fallbacks ===
+        $templateTitle = $emailTemplate['email_template_title'] ?? 'Invoice Issued';
+        $emailSubject = $emailTemplate['email_template_subject'] ?? 'Payment Request: Invoice from Vibrantick InfoTech';
+
+        $content1 = !empty($emailTemplate['content_1'])
+            ? nl2br(trim($emailTemplate['content_1']))
+            : '<p>We are pleased to inform you that your invoice has been successfully generated. Please review the details below and make the payment before the due date to ensure uninterrupted service.</p>';
+
+        $content2 = !empty($emailTemplate['content_2'])
+            ? nl2br(trim($emailTemplate['content_2']))
+            : '
+            <p>If you have already made this payment, thank you! Please disregard this email or contact us if you need a receipt. For any questions or assistance, contact our support team at <a href="mailto:support@vibrantick.org">support@vibrantick.org</a> or call <a href="tel:+919870443528">+91-9870443528</a>.</p>
+            <p>Thank you for your prompt attention to this matter.</p>
+            <p>Best regards,<br>Vibrantick InfoTech Solution Team</p>';
+
+
+        $customerName = htmlspecialchars($invoices['customer_name']);
+        $customerEmail = htmlspecialchars($invoices['customer_email']);
+        $invoiceNumber = htmlspecialchars($invoices['invoice_number']);
+        $dueDate = htmlspecialchars($invoices['due_date']);
+        $amount = number_format((float) $invoices['amount'], 2);
+        $taxRate = htmlspecialchars($invoices['tax_rate']) ?: '0';
+        $discount = number_format((float) $invoices['discount'], 2);
+        $totalAmount = number_format((float) $invoices['total_amount'], 2);
+
+        // Initialize PHPMailer
+        $mail = new PHPMailer(true);
+        $mail->SMTPDebug = 0; // Set to 2 for debugging
+        $mail->isSMTP();
+        $mail->Host = $host;
+        $mail->SMTPAuth = true;
+        $mail->Username = $userName;
+        $mail->Password = $password;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // 'ssl'
+        $mail->Port = $port;
+        $mail->setFrom($userName, $fromTitle);
+        $mail->isHTML(true);
+
+        // Prepare statement for updating reminder_count
+        $stmtUpdate = $db->prepare('UPDATE invoice SET reminder_count = reminder_count + 1 WHERE invoice_id = ?');
+
+        $emailBody = <<<HTML
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>{$templateTitle}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        background-color: #f4f4f4;
+                    }
+                    .container {
+                        max-width: 600px;
+                        margin: 20px auto;
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    }
+                    .header {
+                        background-color: #007bff;
+                        padding: 20px;
+                        text-align: center;
+                        color: #ffffff;
+                    }
+                    .header img {
+                        max-width: 150px;
+                        height: auto;
+                        background-color: #fff;
+                        border-radius: 4px;
+                    }
+                    .header h1 {
+                        margin: 10px 0;
+                        font-size: 24px;
+                    }
+                    .content {
+                        padding: 20px;
+                    }
+                    .content p {
+                        line-height: 1.6;
+                        color: #333333;
+                    }
+                    .invoice-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 20px 0;
+                    }
+                    .invoice-table th,
+                    .invoice-table td {
+                        border: 1px solid #dddddd;
+                        padding: 12px;
+                        text-align: left;
+                    }
+                    .invoice-table th {
+                        background-color: #007bff;
+                        color: #ffffff;
+                        font-weight: bold;
+                    }
+                    .invoice-table tr:nth-child(even) {
+                        background-color: #f9f9f9;
+                    }
+                    .invoice-table tr:hover {
+                        background-color: #f1f1f1;
+                    }
+                    .footer {
+                        background-color: #f4f4f4;
+                        padding: 15px;
+                        text-align: center;
+                        font-size: 12px;
+                        color: #666666;
+                    }
+                    .footer a {
+                        color: #007bff;
+                        text-decoration: none;
+                        margin: 0 10px;
+                    }
+                    .footer img {
+                        width: 24px;
+                        height: 24px;
+                        vertical-align: middle;
+                    }
+                    .button {
+                        display: inline-block;
+                        padding: 10px 20px;
+                        background-color: #007bff;
+                        color: #ffffff;
+                        text-decoration: none;
+                        border-radius: 5px;
+                        margin-top: 20px;
+                    }
+                    @media only screen and (max-width: 600px) {
+                        .container {
+                            width: 100%;
+                            margin: 10px;
+                        }
+                        .header img {
+                            max-width: 120px;
+                        }
+                        .header h1 {
+                            font-size: 20px;
+                        }
+                        .invoice-table th,
+                        .invoice-table td {
+                            font-size: 14px;
+                            padding: 8px;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <!-- Header -->
+                    <div class="header">
+                        <img src="{$logoUrl}" alt="Logo" />
+                        <h1>{$templateTitle}</h1>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="content">
+                        <p>Dear {$customerName},</p>
+                        {$content1}
+
+                        <!-- Invoice Table -->
+                        <table class="invoice-table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice Number</th>
+                                    <th>Due Date</th>
+                                    <th>Amount</th>
+                                    <th>Tax</th>
+                                    <th>Discount</th>
+                                    <th>Total Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{$invoiceNumber}</td>
+                                    <td>{$dueDate}</td>
+                                    <td>Rs: {$amount}</td>
+                                    <td>{$taxRate}</td>
+                                    <td>Rs: {$discount}</td>
+                                    <td><strong>Rs: {$totalAmount}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        {$content2}
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="footer">
+                        <p>&copy; {$currentYear} {$fromTitle}. All rights reserved.</p>
+                        <p>{$address1} <a href='mailto:{$supportEmail}'>{$supportEmail}</a></p>
+                        <p>
+                            <a href='{$linkedin}' target='_blank'><img src='https://cdn-icons-png.flaticon.com/24/174/174857.png ' alt='LinkedIn'></a>
+                            <a href='{$instagram}' target='_blank'><img src='https://cdn-icons-png.flaticon.com/24/2111/2111463.png ' alt='Instagram'></a>
+                            <a href='{$facebook}' target='_blank'><img src='https://cdn-icons-png.flaticon.com/24/733/733547.png ' alt='Facebook'></a>
+                        </p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            HTML;
+
+        $mail->clearAddresses();
+        $mail->addAddress($customerEmail, $customerName);
+        $mail->Subject = $emailSubject;
+        $mail->Body = $emailBody;
+
+        // ✅ Attach the generated PDF as file
+        $mail->addStringAttachment($pdfContent, "Invoice-$invoiceNumber.pdf", 'base64', 'application/pdf');
+
+        if ($mail->send()) {
+
+            $stmtUpdate->bind_param('i', $invoiceId);
+            if (!$stmtUpdate->execute()) {
+                echo "Failed to update reminder_count for invoice {$invoiceId}\n";
+            }
+            echo json_encode([
+                'status' => 200,
+                'message' => 'The Mail has been send to ' . $customerName,
+                'data' => $logoUrl
+            ]);
+            exit;
+        } else {
+            echo json_encode([
+                'status' => 403,
+                'message' => 'Unable to Send Mail to ' . $customerName,
+            ]);
+            exit;
+        }
+    } catch (Exception $e) {
+        echo json_encode([
+            'status' => 500,
+            'error' => $e->getMessage(),
+        ]);
+        exit;
+    }
+}
+
+
 
 // delete multiple invoice
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
@@ -868,13 +1170,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                                     data-feather="trash-2" class="info-img"></i>Delete </a>
                                                         </li>
                                                     <?php endif; ?>
-                                                    <?php if ($isAdmin || hasPermission('Send Mail', $privileges, $roleData['0']['role_name'])): ?>
+                                                    <?php if ($isAdmin || hasPermission('Send Reminder', $privileges, $roleData['0']['role_name'])): ?>
 
                                                         <li>
                                                             <a href="javascript:void(0);"
                                                                 data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
-                                                                class="dropdown-item sendMail mb-0"><i data-feather="send"
-                                                                    class="info-img"></i>Send Mail </a>
+                                                                class="dropdown-item sendReminder mb-0"><i data-feather="bell"
+                                                                    class="info-img"></i>Send Reminder </a>
+                                                        </li>
+                                                    <?php endif; ?>
+
+                                                    <?php if ($isAdmin || hasPermission('Send Invoice', $privileges, $roleData['0']['role_name'])): ?>
+
+                                                        <li>
+                                                            <a href="javascript:void(0);"
+                                                                data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
+                                                                class="dropdown-item sendInvoice mb-0"><i data-feather="send"
+                                                                    class="info-img"></i>Send Invoice </a>
                                                         </li>
                                                     <?php endif; ?>
                                                 </ul>
@@ -1010,12 +1322,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                 });
             });
 
-            $(document).on('click', '.sendMail', function (e) {
+            $(document).on('click', '.sendReminder', function (e) {
                 e.preventDefault();
 
                 let invoiceId = $(this).data('invoice-id');
-
-
                 Swal.fire({
                     title: "Are you sure?",
                     text: "You won't be able to revert this!",
@@ -1029,7 +1339,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                         $.ajax({
                             url: 'manage-invoice.php', // The PHP file that will handle the deletion
                             type: 'POST',
-                            data: { invoiceIdForMail: invoiceId },
+                            data: { invoiceIdForReminder: invoiceId },
                             success: function (response) {
                                 let result = JSON.parse(response);
                                 console.log(result);
@@ -1069,9 +1379,68 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                         });
                     }
                 });
+            });
+
+            $(document).on('click', '.sendInvoice', function (e) {
+                e.preventDefault();
+
+                let invoiceId = $(this).data('invoice-id');
 
 
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "You won't be able to revert this!",
+                    showCancelButton: true,
+                    confirmButtonColor: "#ff9f43",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, Send Mail!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Send AJAX request to delete the record from the database
+                        $.ajax({
+                            url: 'manage-invoice.php', // The PHP file that will handle the deletion
+                            type: 'POST',
+                            data: { invoiceIdForSend: invoiceId },
+                            success: function (response) {
+                                console.log(response);
+                                let result = JSON.parse(response);
+                                console.log(result);
 
+                                if (result.status == 200) {
+                                    // Show success message and reload the page
+                                    Swal.fire(
+                                        'Send!',
+                                        result.message,
+                                        'success' // Added 'success' to show the success icon
+                                    ).then(() => {
+                                        // Reload the page
+                                        location.reload();
+                                    });
+                                }
+                                if (result.status == 404) {
+                                    // Show success message and reload the page
+                                    Swal.fire(
+                                        'Error!',
+                                        result.message,
+                                        'error' // Added 'success' to show the success icon
+                                    ).then(() => {
+                                        // Reload the page
+                                        location.reload();
+                                    });
+                                }
+
+                            },
+                            error: function (xhr, status, error) {
+                                // Show error message if the AJAX request fails
+                                Swal.fire(
+                                    'Error!',
+                                    'There was an error sending the mail.',
+                                    'error'
+                                );
+                            }
+                        });
+                    }
+                });
             });
 
             $(document).on('click', '.multi-delete-button', function (e) {

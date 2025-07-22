@@ -9,15 +9,45 @@ use PHPMailer\PHPMailer\Exception;
 
 try {
 
-    $stmtFetch = $db->prepare("SELECT * FROM email_settings WHERE is_active = 1");
+    $stmtFetch = $db->prepare("SELECT * FROM email_settings WHERE is_active = 1 LIMIT 1");
     $stmtFetch->execute();
-    $emailSettingData = $stmtFetch->get_result()->fetch_all(MYSQLI_ASSOC);
+    $emailSettingData = $stmtFetch->get_result()->fetch_assoc();
 
-    $host = !empty($emailSettingData[0]['email_host']) ? $emailSettingData[0]['email_host'] : getenv("SMTP_HOST");
-    $userName = !empty($emailSettingData[0]['email_address']) ? $emailSettingData[0]['email_address'] : getenv('SMTP_USER_NAME');
-    $password = !empty($emailSettingData[0]['email_password']) ? $emailSettingData[0]['email_password'] : getenv('SMTP_PASSCODE');
-    $port = !empty($emailSettingData[0]['email_port']) ? $emailSettingData[0]['email_port'] : getenv('SMTP_PORT');
-    $title = !empty($emailSettingData[0]['email_from_title']) ? $emailSettingData[0]['email_from_title'] : "Vibrantick InfoTech Solution";
+    // === Email Settings Fallbacks ===
+    $host = $emailSettingData['email_host'] ?? getenv("SMTP_HOST");
+    $userName = $emailSettingData['email_address'] ?? getenv('SMTP_USER_NAME');
+    $password = $emailSettingData['email_password'] ?? getenv('SMTP_PASSCODE');
+    $port = $emailSettingData['email_port'] ?? getenv('SMTP_PORT');
+    $fromTitle = $emailSettingData['email_from_title'] ?? "Vibrantick InfoTech Solution";
+    $logoUrl = getenv("BASE_URL") . $emailSettingData['logo_url'] ?? 'https://vibrantick.in/assets/images/logo/footer.png ';
+
+    $supportEmail = $emailSettingData['support_email'] ?? 'support@vibrantick.org';
+    $phone = $emailSettingData['phone'] ?? '+919870443528';
+    $address1 = $emailSettingData['address_line1'] ?? 'Vibrantick InfoTech Solution | D-185, Phase 8B, Sector 74, SAS Nagar';
+    $linkedin = $emailSettingData['linkedin_url'] ?? 'https://www.linkedin.com/company/vibrantick-infotech-solutions/posts/?feedView=all';
+    $instagram = $emailSettingData['ig_url'] ?? ' https://www.instagram.com/vibrantickinfotech/ ';
+    $facebook = $emailSettingData['fb_url'] ?? 'https://www.facebook.com/vibranticksolutions/ ';
+    $currentYear = date("Y");
+
+
+    $stmtFetchEmailTemplates = $db->prepare("SELECT * FROM email_template WHERE is_active = 1 AND type = 'REMINDER' ");
+    $stmtFetchEmailTemplates->execute();
+    $emailTemplate = $stmtFetchEmailTemplates->get_result()->fetch_array(MYSQLI_ASSOC);
+
+    // === Email Template Fallbacks ===
+    $templateTitle = $emailTemplate['email_template_title'] ?? 'Payment Reminder';
+    $emailSubject = $emailTemplate['email_template_subject'] ?? 'Payment Reminder: Overdue Invoices';
+
+    $content1 = !empty($emailTemplate['content_1'])
+        ? nl2br(trim($emailTemplate['content_1']))
+        : '<p>We hope this message finds you well. The following invoice(s) are overdue. Kindly make the payment at your earliest convenience to avoid any service interruptions.</p>';
+
+    $content2 = !empty($emailTemplate['content_2'])
+        ? nl2br(trim($emailTemplate['content_2']))
+        : '
+        <p>Please settle the outstanding amount at your earliest convenience. For any questions or assistance, contact our support team at <a href="mailto:support@vibrantick.org">support@vibrantick.org</a> or call <a href="tel:+919870443528">+91-9870443528</a>.</p>
+        <p>Thank you for your prompt attention to this matter.</p>
+        <p>Best regards,<br>Vibrantick InfoTech Solution Team</p>';
 
     // Get current date for due_date comparison
     $currentDate = date('Y-m-d');
@@ -89,7 +119,7 @@ try {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Payment Reminder</title>
+            <title>' . ($logoUrl) . '</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
                 .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -119,14 +149,14 @@ try {
             <div class="container">
                 <!-- Header with Logo -->
                 <div class="header">
-                    <img src="https://vibrantick.in/assets/images/logo/footer.png" alt="Vibrantick InfoTech Solution Logo">
-                    <h1>Payment Reminder</h1>
+                    <img src="' . ($logoUrl) . '" alt="Logo">
+                    <h1>' . ($templateTitle) . '</h1>
                 </div>
                 <!-- Content -->
                 <div class="content">
-                    <p>Dear ' . htmlspecialchars($customerName) . ',</p>
-                    <p>We hope this message finds you well. The following invoice(s) are overdue. Kindly make the payment at your earliest convenience to avoid any service interruptions.</p>
-                    <!-- Invoice Table -->
+                    <p>Dear ' . htmlspecialchars($customerName) . ',</p>' .
+            ($content1)
+            . '
                     <table class="invoice-table">
                         <thead>
                             <tr>
@@ -157,24 +187,21 @@ try {
 
         $emailBody .= '
                         </tbody>
-                    </table>
-                    <!-- Call to Action -->
-                    <p>Please settle the outstanding amount at your earliest convenience. For any questions or assistance, contact our support team at <a href="mailto:support@vibrantick.in">support@vibrantick.org</a> or call <a href="tel:+919870443528">+91-9870443528</a>.</p>
-                    <p>Thank you for your prompt attention to this matter.</p>
-                    <p>Best regards,<br>Vibrantick InfoTech Solution Team</p>
-                </div>
+                    </table>' .
+            ($content2)
+            . '</div>
                 <!-- Footer -->
                 <div class="footer">
-                    <p>&copy; ' . date('Y') . ' Vibrantick InfoTech Solution. All rights reserved.</p>
-                    <p>Vibrantick InfoTech Solution | D-185, Phase 8B, Sector 74, SAS Nagar | <a href="mailto:support@vibrantick.org">support@vibrantick.org</a></p>
+                    <p>&copy; ' . date('Y') . $fromTitle . '. All rights reserved.</p>
+                    <p>' . ($address1) . '<a href="mailto:' . ($supportEmail) . '">' . ($supportEmail) . '</a></p>
                     <p>
-                        <a href="https://www.linkedin.com/company/vibrantick-infotech-solutions/posts/?feedView=all" target="_blank">
+                        <a href="' . ($linkedin) . '" target="_blank">
                             <img src="https://cdn-icons-png.flaticon.com/24/174/174857.png" alt="LinkedIn">
                         </a>
-                    <a href="https://www.instagram.com/vibrantickinfotech/" target="_blank">
+                    <a href="' . ($instagram) . '" target="_blank">
                         <img src="https://cdn-icons-png.flaticon.com/24/2111/2111463.png" alt="Instagram">
                     </a>
-                        <a href="https://www.facebook.com/vibranticksolutions/" target="_blank">
+                        <a href="' . ($facebook) . '" target="_blank">
                             <img src="https://cdn-icons-png.flaticon.com/24/733/733547.png" alt="Facebook">
                         </a>
                     </p>
@@ -187,7 +214,7 @@ try {
         // Set email details
         $mail->clearAddresses();
         $mail->addAddress($customerEmail, $customerName);
-        $mail->Subject = 'Payment Reminder: Overdue Invoices';
+        $mail->Subject = $emailSubject;
         $mail->Body = $emailBody;
         $mail->AltBody = "Dear {$customerName},\n\nThe following invoice(s) are overdue:\n\n" .
             implode("\n", array_map(function ($invoice) {

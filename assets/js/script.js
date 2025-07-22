@@ -1593,16 +1593,16 @@ $(document).ready(function () {
   });
 });
 
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement(
-    {
-      pageLanguage: "en",
-      includedLanguages: "en,fr,es,de,it,hi,ja", // Add more languages if required
-      layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-    },
-    "google_translate_element"
-  );
-}
+  function googleTranslateElementInit() {
+    new google.translate.TranslateElement(
+      {
+        pageLanguage: "en",
+        includedLanguages: "en,fr,es,de,it,hi,ja", // Add more languages if required
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+      },
+      "google_translate_element"
+    );
+  }
 
 document.addEventListener("DOMContentLoaded", function () {
   const script = document.createElement("script");

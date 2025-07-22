@@ -82,8 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
         // echo "<pre>";
         // print_r($_POST);
         // exit();
-
-
         if (isset($_POST['invoice_settings_id']) && $_POST['invoice_settings_id'] != "") {
             $invoiceSettingsId = $_POST["invoice_settings_id"];
             $invoicePrefix = $_POST["invoicePrefix"];
@@ -455,12 +453,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <!-- <div class="col-md-2">
+                                                    <div class="col-md-2">
                                                         <div class="new-logo ms-auto">
-                                                            <a href="#"><img src="assets/img/logo-small.png"
-                                                                    alt="Logo" /></a>
+                                                            <a target="_blank"
+                                                                href="<?= isset($invoiceSettings["template"]) ? $invoiceSettings["template"] : "public\assets\invoice-temp\invoice-temp-1.pdf" ?>">
+                                                                <i class="fe fe-eye" data-feather="eye"></i>
+                                                            </a>
                                                         </div>
-                                                    </div> -->
+                                                    </div>
                                                 </div>
                                             </li>
                                         </ul>

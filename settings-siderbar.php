@@ -8,6 +8,8 @@
                     Settings</a></li>
             <li><a href="email-settings.php">Email</a>
             </li>
+            <li><a href="email-template-settings.php">Email Template</a>
+            </li>
             <li><a href="company-settings.php">Company Settings</a>
             </li>
             <li>

@@ -126,10 +126,20 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         $discount = filter_input(INPUT_POST, 'discount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $totalAmount = filter_input(INPUT_POST, 'total_amount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $invoiceTitle = htmlspecialchars($_POST["invoice_title"], ENT_QUOTES, 'UTF-8');
-        $repeatCycle = htmlspecialchars($_POST["repeatCycle"], ENT_QUOTES, 'UTF-8');
         $createBefore = htmlspecialchars($_POST["createBefore"], ENT_QUOTES, 'UTF-8');
 
         $createdBy = base64_decode($_SESSION['admin_id']);
+
+        // Normalize and validate repeatCycle
+        $validCycles = ['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'SEMIQUARTERLY', 'ANNUALLY', 'BIENNIALLY'];
+
+        $inputCycle = strtoupper(trim($_POST['repeatCycle'] ?? ''));
+
+        if (in_array($inputCycle, $validCycles)) {
+            $repeatCycle = $inputCycle;
+        } else {
+            $repeatCycle = null; // since column allows NULL
+        }
 
         // Handle serviceName array
         $serviceIds = isset($_POST['serviceName']) && is_array($_POST['serviceName'])

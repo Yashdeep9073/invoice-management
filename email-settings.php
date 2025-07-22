@@ -14,7 +14,7 @@ use PHPMailer\PHPMailer\Exception;
 
 
 // Define the upload directory
-$uploadDirectory = 'public/upload/auth/images/';
+$uploadDirectory = 'public/upload/emailSetting/images/';
 
 try {
     $stmtFetch = $db->prepare("SELECT * FROM email_settings");
@@ -24,6 +24,60 @@ try {
     $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+    function uploadImage($file, $uploadDirectory)
+    {
+        // Check if the upload directory exists, if not, create it
+        if (!is_dir($uploadDirectory)) {
+            mkdir($uploadDirectory, 0777, true); // Create directory with permissions
+        }
+
+        // Get file details
+        $fileName = basename($file['name']); // File name (e.g., bg.jpg)
+        $fileTmpPath = $file['tmp_name']; // Temporary file path on the server
+        $fileSize = $file['size']; // File size in bytes
+        $fileType = strtolower(pathinfo($fileName, PATHINFO_EXTENSION)); // File extension (e.g., jpg)
+
+        // Allowed file types
+        $allowedTypes = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'svg'];
+
+        // Maximum file size (e.g., 2MB = 2 * 1024 * 1024 bytes)
+        $maxFileSize = 2 * 1024 * 1024;
+
+        // Validate file type
+        if (!in_array($fileType, $allowedTypes)) {
+            return [
+                "status" => false,
+                "error" => "Error: Invalid file type. Only JPG, JPEG, PNG, and GIF files are allowed."
+            ];
+        }
+
+        // Validate file size
+        if ($fileSize > $maxFileSize) {
+            return [
+                "status" => false,
+                "error" => "Error: File size exceeds the maximum limit of 2MB."
+            ];
+        }
+
+        // Generate a unique file name to avoid overwriting
+        $newFileName = uniqid('img_', true) . '.' . $fileType; // e.g., img_123456789.jpg
+        $destinationPath = $uploadDirectory . $newFileName;
+
+        // Move the uploaded file to the destination directory
+        if (move_uploaded_file($fileTmpPath, $destinationPath)) {
+            return [
+                "status" => true,
+                "data" => $newFileName,
+                "full_path" => $destinationPath // Return the full path for reference
+            ];
+        } else {
+            return [
+                "status" => false,
+                "error" => "Error: Failed to upload the file."
+            ];
+        }
+    }
 
 
 } catch (Exception $e) {
@@ -180,6 +234,126 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['send-mail'])) {
         header("Location: email-settings.php");
         exit;
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['addAddress'])) {
+
+    try {
+        //code...
+
+
+        if ($_POST['type'] === "insert") {
+            $addressEmailSettingId = $_POST['addressEmailSettingId'];
+            $emailAddress = $_POST['emailAddress'];
+            $phone = $_POST['phone'];
+            $addressLine = $_POST['addressLine'];
+            $linkedinUrl = $_POST['linkedinUrl'];
+            $instagramUrl = $_POST['instagramUrl'];
+            $facebookUrl = $_POST['facebookUrl'];
+            $mailLogo = $_FILES['mailLogo'];
+
+            if ($mailLogo['name'] != "") {
+                $uploadedLogo = uploadImage($mailLogo, $uploadDirectory);
+                if ($uploadedLogo['status']) {
+                    $logoUrl = $uploadedLogo['full_path'];
+                } else {
+                    $_SESSION['error'] = $uploadedLogo['error'];
+                    header("Location: email-settings.php");
+                    exit;
+                }
+            }
+
+            $db->begin_transaction();
+
+            $stmtAddAddress = $db->prepare("UPDATE email_settings SET 
+             logo_url = ?,
+             support_email = ?,
+             phone = ?,
+             address_line1 = ?,
+             ig_url = ?,
+             fb_url = ?,
+             linkedin_url = ?
+             WHERE email_settings_id = ?");
+
+            $stmtAddAddress->bind_param(
+                "sssssssi",
+                $logoUrl,
+                $emailAddress,
+                $phone,
+                $addressLine,
+                $instagramUrl,
+                $facebookUrl,
+                $linkedinUrl,
+                $addressEmailSettingId
+            );
+            $stmtAddAddress->execute();
+            $db->commit(); // Commit transaction
+
+            $_SESSION['success'] = "Address Update Successfully";
+            header("Location: email-settings.php");
+        } else if ($_POST['type'] === "update") {
+            $addressEmailSettingId = $_POST['addressEmailSettingId'];
+            $emailAddress = $_POST['emailAddress'];
+            $phone = $_POST['phone'];
+            $addressLine = $_POST['addressLine'];
+            $linkedinUrl = $_POST['linkedinUrl'];
+            $instagramUrl = $_POST['instagramUrl'];
+            $facebookUrl = $_POST['facebookUrl'];
+            $mailLogo = $_FILES['mailLogo'];
+
+            // exiting 
+            $logoUrl = $emailSettingData[0]["logo_url"];
+
+            if ($mailLogo['name'] != "") {
+                $uploadedLogo = uploadImage($mailLogo, $uploadDirectory);
+                if ($uploadedLogo['status']) {
+                    $logoUrl = $uploadedLogo['full_path'];
+                } else {
+                    $_SESSION['error'] = $uploadedLogo['error'];
+                    header("Location: email-settings.php");
+                    exit;
+                }
+            }
+
+            $db->begin_transaction();
+
+            $stmtAddAddress = $db->prepare("UPDATE email_settings SET 
+             logo_url = ?,
+             support_email = ?,
+             phone = ?,
+             address_line1 = ?,
+             ig_url = ?,
+             fb_url = ?,
+             linkedin_url = ?
+             WHERE email_settings_id = ?");
+
+            $stmtAddAddress->bind_param(
+                "sssssssi",
+                $logoUrl,
+                $emailAddress,
+                $phone,
+                $addressLine,
+                $instagramUrl,
+                $facebookUrl,
+                $linkedinUrl,
+                $addressEmailSettingId
+            );
+            $stmtAddAddress->execute();
+            $db->commit(); // Commit transaction
+
+            $_SESSION['success'] = "Address Update Successfully";
+            header("Location: email-settings.php");
+
+
+
+        }
+        exit;
+    } catch (\Throwable $th) {
+        $_SESSION['error'] = $th->getMessage();
+        header("Location: email-settings.php");
+        exit;
+    }
+
 }
 
 
@@ -392,8 +566,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['send-mail'])) {
                                                                             <span class="checkmarks"></span>
                                                                         </label>
                                                                     </td>
+
                                                                     <td class="">
-                                                                        <?php echo $data['email_from_title'] ?>
+                                                                        <div class="productimgname">
+                                                                            <a href="javascript:void(0);"
+                                                                                class="product-img stock-img">
+                                                                                <img src="<?= !empty($emailSettingData[0]["logo_url"]) ? $emailSettingData[0]["logo_url"] : "assets/img/products/stock-img-01.png" ?>"
+                                                                                    alt="product">
+                                                                            </a>
+                                                                            <a href="javascript:void(0);"><?php echo $data['email_from_title'] ?>
+                                                                            </a>
+                                                                        </div>
                                                                     </td>
                                                                     <td class="ref-number">
                                                                         <?php echo $data['email_address'] ?>
@@ -435,6 +618,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['send-mail'])) {
                                                                                     class="editButton dropdown-item"><i
                                                                                         data-feather="edit"
                                                                                         class="info-img"></i>Edit
+                                                                                </a>
+                                                                            </li>
+
+                                                                            <li>
+                                                                                <a href="javascript:void(0);"
+                                                                                    data-bs-toggle="modal"
+                                                                                    data-bs-target="#add-mail"
+                                                                                    data-emailSetting-id="<?php echo $data['email_settings_id'] ?>"
+                                                                                    class="dropdown-item addAddressButton mb-0"><i
+                                                                                        data-feather="plus-circle"
+                                                                                        class="info-img"></i>Add Address
                                                                                 </a>
                                                                             </li>
 
@@ -628,6 +822,105 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['send-mail'])) {
         </div>
     </div>
 
+    <div class="modal fade" id="add-mail">
+        <div class="modal-dialog modal-dialog-centered custom-modal-two">
+            <div class="modal-content">
+                <div class="page-wrapper-new p-0">
+                    <div class="content">
+                        <div class="modal-header border-0 custom-modal-header">
+                            <div class="page-title">
+                                <h4>Add Address</h4>
+                            </div>
+                            <div
+                                class="status-toggle modal-status d-flex justify-content-between align-items-center ms-auto me-2">
+                                <input type="checkbox" id="user5" class="check" checked="">
+                                <label for="user5" class="checktoggle"> </label>
+                            </div>
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body custom-modal-body">
+                            <form action="" method="post" enctype="multipart/form-data">
+                                <input type="hidden" id="addressEmailSettingId" name="addressEmailSettingId">
+                                <input type="hidden" name="type"
+                                    value="<?= !empty($emailSettingData[0]['logo_url']) ? "update" : "insert" ?>">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-3">
+                                            <label class="form-label">Logo <span> *</span></label>
+                                            <input type="file" class="form-control" name="mailLogo"
+                                                placeholder="From Title" accept=".png,.jpeg,.jpg,.webp,.svg">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Email Address <span> *</span></label>
+                                            <input type="email" class="form-control" name="emailAddress"
+                                                value="<?= !empty($emailSettingData[0]['support_email']) ? $emailSettingData[0]['support_email'] : "" ?>"
+                                                required>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Phone <span> *</span></label>
+                                            <input type="tel" class="form-control" name="phone"
+                                                value="<?= !empty($emailSettingData[0]['phone']) ? $emailSettingData[0]['phone'] : "" ?>"
+                                                required>
+                                        </div>
+                                    </div>
+
+
+                                    <div class="col-lg-12">
+                                        <div class="mb-3">
+                                            <label class="form-label"> Address Line <span> *</span></label>
+                                            <input type="text" class="form-control" name="addressLine"
+                                                value="<?= !empty($emailSettingData[0]['address_line1']) ? $emailSettingData[0]['address_line1'] : "" ?>"
+                                                required>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-12">
+                                        <div class="mb-0">
+                                            <label class="form-label"> Linkedin Url <span> *</span></label>
+                                            <input type="url" class="form-control" name="linkedinUrl"
+                                                value="<?= !empty($emailSettingData[0]['linkedin_url']) ? $emailSettingData[0]['linkedin_url'] : "" ?>"
+                                                required>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <div class="mb-0">
+                                            <label class="form-label"> Instagram Url <span> *</span></label>
+                                            <input type="url" class="form-control" name="instagramUrl"
+                                                value="<?= !empty($emailSettingData[0]['ig_url']) ? $emailSettingData[0]['ig_url'] : "" ?>"
+                                                required>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <div class="mb-0">
+                                            <label class="form-label"> Facebook Url <span> *</span></label>
+                                            <input type="url" class="form-control" name="facebookUrl"
+                                                value="<?= !empty($emailSettingData[0]['fb_url']) ? $emailSettingData[0]['fb_url'] : "" ?>"
+                                                required>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="modal-footer-btn">
+                                    <button type="button" class="btn btn-cancel me-2"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" name="addAddress" class="btn btn-submit">Submit</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <div class="modal fade" id="test-mail">
         <div class="modal-dialog modal-dialog-centered custom-modal-two">
@@ -717,6 +1010,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['send-mail'])) {
                 $('#editEmailSettingHost').val(editEmailSettingHost);
                 $('#editEmailSettingPort').val(editEmailSettingPort);
                 $('#editEmailSettingStatus').val(editEmailSettingStatus);
+            });
+
+            $(document).on('click', '.addAddressButton', function () {
+                let editEmailSettingId = $(this).data("emailsetting-id");
+                $('#addressEmailSettingId').val(editEmailSettingId);
             });
 
 

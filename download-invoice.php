@@ -566,6 +566,7 @@ try {
     // Output final PDF
     $pdf->Output('D', ucfirst(str_replace(" ", "-", $invoice['invoice_title'])) . "-" . $invoice['invoice_number'] . '.pdf');
 
+    
 } catch (Exception $e) {
     echo "Error: " . htmlspecialchars($e->getMessage());
 }
