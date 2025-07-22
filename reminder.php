@@ -192,7 +192,7 @@ try {
             . '</div>
                 <!-- Footer -->
                 <div class="footer">
-                    <p>&copy; ' . date('Y') . $fromTitle . '. All rights reserved.</p>
+                    <p>&copy; ' . date('Y') . " " . $fromTitle . '. All rights reserved.</p>
                     <p>' . ($address1) . '<a href="mailto:' . ($supportEmail) . '">' . ($supportEmail) . '</a></p>
                     <p>
                         <a href="' . ($linkedin) . '" target="_blank">
