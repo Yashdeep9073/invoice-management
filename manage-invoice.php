@@ -1367,11 +1367,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         location.reload();
                                     });
                                 }
-                                if (result.status == 500) {
+                                if (result.status == 404) {
                                     // Show success message and reload the page
                                     Swal.fire(
                                         'Error!',
                                         result.message,
+                                        'error' // Added 'success' to show the success icon
+                                    ).then(() => {
+                                        // Reload the page
+                                        location.reload();
+                                    });
+                                }
+                                if (result.status == 500) {
+                                    // Show success message and reload the page
+                                    Swal.fire(
+                                        'Error!',
+                                        result.error,
                                         'error' // Added 'success' to show the success icon
                                     ).then(() => {
                                         // Reload the page
@@ -1440,11 +1451,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         location.reload();
                                     });
                                 }
-                                if (result.status == 500) {
+                                if (result.status == 404) {
                                     // Show success message and reload the page
                                     Swal.fire(
                                         'Error!',
                                         result.message,
+                                        'error' // Added 'success' to show the success icon
+                                    ).then(() => {
+                                        // Reload the page
+                                        location.reload();
+                                    });
+                                }
+                                if (result.status == 500) {
+                                    // Show success message and reload the page
+                                    Swal.fire(
+                                        'Error!',
+                                        result.error,
                                         'error' // Added 'success' to show the success icon
                                     ).then(() => {
                                         // Reload the page

@@ -267,6 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit'])) {
         <div class="whirly-loader"></div>
     </div>
 
+
     <div class="main-wrapper">
         <?php if (isset($_SESSION['success'])) { ?>
             <script>
