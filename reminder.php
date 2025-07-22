@@ -101,7 +101,7 @@ try {
     $mail->Password = $password;
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // 'ssl'
     $mail->Port = $port;
-    $mail->setFrom($userName, $title);
+    $mail->setFrom($userName, $fromTitle);
     $mail->isHTML(true);
 
     // Prepare statement for updating reminder_count

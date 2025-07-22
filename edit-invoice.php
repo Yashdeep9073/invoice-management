@@ -185,7 +185,16 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
 
         $setReminder = isset($_POST['setReminder']) ? (int) $_POST['setReminder'] : 0;
 
-        $repeatCycle = htmlspecialchars($_POST["repeatCycle"], ENT_QUOTES, 'UTF-8');
+        // Normalize and validate repeatCycle
+        $validCycles = ['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'SEMIQUARTERLY', 'ANNUALLY', 'BIENNIALLY'];
+
+        $inputCycle = strtoupper(trim($_POST['repeatCycle'] ?? ''));
+
+        if (in_array($inputCycle, $validCycles)) {
+            $repeatCycle = $inputCycle;
+        } else {
+            $repeatCycle = null; // since column allows NULL
+        }
         $createBefore = htmlspecialchars($_POST["createBefore"], ENT_QUOTES, 'UTF-8');
 
 
@@ -640,18 +649,24 @@ ob_end_flush();
                                                         </select>
                                                     </div>
                                                 </div>
+                                                <?php
+                                                $isRecursive = $invoices['0']['invoice_type'] == "RECURSIVE";
+                                                $hiddenClass = $isRecursive ? '' : 'apexcharts-toolbar';
+                                                $disabledAttr = $isRecursive ? '' : 'disabled';
+                                                ?>
                                                 <div
-                                                    class="col-lg-4 col-sm-6 col-12 create-before <?php echo $invoices['0']['invoice_type'] == "RECURSIVE" ? "" : "apexcharts-toolbar" ?>">
+                                                    class="col-lg-4 col-sm-6 col-12 create-before <?php echo $hiddenClass ?>">
                                                     <div class="mb-3 add-product">
-                                                        <label class="form-label">Create before (days): <span>
-                                                                *</span></label>
+                                                        <label class="form-label">Create before (days):
+                                                            <span>*</span></label>
                                                         <input type="number"
                                                             value="<?php echo $invoices[0]['create_before'] ?>" min="1"
                                                             id="createBefore" name="createBefore"
                                                             placeholder="Enter To Date" class="form-control"
-                                                            autocomplete="off">
+                                                            autocomplete="off" <?php echo $disabledAttr ?>>
                                                     </div>
                                                 </div>
+
 
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="mb-3 add-product">
