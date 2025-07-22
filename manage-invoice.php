@@ -785,6 +785,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForSend'])) {
         echo json_encode([
             'status' => 500,
             'error' => $e->getMessage(),
+            'message' => $e->getMessage(),
         ]);
         exit;
     }
