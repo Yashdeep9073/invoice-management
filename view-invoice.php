@@ -519,6 +519,21 @@ try {
     // Write the second line of the message
     $pdf->Cell(0, 0, 'fruitful relationship with our company', 0, 1);
 
+    // Add paid stamp if invoice is paid
+    if ($invoice['status'] == "PAID") {
+        $stampPath = 'public/assets/stamp/paid_stamp.png';
+        if (file_exists($stampPath)) {
+            // Small stamp (20x20 pixels)
+            // $pdf->Image($stampPath, 150, 50, 20, 20);
+
+            // Medium stamp (30x30 pixels) - recommended
+            $pdf->Image($stampPath, 170, 233, 20, 10);
+
+            // Large stamp (40x40 pixels)
+            // $pdf->Image($stampPath, 150, 50, 40, 40);
+        }
+    }
+
     // // Payment Information Section
     // $pdf->SetFont('Helvetica', 'B', 12);
     // $pdf->SetXY(20, 160);
