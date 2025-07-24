@@ -7,7 +7,7 @@ if (!isset($_SESSION["admin_id"])) {
 require "./database/config.php";
 
 // Define the upload directory
-$uploadDirectory = 'public/upload/invoice/images/';
+$uploadDirectory = 'public/upload/invoice/stamps/';
 
 try {
     $stmtFetch = $db->prepare("SELECT * FROM invoice_settings");
@@ -79,10 +79,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
     try {
 
-        // echo "<pre>";
-        // print_r($_POST);
-        // exit();
+
         if (isset($_POST['invoice_settings_id']) && $_POST['invoice_settings_id'] != "") {
+
             $invoiceSettingsId = $_POST["invoice_settings_id"];
             $invoicePrefix = $_POST["invoicePrefix"];
             $showHsnCode = !empty($_POST["showHsnCode"]) && $_POST["showHsnCode"] == "on" ? 1 : null;
@@ -92,9 +91,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
             $invoiceLogo = $_FILES["invoiceLogo"];
             $invoiceTemplate = $_FILES["invoiceTemplate"];
+            $invoiceStamp = $_FILES["invoiceStamp"];
 
             // Get existing logo/template from DB
-            $stmtFetch = $db->prepare("SELECT logo, template FROM invoice_settings WHERE invoice_settings_id = ?");
+            $stmtFetch = $db->prepare("SELECT logo, template,invoice_stamp_url FROM invoice_settings WHERE invoice_settings_id = ?");
             $stmtFetch->bind_param("i", $invoiceSettingsId);
             $stmtFetch->execute();
             $result = $stmtFetch->get_result();
@@ -103,6 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
             $logoUrl = $existing['logo'];
             $templateUrl = $existing['template'];
+            $stampUrl = $existing['invoice_stamp_url'];
+
 
             // Upload new files if provided
             if ($invoiceLogo['name'] != "") {
@@ -127,8 +129,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                 }
             }
 
+            if ($invoiceStamp['name'] != "") {
+                $uploadedStamp = uploadImage($invoiceStamp, $uploadDirectory);
+                if ($uploadedStamp['status']) {
+                    $stampUrl = $uploadedStamp['full_path'];
+                } else {
+                    $_SESSION['error'] = $uploadedStamp['error'];
+                    header("Location: invoice-settings.php");
+                    exit;
+                }
+            }
+
+
+
+
             // Update record
-            $stmtUpdate = $db->prepare("UPDATE invoice_settings SET invoice_prefix = ?, logo = ?, header_terms = ?, footer_terms = ?, template = ?, is_show_hsn = ?,is_show_bill_date = ? WHERE invoice_settings_id = ?");
+            $stmtUpdate = $db->prepare("UPDATE invoice_settings SET invoice_prefix = ?, logo = ?, header_terms = ?, footer_terms = ?, 
+            template = ?, is_show_hsn = ?,is_show_bill_date = ?,
+            invoice_stamp_url = ?
+             WHERE invoice_settings_id = ?");
             if ($stmtUpdate === false) {
                 $_SESSION['error'] = "Database prepare error: " . $db->error;
                 header("Location: invoice-settings.php");
@@ -136,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
             }
 
             $stmtUpdate->bind_param(
-                "ssssssii",
+                "ssssssisi",
                 $invoicePrefix,
                 $logoUrl,
                 $invoiceHeader,
@@ -144,6 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                 $templateUrl,
                 $showHsnCode,
                 $showBillDate,
+                $stampUrl,
                 $invoiceSettingsId
             );
 
@@ -166,20 +186,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
             $invoiceLogo = $_FILES["invoiceLogo"];
             $invoiceTemplate = $_FILES["invoiceTemplate"];
+            $invoiceStamp = $_FILES["invoiceStamp"];
 
             $uploadedLogo = uploadImage($invoiceLogo, $uploadDirectory);
             $uploadedTemplate = uploadImage($invoiceTemplate, $uploadDirectory);
+            $uploadedStamp = uploadImage($invoiceStamp, $uploadDirectory);
 
 
-            if ($uploadedLogo['status'] && $uploadedTemplate['status']) {
+            if ($uploadedLogo['status'] && $uploadedTemplate['status'] && $uploadedStamp['status']) {
                 $logoUrl = $uploadDirectory . $uploadedLogo['data'];
                 $templateUrl = $uploadDirectory . $uploadedTemplate['data'];
+                $stampUrl = $uploadedStamp['full_path'];
 
                 // Insert into database
                 $stmtInsert = $db->prepare("INSERT INTO invoice_settings (
                 invoice_prefix, logo, header_terms, footer_terms,
-                template,is_show_hsn,is_show_bill_date
-            ) VALUES (?, ?, ?, ?, ?, ?,?)");
+                template,is_show_hsn,is_show_bill_date,invoice_stamp_url
+            ) VALUES (?, ?, ?, ?, ?, ?,?,?)");
 
 
                 if ($stmtInsert === false) {
@@ -189,14 +212,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                 }
 
                 $stmtInsert->bind_param(
-                    "sssssii",
+                    "sssssiis",
                     $invoicePrefix,
                     $logoUrl,
                     $invoiceHeader,
                     $invoiceFooter,
                     $templateUrl,
                     $showHsnCode,
-                    $showBillDate
+                    $showBillDate,
+                    $stampUrl
                 );
 
                 if ($stmtInsert->execute()) {
@@ -421,6 +445,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                                                         <div class="new-logo ms-auto">
                                                             <a href="#"><img
                                                                     src="<?= isset($invoiceSettings["logo"]) ? $invoiceSettings["logo"] : "assets/img/logo-small.png" ?>"
+                                                                    alt="Logo" /></a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="logo-info me-0 mb-3 mb-md-0">
+                                                            <h6>Invoice Stamp</h6>
+                                                            <p>
+                                                                Upload Paid Stamp of your Company to display in
+                                                                Invoice
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="profile-pic-upload mb-0 me-0">
+                                                            <div class="new-employee-field">
+                                                                <div class="mb-3 mb-md-0">
+                                                                    <div class="image-upload mb-0">
+                                                                        <input type="file" accept=".png,.jpeg,.jpg,.svg"
+                                                                            name="invoiceStamp" />
+                                                                        <div class="image-uploads">
+                                                                            <h4>
+                                                                                <i data-feather="upload"></i>Upload
+                                                                            </h4>
+                                                                        </div>
+                                                                    </div>
+                                                                    <span>For better preview recommended size is
+                                                                        450px x 450px. Max size 5mb.</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="new-logo ms-auto">
+                                                            <a href="#"><img
+                                                                    src="<?= isset($invoiceSettings["invoice_stamp_url"]) ? $invoiceSettings["invoice_stamp_url"] : "public/assets/stamp/paid_stamp.png" ?>"
                                                                     alt="Logo" /></a>
                                                         </div>
                                                     </div>

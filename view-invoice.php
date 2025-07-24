@@ -206,6 +206,8 @@ try {
             border-collapse: separate;
             border-spacing: 0;
             margin: 20px 0;
+            border: 1px solid #4e4e4eff;
+
         }
 
         .invoice-table th {
@@ -244,7 +246,7 @@ try {
 
         .amount-cell {
             font-weight: 600;
-            color: #1e88e5;
+            color: #00659c;
         }
 
         .table-container {
@@ -349,7 +351,7 @@ try {
     $pdf->SetXY(20, 45);
     $pdf->Cell(22, 10, 'Invoice No: ', 0, 0); // Render "Invoice No:" in black, normal font
     $pdf->SetFont('FuturaBT-Medium', '', 12); // Set font to bold
-    $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
     $pdf->Cell(0, 10, $invoice['invoice_number'], 0, 0); // Render invoice number in bold blue
     $pdf->SetTextColor(0, 0, 0); // Reset text color to black
     $pdf->SetFont('FuturaBT-Medium', '', 12); // Reset font to normal
@@ -357,7 +359,7 @@ try {
     $labelWidth = $pdf->GetStringWidth('Date: ') + 1; // Calculate width of "Date:" with small padding
     $pdf->Cell($labelWidth, 10, 'Date: ', 0, 0); // Render "Date:" in black, normal font with exact width
     $pdf->SetFont('FuturaBT-Medium', '', 12); // Set font to bold
-    $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
     $pdf->Cell(0, 10, date('d-M-Y', strtotime($invoice['created_at'])), 0, 1); // Render date in bold blue, no gap
     $pdf->SetTextColor(0, 0, 0); // Reset text color to black
     $pdf->SetFont('FuturaBT-Medium', '', 12); // Reset font to normal
@@ -368,7 +370,7 @@ try {
 
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('FuturaBT-Medium', '', 12);
-    $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
     $pdf->SetXY(20, 55);
     $pdf->Cell(90, 10, 'Bill To:', 0, 0);
     $pdf->SetTextColor(0, 0, 0); // Reset text color to black
@@ -398,7 +400,7 @@ try {
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
         $pdf->SetXY(150, 55);
         $pdf->Cell(90, 10, 'HSN Code:', 0, 0);
-        $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+        $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
         $pdf->SetXY(172, 55);
         $pdf->SetFont('FuturaBT-Medium', '', 12);
         $pdf->Cell(90, 10, $hsnCode, 0, 0);
@@ -411,7 +413,7 @@ try {
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
         $pdf->SetXY(115, 85);
         $pdf->Cell(15, 10, 'Bill Duration:', 0, 0); // Narrower cell for label
-        $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+        $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
         $pdf->SetXY(142, 85);
         $pdf->SetFont('FuturaBT-Medium', '', 12);
         $fromDate = date('M d', strtotime(trim($invoice['from_date'])));
@@ -441,7 +443,7 @@ try {
     $lineHeight = 6;
 
     // Line 1: Total
-    $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(130, $summaryStartY);
     $formattedAmount = number_format($priceWithoutTax, 2);
@@ -452,7 +454,7 @@ try {
     $pdf->Line(130, $summaryStartY + $lineHeight + 0.5, 200, $summaryStartY + $lineHeight + 0.5);
 
     // Line 2: Discount
-    $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(130, $summaryStartY + $lineHeight + 2);
     $pdf->Cell(0, $lineHeight, 'Discount: ' . $discount . "%", 0, 1);
@@ -472,6 +474,10 @@ try {
     $pdf->SetXY(130, $summaryStartY + $lineHeight + 16);
     $pdf->SetFont('FuturaMdBT-Bold', '', 12);
     $pdf->Cell(0, $lineHeight, "Total Amount: {$currencySymbol}. " . number_format($finalTotal, 2) . "/-", 0, 1);
+
+
+    $pdf->Line(130, $summaryStartY + $lineHeight * 4 + 4, 200, $summaryStartY + $lineHeight * 4 + 4);
+
 
     // Line 5: Total Amount In Words
     $pdf->SetXY(130, $summaryStartY + $lineHeight + 26);
@@ -521,13 +527,15 @@ try {
 
     // Add paid stamp if invoice is paid
     if ($invoice['status'] == "PAID") {
-        $stampPath = 'public/assets/stamp/paid_stamp.png';
+        $stampPath = !empty($invoiceSettings['invoice_stamp_url']) ? $invoiceSettings['invoice_stamp_url'] : 'public/assets/stamp/paid_stamp.png';
+
+
         if (file_exists($stampPath)) {
             // Small stamp (20x20 pixels)
             // $pdf->Image($stampPath, 150, 50, 20, 20);
 
             // Medium stamp (30x30 pixels) - recommended
-            $pdf->Image($stampPath, 170, 233, 20, 10);
+            $pdf->Image($stampPath, 178, 228, 25, 15);
 
             // Large stamp (40x40 pixels)
             // $pdf->Image($stampPath, 150, 50, 40, 40);
@@ -537,7 +545,7 @@ try {
     // // Payment Information Section
     // $pdf->SetFont('Helvetica', 'B', 12);
     // $pdf->SetXY(20, 160);
-    // $pdf->SetTextColor(62, 144, 237); // Blue (#3e90ed)
+    // $pdf->SetTextColor(0, 101, 156); // Blue (#3e90ed)
     // $pdf->Cell(0, 5, 'Payment Information:', 0, 1);
     // $pdf->SetTextColor(0, 0, 0); // Black
 
@@ -547,7 +555,7 @@ try {
     // $pdf->SetTextColor(0, 0, 0); // Black for label
     // $pdf->Write(5, 'Payment Method: ');
     // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
-    // $pdf->SetTextColor(62, 144, 237); // Blue for value
+    // $pdf->SetTextColor(0, 101, 156); // Blue for value
     // $pdf->Write(5, $invoice['payment_method'] . "\n");
 
     // // Transaction ID
@@ -556,7 +564,7 @@ try {
     // $pdf->SetTextColor(0, 0, 0); // Black for label
     // $pdf->Write(5, 'Transaction ID: ');
     // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
-    // $pdf->SetTextColor(62, 144, 237); // Blue for value
+    // $pdf->SetTextColor(0, 101, 156); // Blue for value
     // $pdf->Write(5, $invoice['transaction_id'] . "\n");
 
     // // Payment Status
@@ -565,7 +573,7 @@ try {
     // $pdf->SetTextColor(0, 0, 0); // Black for label
     // $pdf->Write(5, 'Payment Status: ');
     // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
-    // $pdf->SetTextColor(62, 144, 237); // Blue for value
+    // $pdf->SetTextColor(0, 101, 156); // Blue for value
     // $pdf->Write(5, $invoice['paymentStatus'] . "\n");
 
     // // Due Date
@@ -574,7 +582,7 @@ try {
     // $pdf->SetTextColor(0, 0, 0); // Black for label
     // $pdf->Write(5, 'Due Date: ');
     // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
-    // $pdf->SetTextColor(62, 144, 237); // Blue for value
+    // $pdf->SetTextColor(0, 101, 156); // Blue for value
     // $pdf->Write(5, $invoice['due_date'] . "\n");
 
     // Output final PDF
