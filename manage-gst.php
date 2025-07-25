@@ -66,7 +66,7 @@ try {
             INNER JOIN customer ON customer.customer_id = invoice.customer_id
             LEFT JOIN admin ON admin.admin_id = invoice.created_by 
              INNER JOIN tax ON tax.tax_id = invoice.tax
-            WHERE invoice.is_active = 1";
+            WHERE invoice.is_active = 1 AND status IN ('PAID', 'PENDING')";
 
             $conditions = [];
             $paramsToBind = [];
@@ -129,7 +129,7 @@ try {
                 LEFT JOIN admin
                 ON admin.admin_id = invoice.created_by 
                   INNER JOIN tax ON tax.tax_id = invoice.tax
-                WHERE invoice.is_active = 1
+                WHERE invoice.is_active = 1 AND invoice.status IN ('PAID', 'PENDING')
                 ");
             if ($stmtFetchInvoices->execute()) {
                 $invoices = $stmtFetchInvoices->get_result();
@@ -451,6 +451,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
         $gstStatus = $_POST['gstStatus'];
         $invoiceId = $_POST['invoiceId'];
 
+        // echo "<pre>";
+        // print_r($_POST);
+        // exit;
+
         $stmtUpdate = $db->prepare("UPDATE invoice SET gst_status = ? WHERE invoice_id = ?");
         $stmtUpdate->bind_param("si", $gstStatus, $invoiceId);
         $stmtUpdate->execute();
@@ -706,6 +710,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                 <tbody>
                                     <?php
                                     $totalTaxAmount = 0;
+                                    $totalBaseAmount = 0;
                                     foreach ($invoices->fetch_all(MYSQLI_ASSOC) as $invoice) { ?>
                                         <tr>
                                             <td>
@@ -729,6 +734,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                             $taxRateStr = $invoice['tax_rate'];
                                             $taxRate = intval(str_replace('%', '', $taxRateStr));
                                             $priceWithoutTax = $taxRate > 0 ? $invoice['total_amount'] / (1 + $taxRate / 100) : $invoice['total_amount'];
+                                            $totalBaseAmount += $invoice['total_amount'];
                                             $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
                                             echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $taxAmount;
                                             $totalTaxAmount += $taxAmount;
@@ -771,10 +777,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="6"></td>
-                                        <td><strong><span class="text-danger">Total:
-                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalTaxAmount, 2); ?></span></strong>
-                                        </td>
+                                        <td colspan="5"></td>
+                                        <td><strong>
+                                                <span class="text-primary">Total:
+                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalBaseAmount, 2); ?>
+                                                </span>
+                                            </strong></td>
+                                        <td><strong>
+                                                <span class="text-danger">GST:
+                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalTaxAmount, 2); ?>
+                                                </span>
+                                            </strong></td>
                                         <td colspan="3"></td>
                                     </tr>
                                 </tfoot>
@@ -1083,6 +1096,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                 console.log("To Date -", toDate);
                 window.location.href = `manage-gst.php?customer=${customerId}&from=${fromDate}&to=${toDate}`;
             });
+
+
+            $(document).on('click', '.editButton', function () {
+
+                let invoiceId = $(this).data('invoice-id');
+                let gstStatus = $(this).data("gst-status");
+
+                $('#invoiceId').val(invoiceId);
+                $('#gstStatus').val(gstStatus);
+
+
+            });
+
         });
     </script>
 

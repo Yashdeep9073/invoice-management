@@ -220,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForReminder']
         ON customer.customer_id = invoice.customer_id
         INNER JOIN tax
         ON tax.tax_id = invoice.tax
-        WHERE invoice.is_active = 1 AND invoice.invoice_id = ? AND invoice.status = 'PENDING'");
+        WHERE invoice.is_active = 1 AND invoice.invoice_id = ? AND invoice.status IN ('PENDING', 'CANCELLED', 'REFUNDED') ");
 
         $stmtFetchCustomer->bind_param('i', $invoiceId);
 
@@ -502,7 +502,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForSend'])) {
         ON customer.customer_id = invoice.customer_id
         INNER JOIN tax
         ON tax.tax_id = invoice.tax
-        WHERE invoice.is_active = 1 AND invoice.invoice_id = ? AND invoice.status = 'PENDING'");
+        WHERE invoice.is_active = 1 AND invoice.invoice_id = ? AND invoice.status IN ('PENDING', 'CANCELLED', 'REFUNDED')");
 
         $stmtFetchCustomer->bind_param('i', $invoiceId);
 
@@ -1093,6 +1093,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                 <tbody>
                                     <?php
                                     $totalTaxAmount = 0;
+                                    $totalBaseAmount = 0;
+
                                     foreach ($invoices->fetch_all(MYSQLI_ASSOC) as $invoice) { ?>
                                         <tr>
                                             <td>
@@ -1117,9 +1119,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                             $taxRateStr = $invoice['tax_rate'];
                                             $taxRate = intval(str_replace('%', '', $taxRateStr));
                                             $priceWithoutTax = $taxRate > 0 ? $invoice['total_amount'] / (1 + $taxRate / 100) : $invoice['total_amount'];
+
+                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING', 'REFUNDED'])) {
+                                                $totalBaseAmount += $invoice['total_amount'];
+                                            }
+
                                             $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
                                             echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $taxAmount;
-                                            $totalTaxAmount += $taxAmount;
+                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING', 'REFUNDED'])) {
+                                                $totalTaxAmount += $taxAmount;
+                                            }
                                             ?>
                                             </td>
                                             <td><?php echo $invoice['admin_username'] ?></td>
@@ -1195,15 +1204,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         </tr>
                                     <?php } ?>
                                 </tbody>
-                                <!-- <tfoot>
+                                <tfoot>
                                     <tr>
-                                        <td colspan="6"></td>
-                                        <td><strong><span class="text-danger">Total:
-                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalTaxAmount, 2); ?></span></strong>
-                                        </td>
+                                        <td colspan="5"></td>
+                                        <td><strong>
+                                                <span class="text-primary">Total:
+                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalBaseAmount, 2); ?>
+                                                </span>
+                                            </strong></td>
+                                        <td><strong>
+                                                <span class="text-danger">GST:
+                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalTaxAmount, 2); ?>
+                                                </span>
+                                            </strong></td>
                                         <td colspan="3"></td>
                                     </tr>
-                                </tfoot> -->
+                                </tfoot>
+
                             </table>
                         </div>
                     </div>

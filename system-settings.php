@@ -10,10 +10,11 @@ require "./database/config.php";
 $uploadDirectory = 'public/upload/auth/images/';
 
 try {
-    $stmtFetch = $db->prepare("SELECT auth_banner FROM system_settings");
+    $stmtFetch = $db->prepare("SELECT * FROM system_settings");
     $stmtFetch->execute();
     $data = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
     $imageUrl = $data['auth_banner'];
+    $isRecaptchaActive = $data['is_recaptcha_active'];
 
     $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
     $stmtFetchCompanySettings->execute();
@@ -314,8 +315,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaStatus'])) {
                                                         </div>
                                                         <div
                                                             class="status-toggle modal-status d-flex justify-content-between align-items-center ms-2">
-                                                            <input type="checkbox" id="user1" class="check" checked="">
-                                                            <label for="user1" class="checktoggle"> </label>
+                                                            <input type="checkbox" id="user1" class="check"
+                                                                <?= $isRecaptchaActive ? 'checked' : '' ?>>
+                                                            <label for="user1" class="checktoggle"></label>
                                                         </div>
                                                     </div>
                                                     <p>Captcha helps protect you from spam and password decryption</p>
@@ -338,11 +340,11 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaStatus'])) {
                                                                 <h5>Auth Banner</h5>
                                                             </div>
                                                         </div>
-                                                        <div
+                                                        <!-- <div
                                                             class="status-toggle modal-status d-flex justify-content-between align-items-center ms-2">
                                                             <input type="checkbox" id="user4" class="check" checked="">
                                                             <label for="user4" class="checktoggle"> </label>
-                                                        </div>
+                                                        </div> -->
                                                     </div>
                                                     <p>Provides detailed information about geographical regions and
                                                         sites worldwide.</p>

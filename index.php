@@ -70,7 +70,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Database query to fetch admin
-    $stmt = $db->prepare("SELECT * FROM admin WHERE admin_email = ?");
+    $stmt = $db->prepare("SELECT * FROM admin WHERE admin_email = ? AND is_active = 1");
     $stmt->bind_param("s", $emailInput);
     $stmt->execute();
     $result = $stmt->get_result();

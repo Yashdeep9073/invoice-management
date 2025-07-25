@@ -15,6 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
     try {
 
+
+
+
+
         $customerName = filter_input(INPUT_POST, 'customerName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $customerPhone = filter_input(INPUT_POST, 'customerPhone', FILTER_SANITIZE_NUMBER_INT);
         $customerEmail = filter_input(INPUT_POST, 'customerEmail', FILTER_SANITIZE_EMAIL);
@@ -28,10 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
         $customerState = filter_input(INPUT_POST, 'customerState', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $customerCity = filter_input(INPUT_POST, 'customerCity', FILTER_SANITIZE_NUMBER_INT);
         $gstNumber = filter_input(INPUT_POST, 'gstNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-        // echo "<pre>";
-        // print_r($_POST);
-        // exit();
 
         $stmtInsert = $db->prepare('INSERT INTO customer 
         (
@@ -79,6 +79,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editCustomerId'])) {
     try {
+
+
+
         $editCustomerId = filter_input(INPUT_POST, 'editCustomerId', FILTER_SANITIZE_NUMBER_INT);
 
         // Initialize arrays for query fields and values
@@ -158,7 +161,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editCustomerId'])) {
         }
 
         $editCustomerStatus = filter_input(INPUT_POST, 'editCustomerStatus', FILTER_SANITIZE_NUMBER_INT);
-        if (!empty($editCustomerStatus)) {
+        if (isset($_POST['editCustomerStatus'])) {
+
             $fields[] = 'isActive = ?';
             $values[] = $editCustomerStatus;
             $types .= 'i';
@@ -174,6 +178,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editCustomerId'])) {
         // Add customer_id to the values and types
         $values[] = $editCustomerId;
         $types .= 'i';
+
+        // echo "<pre>";
+        // print_r($_POST);
+        // print_r($fields);
+        // print_r($values);
+        // print_r($editCustomerStatus);
+        // exit();
 
         // If there are fields to update, build and execute the query
         if (!empty($fields)) {
@@ -332,6 +343,12 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_FILES['excel_file'])) {
 
 
 try {
+
+    $stmtFetchCities = $db->prepare("SELECT * FROM cities");
+
+    if ($stmtFetchCities->execute()) {
+        $cities = $stmtFetchCities->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
 
     $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
     $stmtFetchLocalizationSettings->execute();
@@ -651,28 +668,27 @@ ob_end_flush();
                                         <div class="input-blocks">
                                             <label>Customer Name <span> *</span></label>
                                             <input type="text" class="form-control" name="customerName"
-                                                placeholder="Enter customer name" required>
+                                                placeholder="Enter customer name">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer Phone <span> *</span></label>
                                             <input type="tel" class="form-control" name="customerPhone"
-                                                placeholder="Enter customer phone" required>
+                                                placeholder="Enter customer phone">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer Email <span> *</span></label>
                                             <input type="email" class="form-control" name="customerEmail"
-                                                placeholder="Enter customer email" required>
+                                                placeholder="Enter customer email">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer State <span> *</span></label>
-                                            <select class="form-select" id="customerState" name="customerState"
-                                                required>
+                                            <select class="form-select" id="customerState" name="customerState">
                                                 <option>Select</option>
                                                 <?php foreach ($states as $state) { ?>
                                                     <option value="<?php echo $state['state_code']; ?>">
@@ -685,7 +701,7 @@ ob_end_flush();
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer City <span> *</span></label>
-                                            <select class="form-select" id="customerCity" name="customerCity" required>
+                                            <select class="form-select" id="customerCity" name="customerCity">
                                                 <option>Select a city</option>
                                             </select>
                                         </div>
@@ -694,42 +710,42 @@ ob_end_flush();
                                         <div class="input-blocks">
                                             <label>Customer Address <span> *</span></label>
                                             <input type="text" class="form-control" name="customerAddress"
-                                                placeholder="Enter customer address" required>
+                                                placeholder="Enter customer address">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Name <span> *</span></label>
                                             <input type="text" class="form-control" name="shippingName"
-                                                placeholder="Enter shipping name" required>
+                                                placeholder="Enter shipping name">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Phone <span> *</span></label>
                                             <input type="tel" class="form-control" name="shippingPhone"
-                                                placeholder="Enter shipping phone" required>
+                                                placeholder="Enter shipping phone">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Email <span> *</span></label>
                                             <input type="email" class="form-control" name="shippingEmail"
-                                                placeholder="Enter shipping email" required>
+                                                placeholder="Enter shipping email">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Address <span> *</span></label>
                                             <input type="text" class="form-control" name="shippingAddress"
-                                                placeholder="Enter shipping address" required>
+                                                placeholder="Enter shipping address">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>GST Numbers <span> *</span></label>
                                             <input type="text" class="form-control" name="gstNumber"
-                                                placeholder="Enter GST number" required>
+                                                placeholder="Enter GST number">
                                         </div>
                                     </div>
                                 </div>
@@ -770,28 +786,27 @@ ob_end_flush();
                                         <div class="input-blocks">
                                             <label>Customer Name</label>
                                             <input type="text" class="form-control" name="editCustomerName"
-                                                id="editCustomerName" required>
+                                                id="editCustomerName">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer Phone</label>
                                             <input type="tel" class="form-control" name="editCustomerPhone"
-                                                id="editCustomerPhone" required>
+                                                id="editCustomerPhone">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer Email</label>
                                             <input type="email" class="form-control" name="editCustomerEmail"
-                                                id="editCustomerEmail" required>
+                                                id="editCustomerEmail">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer State</label>
-                                            <select class="form-select" id="editCustomerState" name="editCustomerState"
-                                                required>
+                                            <select class="form-select" id="editCustomerState" name="editCustomerState">
                                                 <?php foreach ($states as $state) { ?>
                                                     <option value="<?php echo $state['state_code'] ?>">
                                                         <?php echo $state['state_name'] ?>
@@ -804,7 +819,10 @@ ob_end_flush();
                                         <div class="input-blocks">
                                             <label>Customer City</label>
                                             <select class=" form-select" id="editCustomerCity" name="editCustomerCity">
-
+                                                <?php foreach ($cities as $city) { ?>
+                                                    <option value="<?= $city['city_id'] ?>"><?= $city['city_name'] ?>
+                                                    </option>
+                                                <?php } ?>
                                             </select>
                                         </div>
                                     </div>
@@ -812,35 +830,35 @@ ob_end_flush();
                                         <div class="input-blocks">
                                             <label>Customer Address</label>
                                             <input type="text" class="form-control" name="editCustomerAddress"
-                                                id="editCustomerAddress" required>
+                                                id="editCustomerAddress">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Name</label>
                                             <input type="text" class="form-control" name="editShippingName"
-                                                id="editShippingName" required>
+                                                id="editShippingName">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Phone</label>
                                             <input type="tel" class="form-control" name="editShippingPhone"
-                                                id="editShippingPhone" required>
+                                                id="editShippingPhone">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Email</label>
                                             <input type="email" class="form-control" name="editShippingEmail"
-                                                id="editShippingEmail" required>
+                                                id="editShippingEmail">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Address</label>
                                             <input type="text" class="form-control" name="editShippingAddress"
-                                                id="editShippingAddress" required>
+                                                id="editShippingAddress">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
@@ -857,7 +875,7 @@ ob_end_flush();
                                         <div class="input-blocks">
                                             <label>GST Numbers</label>
                                             <input type="text" class="form-control" name="editGstNumber"
-                                                id="editGstNumber" required>
+                                                id="editGstNumber">
                                         </div>
                                     </div>
 
@@ -907,8 +925,7 @@ ob_end_flush();
                                         <div class="input-blocks image-upload-down">
                                             <label> Upload CSV File</label>
                                             <div class="image-upload download">
-                                                <input type="file" accept=".xls,.xlsx,.csv" name="excel_file"
-                                                    required />
+                                                <input type="file" accept=".xls,.xlsx,.csv" name="excel_file" />
                                                 <div class="image-uploads">
                                                     <img src="assets/img/download-img.png" alt="img" />
                                                     <h4>Drag and drop a <span>file to upload</span></h4>

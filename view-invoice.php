@@ -7,6 +7,7 @@ header('Content-Type: text/html; charset=utf-8');
 require "./database/config.php";
 require 'vendor/autoload.php';
 
+
 use setasign\Fpdi\Fpdi;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -439,7 +440,7 @@ try {
 
 
     // Start Y position for first line
-    $summaryStartY = 180;
+    $summaryStartY = 155;
     $lineHeight = 6;
 
     // Line 1: Total
@@ -528,17 +529,33 @@ try {
     // Add paid stamp if invoice is paid
     if ($invoice['status'] == "PAID") {
         $stampPath = !empty($invoiceSettings['invoice_stamp_url']) ? $invoiceSettings['invoice_stamp_url'] : 'public/assets/stamp/paid_stamp.png';
-
-
         if (file_exists($stampPath)) {
-            // Small stamp (20x20 pixels)
-            // $pdf->Image($stampPath, 150, 50, 20, 20);
-
             // Medium stamp (30x30 pixels) - recommended
-            $pdf->Image($stampPath, 178, 228, 25, 15);
-
-            // Large stamp (40x40 pixels)
-            // $pdf->Image($stampPath, 150, 50, 40, 40);
+            $pdf->Image($stampPath, 140, 210, 50, 30);
+        }
+    }
+    // Add paid stamp if invoice is PENDING 
+    if ($invoice['status'] == "PENDING") {
+        $stampPath = 'public/assets/stamp/pending_stamp.png';
+        if (file_exists($stampPath)) {
+            // Medium stamp (30x30 pixels) - recommended
+            $pdf->Image($stampPath, 130, 215, 50, 20);
+        }
+    }
+    // Add paid stamp if invoice is REFUNDED
+    if ($invoice['status'] == "REFUNDED") {
+        $stampPath = 'public/assets/stamp/refund_stamp.png';
+        if (file_exists($stampPath)) {
+            // Medium stamp (30x30 pixels) - recommended
+            $pdf->Image($stampPath, 80, 110, 100, 100);
+        }
+    }
+    // Add paid stamp if invoice is paid
+    if ($invoice['status'] == "CANCELLED") {
+        $stampPath = 'public/assets/stamp/cancel_stamp.png';
+        if (file_exists($stampPath)) {
+            // Medium stamp (30x30 pixels) - recommended
+            $pdf->Image($stampPath, 80, 150, 80, 35);
         }
     }
 

@@ -22,12 +22,12 @@ try {
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
-    $stmtNumber = $db->prepare("SELECT COUNT(*) AS total_invoices FROM invoice WHERE is_active = 1 AND status != 'CANCELLED';");
+    $stmtNumber = $db->prepare("SELECT COUNT(*) AS total_invoices FROM invoice WHERE is_active = 1 AND status IN ('PAID', 'PENDING');");
     $stmtNumber->execute();
     $totalNumberInvoice = $stmtNumber->get_result()->fetch_all(MYSQLI_ASSOC);
 
 
-    $stmtTotalAmount = $db->prepare("SELECT SUM(total_amount) AS total_payment FROM invoice WHERE is_active = 1 AND status != 'CANCELLED'; ");
+    $stmtTotalAmount = $db->prepare("SELECT SUM(total_amount) AS total_payment FROM invoice WHERE is_active = 1 AND status IN ('PAID', 'PENDING'); ");
     $stmtTotalAmount->execute();
     $totalAmount = $stmtTotalAmount->get_result()->fetch_all(MYSQLI_ASSOC);
 
@@ -509,7 +509,6 @@ ob_end_flush();
                     let invoiceCounts = result.invoiceCounts;
                     let invoiceAmounts = result.invoiceAmounts;
 
-                    // Bar chart for total amounts
                     let optionBar = {
                         series: [
                             {
@@ -530,6 +529,7 @@ ob_end_flush();
                             height: 350,
                             toolbar: { show: true }
                         },
+                        colors: ['#00E396', '#FFB020', '#FF4560'], // Paid, Pending, Cancelled
                         plotOptions: {
                             bar: {
                                 horizontal: false,
@@ -562,6 +562,7 @@ ob_end_flush();
                             }
                         }
                     };
+
 
                     var chartBar = new ApexCharts(document.querySelector("#s-line-area"), optionBar);
                     chartBar.render();
