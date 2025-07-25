@@ -440,7 +440,7 @@ try {
 
 
     // Start Y position for first line
-    $summaryStartY = 155;
+    $summaryStartY = 180;
     $lineHeight = 6;
 
     // Line 1: Total
