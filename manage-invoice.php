@@ -1126,7 +1126,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
 
                                             $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
                                             echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $taxAmount;
-                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING', 'REFUNDED'])) {
+                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
                                                 $totalTaxAmount += $taxAmount;
                                             }
                                             ?>

@@ -7,6 +7,7 @@ header('Content-Type: text/html; charset=utf-8');
 require "./database/config.php";
 require 'vendor/autoload.php';
 
+
 use setasign\Fpdi\Fpdi;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -206,6 +207,8 @@ try {
             border-collapse: separate;
             border-spacing: 0;
             margin: 20px 0;
+            border: 1px solid #4e4e4eff;
+
         }
 
         .invoice-table th {
@@ -244,7 +247,7 @@ try {
 
         .amount-cell {
             font-weight: 600;
-            color: #1e88e5;
+            color: #00659c;
         }
 
         .table-container {
@@ -349,7 +352,7 @@ try {
     $pdf->SetXY(20, 45);
     $pdf->Cell(22, 10, 'Invoice No: ', 0, 0); // Render "Invoice No:" in black, normal font
     $pdf->SetFont('FuturaBT-Medium', '', 12); // Set font to bold
-    $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
     $pdf->Cell(0, 10, $invoice['invoice_number'], 0, 0); // Render invoice number in bold blue
     $pdf->SetTextColor(0, 0, 0); // Reset text color to black
     $pdf->SetFont('FuturaBT-Medium', '', 12); // Reset font to normal
@@ -357,7 +360,7 @@ try {
     $labelWidth = $pdf->GetStringWidth('Date: ') + 1; // Calculate width of "Date:" with small padding
     $pdf->Cell($labelWidth, 10, 'Date: ', 0, 0); // Render "Date:" in black, normal font with exact width
     $pdf->SetFont('FuturaBT-Medium', '', 12); // Set font to bold
-    $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
     $pdf->Cell(0, 10, date('d-M-Y', strtotime($invoice['created_at'])), 0, 1); // Render date in bold blue, no gap
     $pdf->SetTextColor(0, 0, 0); // Reset text color to black
     $pdf->SetFont('FuturaBT-Medium', '', 12); // Reset font to normal
@@ -368,7 +371,7 @@ try {
 
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('FuturaBT-Medium', '', 12);
-    $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
     $pdf->SetXY(20, 55);
     $pdf->Cell(90, 10, 'Bill To:', 0, 0);
     $pdf->SetTextColor(0, 0, 0); // Reset text color to black
@@ -398,7 +401,7 @@ try {
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
         $pdf->SetXY(150, 55);
         $pdf->Cell(90, 10, 'HSN Code:', 0, 0);
-        $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+        $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
         $pdf->SetXY(172, 55);
         $pdf->SetFont('FuturaBT-Medium', '', 12);
         $pdf->Cell(90, 10, $hsnCode, 0, 0);
@@ -411,7 +414,7 @@ try {
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
         $pdf->SetXY(115, 85);
         $pdf->Cell(15, 10, 'Bill Duration:', 0, 0); // Narrower cell for label
-        $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+        $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
         $pdf->SetXY(142, 85);
         $pdf->SetFont('FuturaBT-Medium', '', 12);
         $fromDate = date('M d', strtotime(trim($invoice['from_date'])));
@@ -437,11 +440,11 @@ try {
 
 
     // Start Y position for first line
-    $summaryStartY = 180;
+    $summaryStartY = 155;
     $lineHeight = 6;
 
     // Line 1: Total
-    $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(130, $summaryStartY);
     $formattedAmount = number_format($priceWithoutTax, 2);
@@ -452,7 +455,7 @@ try {
     $pdf->Line(130, $summaryStartY + $lineHeight + 0.5, 200, $summaryStartY + $lineHeight + 0.5);
 
     // Line 2: Discount
-    $pdf->SetTextColor(62, 144, 237); // Set text color to #3e90ed
+    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(130, $summaryStartY + $lineHeight + 2);
     $pdf->Cell(0, $lineHeight, 'Discount: ' . $discount . "%", 0, 1);
@@ -472,6 +475,10 @@ try {
     $pdf->SetXY(130, $summaryStartY + $lineHeight + 16);
     $pdf->SetFont('FuturaMdBT-Bold', '', 12);
     $pdf->Cell(0, $lineHeight, "Total Amount: {$currencySymbol}. " . number_format($finalTotal, 2) . "/-", 0, 1);
+
+
+    $pdf->Line(130, $summaryStartY + $lineHeight * 4 + 4, 200, $summaryStartY + $lineHeight * 4 + 4);
+
 
     // Line 5: Total Amount In Words
     $pdf->SetXY(130, $summaryStartY + $lineHeight + 26);
@@ -518,6 +525,39 @@ try {
 
     // Write the second line of the message
     $pdf->Cell(0, 0, 'fruitful relationship with our company', 0, 1);
+
+    // Add paid stamp if invoice is paid
+    if ($invoice['status'] == "PAID") {
+        $stampPath = !empty($invoiceSettings['invoice_stamp_url']) ? $invoiceSettings['invoice_stamp_url'] : 'public/assets/stamp/paid_stamp.png';
+        if (file_exists($stampPath)) {
+            // Medium stamp (30x30 pixels) - recommended
+            $pdf->Image($stampPath, 140, 210, 50, 30);
+        }
+    }
+    // Add paid stamp if invoice is PENDING 
+    if ($invoice['status'] == "PENDING") {
+        $stampPath = 'public/assets/stamp/pending_stamp.png';
+        if (file_exists($stampPath)) {
+            // Medium stamp (30x30 pixels) - recommended
+            $pdf->Image($stampPath, 130, 215, 50, 20);
+        }
+    }
+    // Add paid stamp if invoice is REFUNDED
+    if ($invoice['status'] == "REFUNDED") {
+        $stampPath = 'public/assets/stamp/refund_stamp.png';
+        if (file_exists($stampPath)) {
+            // Medium stamp (30x30 pixels) - recommended
+            $pdf->Image($stampPath, 80, 110, 100, 100);
+        }
+    }
+    // Add paid stamp if invoice is paid
+    if ($invoice['status'] == "CANCELLED") {
+        $stampPath = 'public/assets/stamp/cancel_stamp.png';
+        if (file_exists($stampPath)) {
+            // Medium stamp (30x30 pixels) - recommended
+            $pdf->Image($stampPath, 80, 150, 80, 35);
+        }
+    }
 
     // // Payment Information Section
     // $pdf->SetFont('Helvetica', 'B', 12);
@@ -566,7 +606,7 @@ try {
     // Output final PDF
     $pdf->Output('D', ucfirst(str_replace(" ", "-", $invoice['invoice_title'])) . "-" . $invoice['invoice_number'] . '.pdf');
 
-    
+
 } catch (Exception $e) {
     echo "Error: " . htmlspecialchars($e->getMessage());
 }
