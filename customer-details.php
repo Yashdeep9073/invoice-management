@@ -341,6 +341,52 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_FILES['excel_file'])) {
     exit;
 }
 
+// delete multiple airlines
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerIds'])) {
+
+
+    $customerIds = $_POST['customerIds'];
+
+    // Validate: Must be an array of integers
+    if (!is_array($customerIds)) {
+        echo json_encode([
+            'status' => 400,
+            'message' => 'Invalid data format.'
+        ]);
+        exit;
+    }
+
+    try {
+        // Prepare the SQL dynamically
+        $placeholders = implode(',', array_fill(0, count($customerIds), '?'));
+        $types = str_repeat('i', count($customerIds)); // All integers
+
+        $stmt = $db->prepare("DELETE FROM customer WHERE customer_id IN ($placeholders)");
+        $stmt->bind_param($types, ...$customerIds);
+
+        if ($stmt->execute()) {
+            echo json_encode([
+                'status' => 200,
+                'message' => 'Selected customer deleted successfully.',
+                'deleted_ids' => $customerIds
+            ]);
+        } else {
+            echo json_encode([
+                'status' => 400,
+                'message' => $stmt->error
+            ]);
+        }
+
+        exit;
+    } catch (Exception $e) {
+        echo json_encode([
+            'status' => 500,
+            'message' => $e->getMessage()
+        ]);
+        exit;
+    }
+}
+
 
 try {
 
@@ -498,6 +544,12 @@ ob_end_flush();
                         </div>
                     </div>
                     <ul class="table-top-head">
+                        <?php if ($isAdmin || hasPermission('Delete Customer', $privileges, $roleData['0']['role_name'])): ?>
+                            <li>
+                                <a data-bs-toggle="tooltip" class="multi-delete-button" data-bs-placement="top"
+                                    title="Delete"><img src="assets/img/icons/delete.png" alt="img" /></a>
+                            </li>
+                        <?php endif; ?>
                         <li>
                             <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"><img
                                     src="assets/img/icons/pdf.svg" alt="img"></a>
@@ -563,7 +615,8 @@ ob_end_flush();
                                         <tr>
                                             <td>
                                                 <label class="checkboxs">
-                                                    <input type="checkbox" />
+                                                    <input type="checkbox" name="customerIds"
+                                                        value="<?php echo $customer['customer_id'] ?>" />
                                                     <span class="checkmarks"></span>
                                                 </label>
                                             </td>
@@ -1189,6 +1242,60 @@ ob_end_flush();
                         .then(data => callback(data.country_code))
                         .catch(() => callback('us'));
                 }
+            });
+
+            $(document).on('click', '.multi-delete-button', function (e) {
+                e.preventDefault();
+
+                let customerIds = [];
+                $('input[name="customerIds"]:checked').each(function () {
+                    customerIds.push(parseInt($(this).val()));
+                });
+
+                if (customerIds.length == 0) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: "Please select customer!",
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "You won't be able to revert this!",
+                    showCancelButton: true,
+                    confirmButtonColor: "#ff9f43",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, delete it!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+
+                        $.ajax({
+                            url: "customer-details.php",
+                            type: "post",
+                            data: { customerIds: customerIds },
+                            success: function (response) {
+
+                                Swal.fire(
+                                    'Deleted!',
+                                    'The Customer has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    // Reload the page
+                                    location.reload();
+                                });
+
+                            },
+                            error: function (error) {
+                                console.log(error);
+                            },
+                        });
+
+                    }
+                })
+
+
             });
 
         })

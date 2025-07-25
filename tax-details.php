@@ -116,6 +116,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['taxId'])) {
 }
 
 
+// delete multiple airlines
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['taxIds'])) {
+
+
+    $taxIds = $_POST['taxIds'];
+
+    // Validate: Must be an array of integers
+    if (!is_array($taxIds)) {
+        echo json_encode([
+            'status' => 400,
+            'message' => 'Invalid data format.'
+        ]);
+        exit;
+    }
+
+    try {
+        // Prepare the SQL dynamically
+        $placeholders = implode(',', array_fill(0, count($taxIds), '?'));
+        $types = str_repeat('i', count($taxIds)); // All integers
+
+        $stmt = $db->prepare("DELETE FROM tax WHERE tax_id IN ($placeholders)");
+        $stmt->bind_param($types, ...$taxIds);
+
+        if ($stmt->execute()) {
+            echo json_encode([
+                'status' => 200,
+                'message' => 'Selected tax deleted successfully.',
+                'deleted_ids' => $taxIds
+            ]);
+        } else {
+            echo json_encode([
+                'status' => 400,
+                'message' => $stmt->error
+            ]);
+        }
+
+        exit;
+    } catch (Exception $e) {
+        echo json_encode([
+            'status' => 500,
+            'message' => $e->getMessage()
+        ]);
+        exit;
+    }
+}
+
 try {
 
     $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
@@ -254,18 +300,12 @@ ob_end_flush();
                         </div>
                     </div>
                     <ul class="table-top-head">
-                        <li>
-                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"><img
-                                    src="assets/img/icons/pdf.svg" alt="img" /></a>
-                        </li>
-                        <li>
-                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img
-                                    src="assets/img/icons/excel.svg" alt="img" /></a>
-                        </li>
-                        <li>
-                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="Print"><i data-feather="printer"
-                                    class="feather-rotate-ccw"></i></a>
-                        </li>
+                        <?php if ($isAdmin || hasPermission('Delete Tax', $privileges, $roleData['0']['role_name'])): ?>
+                            <li>
+                                <a data-bs-toggle="tooltip" class="multi-delete-button" data-bs-placement="top"
+                                    title="Delete"><img src="assets/img/icons/delete.png" alt="img" /></a>
+                            </li>
+                        <?php endif; ?>
                         <li>
                             <a href='' data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
                                     data-feather="rotate-ccw" class="feather-rotate-ccw"></i></a>
@@ -378,7 +418,8 @@ ob_end_flush();
                                         <tr>
                                             <td>
                                                 <label class="checkboxs">
-                                                    <input type="checkbox" />
+                                                    <input type="checkbox" name="taxIds"
+                                                        value="<?php echo $tax['tax_id'] ?>" />
                                                     <span class="checkmarks"></span>
                                                 </label>
                                             </td>
@@ -580,6 +621,62 @@ ob_end_flush();
 
     <script>
         $(document).ready(function (e) {
+
+            $(document).on('click', '.multi-delete-button', function (e) {
+                e.preventDefault();
+
+                let taxIds = [];
+                $('input[name="taxIds"]:checked').each(function () {
+                    taxIds.push(parseInt($(this).val()));
+                });
+
+                if (taxIds.length == 0) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: "Please select tax!",
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "You won't be able to revert this!",
+                    showCancelButton: true,
+                    confirmButtonColor: "#ff9f43",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, delete it!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+
+                        $.ajax({
+                            url: "tax-details.php",
+                            type: "post",
+                            data: { taxIds: taxIds },
+                            success: function (response) {
+
+                                Swal.fire(
+                                    'Deleted!',
+                                    'The Tax has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    // Reload the page
+                                    location.reload();
+                                });
+
+                            },
+                            error: function (error) {
+                                console.log(error);
+                            },
+                        });
+
+                    }
+                })
+
+
+            });
+
+
 
             $(document).on('click', '.editButton', function () {
 

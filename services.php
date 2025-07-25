@@ -100,6 +100,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['serviceId'])) {
 }
 
 
+// delete multiple airlines
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['serviceIds'])) {
+
+
+    $serviceIds = $_POST['serviceIds'];
+
+    // Validate: Must be an array of integers
+    if (!is_array($serviceIds)) {
+        echo json_encode([
+            'status' => 400,
+            'message' => 'Invalid data format.'
+        ]);
+        exit;
+    }
+
+    try {
+        // Prepare the SQL dynamically
+        $placeholders = implode(',', array_fill(0, count($serviceIds), '?'));
+        $types = str_repeat('i', count($serviceIds)); // All integers
+
+        $stmt = $db->prepare("DELETE FROM services WHERE service_id IN ($placeholders)");
+        $stmt->bind_param($types, ...$serviceIds);
+
+        if ($stmt->execute()) {
+            echo json_encode([
+                'status' => 200,
+                'message' => 'Selected service deleted successfully.',
+                'deleted_ids' => $airlserviceIdsineIds
+            ]);
+        } else {
+            echo json_encode([
+                'status' => 400,
+                'message' => $stmt->error
+            ]);
+        }
+
+        exit;
+    } catch (Exception $e) {
+        echo json_encode([
+            'status' => 500,
+            'message' => $e->getMessage()
+        ]);
+        exit;
+    }
+}
+
+
 try {
     $stmtFetch = $db->prepare("SELECT * FROM services");
     $stmtFetch->execute();
@@ -232,6 +279,19 @@ try {
                         </div>
                     </div>
 
+                    <ul class="table-top-head">
+                        <?php if ($isAdmin || hasPermission('Delete Service', $privileges, $roleData['0']['role_name'])): ?>
+                            <li>
+                                <a data-bs-toggle="tooltip" class="multi-delete-button" data-bs-placement="top"
+                                    title="Delete"><img src="assets/img/icons/delete.png" alt="img" /></a>
+                            </li>
+                        <?php endif; ?>
+                        <li>
+                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i
+                                    data-feather="chevron-up" class="feather-chevron-up"></i></a>
+                        </li>
+                    </ul>
+
                     <?php if ($isAdmin || hasPermission('Add Service', $privileges, $roleData['0']['role_name'])): ?>
                         <div class="page-btn">
                             <a href="#" class="btn btn-added" data-bs-toggle="modal" data-bs-target="#add-units"><i
@@ -276,7 +336,8 @@ try {
                                         <tr>
                                             <td>
                                                 <label class="checkboxs">
-                                                    <input type="checkbox">
+                                                    <input type="checkbox" name="serviceIds"
+                                                        value="<?php echo $service['service_id'] ?>">
                                                     <span class="checkmarks"></span>
                                                 </label>
                                             </td>
@@ -528,6 +589,60 @@ try {
                         });
                     }
                 });
+            });
+
+            $(document).on('click', '.multi-delete-button', function (e) {
+                e.preventDefault();
+
+                let serviceIds = [];
+                $('input[name="serviceIds"]:checked').each(function () {
+                    serviceIds.push(parseInt($(this).val()));
+                });
+
+                if (serviceIds.length == 0) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: "Please select service!",
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "You won't be able to revert this!",
+                    showCancelButton: true,
+                    confirmButtonColor: "#ff9f43",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, delete it!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+
+                        $.ajax({
+                            url: "services.php",
+                            type: "post",
+                            data: { serviceIds: serviceIds },
+                            success: function (response) {
+
+                                Swal.fire(
+                                    'Deleted!',
+                                    'The Service has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    // Reload the page
+                                    location.reload();
+                                });
+
+                            },
+                            error: function (error) {
+                                console.log(error);
+                            },
+                        });
+
+                    }
+                })
+
+
             });
 
         })
