@@ -1120,7 +1120,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                             $taxRate = intval(str_replace('%', '', $taxRateStr));
                                             $priceWithoutTax = $taxRate > 0 ? $invoice['total_amount'] / (1 + $taxRate / 100) : $invoice['total_amount'];
 
-                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING', 'REFUNDED'])) {
+                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
                                                 $totalBaseAmount += $invoice['total_amount'];
                                             }
 
