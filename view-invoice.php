@@ -408,7 +408,7 @@ try {
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
     }
 
-    if ($invoiceSettings['is_show_bill_date'] === 1) {
+    if ($invoiceSettings['is_show_bill_date'] === 1 && $invoice['invoice_type'] == "RECURSIVE") {
         // Bill To and Ship To (side by side, below header)
         $pdf->SetFont('FuturaBT-Medium', '', 12);
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
