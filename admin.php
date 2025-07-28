@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editAdminId'])) {
     $editAdminName = filter_input(INPUT_POST, 'editAdminName', FILTER_SANITIZE_STRING);
     $editAdminPhone = filter_input(INPUT_POST, 'editAdminPhone', FILTER_SANITIZE_STRING); // Changed to STRING
     $editAdminEmail = filter_input(INPUT_POST, 'editAdminEmail', FILTER_VALIDATE_EMAIL);
-    $editAdminPassword = filter_input(INPUT_POST, 'adminPassword', FILTER_SANITIZE_STRING); // Note: Field name is adminPassword
+    $editAdminPassword = filter_input(INPUT_POST, 'editAdminPassword', FILTER_SANITIZE_STRING); // Note: Field name is adminPassword
     $editAdminStatus = filter_input(INPUT_POST, 'editAdminStatus', FILTER_SANITIZE_NUMBER_INT);
     $editAdminRole = filter_input(INPUT_POST, 'editAdminRole', FILTER_SANITIZE_NUMBER_INT);
 
