@@ -462,7 +462,12 @@ ob_end_flush();
     <!-- intl-tel-input -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/css/intlTelInput.css">
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/intlTelInput.min.js"></script>
+    <!-- html to pdf -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
+    <!-- html to excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 </head>
 
@@ -551,12 +556,12 @@ ob_end_flush();
                             </li>
                         <?php endif; ?>
                         <li>
-                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="Pdf"><img
+                            <a data-bs-toggle="tooltip" onclick="exportToPDF()" data-bs-placement="top" title="Pdf"><img
                                     src="assets/img/icons/pdf.svg" alt="img"></a>
                         </li>
                         <li>
-                            <a data-bs-toggle="tooltip" data-bs-placement="top" title="Excel"><img
-                                    src="assets/img/icons/excel.svg" alt="img"></a>
+                            <a data-bs-toggle="tooltip" onclick="exportToExcel()" data-bs-placement="top"
+                                title="Excel"><img src="assets/img/icons/excel.svg" alt="img"></a>
                         </li>
                         <li>
                             <a href="" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
@@ -592,7 +597,7 @@ ob_end_flush();
 
 
                         <div class="table-responsive">
-                            <table class="table datanew">
+                            <table class="table datanew" id="myTable">
                                 <thead>
                                     <tr>
                                         <th class="no-sort">

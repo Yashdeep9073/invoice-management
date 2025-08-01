@@ -427,11 +427,11 @@ try {
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(20, 85);
-    $pdf->Cell(90, 10, 'Kindly/Attention,', 0, 0);
+    $pdf->Cell(90, 10, 'Kindly Attention!', 0, 0);
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(20, 90);
-    $pdf->Cell(90, 10, 'Dear Mam/Sir,', 0, 0);
+    $pdf->Cell(90, 10, 'Dear ,', 0, 0);
 
     // Summary (center-aligned, below table)
     $discount = isset($invoice['discount']) ? $invoice['discount'] : 0;
@@ -524,7 +524,7 @@ try {
     $pdf->SetX(20); // Move the X-coordinate to 30 (10mm to the right of the original 20)
 
     // Write the second line of the message
-    $pdf->Cell(0, 0, 'fruitful relationship with our company', 0, 1);
+    $pdf->Cell(0, 0, 'fruitful relationship with our company.', 0, 1);
 
     // Add paid stamp if invoice is paid
     if ($invoice['status'] == "PAID") {

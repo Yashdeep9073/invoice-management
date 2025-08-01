@@ -1596,7 +1596,7 @@ $(document).ready(function () {
   function googleTranslateElementInit() {
     new google.translate.TranslateElement(
       {
-        pageLanguage: "en",
+        pageLanguage: "auto",
         includedLanguages: "en,fr,es,de,it,hi,ja", // Add more languages if required
         layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
       },
