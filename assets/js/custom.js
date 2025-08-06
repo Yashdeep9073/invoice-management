@@ -67,7 +67,8 @@ function exportToPDF() {
         let text = clone.textContent.trim();
 
         // Remove ₹ symbol specifically
-        text = text.replace(/₹/g, '').trim();
+        text = text.replace(/[₹$]/g, '').trim();
+
 
         rowData.push(text);
       }
