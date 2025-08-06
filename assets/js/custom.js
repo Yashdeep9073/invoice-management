@@ -35,6 +35,7 @@ function exportToExcel() {
 //   doc.autoTable({ html: "#myTable" });
 //   doc.save("sample.pdf");
 // }
+
 function exportToPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -53,14 +54,22 @@ function exportToPDF() {
   // Remove "Action" from headers
   if (actionIndex !== -1) headers.splice(actionIndex, 1);
 
-  // Get table rows and remove "Action" column data
+  // Get rows from tbody
   const trs = table.querySelectorAll("tbody tr");
   trs.forEach((tr) => {
     const rowData = [];
     const tds = tr.querySelectorAll("td");
     tds.forEach((td, index) => {
       if (index !== actionIndex) {
-        rowData.push(td.innerText.trim());
+        const clone = td.cloneNode(true);
+        clone.querySelectorAll("svg, input, span, a, label").forEach(el => el.remove());
+
+        let text = clone.textContent.trim();
+
+        // Remove ₹ symbol specifically
+        text = text.replace(/₹/g, '').trim();
+
+        rowData.push(text);
       }
     });
     data.push(rowData);
@@ -72,6 +81,6 @@ function exportToPDF() {
     body: data,
   });
 
-  doc.save("sample.pdf");
+  doc.save("invoice-table.pdf");
 }
 
