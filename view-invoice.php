@@ -431,7 +431,7 @@ try {
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(20, 90);
-    $pdf->Cell(90, 10, 'Dear ,', 0, 0);
+    $pdf->Cell(90, 10, 'Dear,', 0, 0);
 
     // Summary (center-aligned, below table)
     $discount = isset($invoice['discount']) ? $invoice['discount'] : 0;
@@ -440,7 +440,7 @@ try {
 
 
     // Start Y position for first line
-    $summaryStartY = 180;
+    $summaryStartY = 170;
     $lineHeight = 6;
 
     // Line 1: Total
@@ -531,7 +531,7 @@ try {
         $stampPath = !empty($invoiceSettings['invoice_stamp_url']) ? $invoiceSettings['invoice_stamp_url'] : 'public/assets/stamp/paid_stamp.png';
         if (file_exists($stampPath)) {
             // Medium stamp (30x30 pixels) - recommended
-            $pdf->Image($stampPath, 140, 210, 50, 30);
+            $pdf->Image($stampPath, 140, 220, 45, 30);
         }
     }
     // Add paid stamp if invoice is PENDING 
@@ -539,7 +539,7 @@ try {
         $stampPath = 'public/assets/stamp/pending_stamp.png';
         if (file_exists($stampPath)) {
             // Medium stamp (30x30 pixels) - recommended
-            $pdf->Image($stampPath, 130, 215, 50, 20);
+            $pdf->Image($stampPath, 130, 220, 50, 20);
         }
     }
     // Add paid stamp if invoice is REFUNDED

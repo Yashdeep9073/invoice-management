@@ -427,11 +427,11 @@ try {
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(20, 85);
-    $pdf->Cell(90, 10, 'Kindly/Attention,', 0, 0);
+    $pdf->Cell(90, 10, 'Kindly Attention!', 0, 0);
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(20, 90);
-    $pdf->Cell(90, 10, 'Dear Mam/Sir,', 0, 0);
+    $pdf->Cell(90, 10, 'Dear,', 0, 0);
 
     // Summary (center-aligned, below table)
     $discount = isset($invoice['discount']) ? $invoice['discount'] : 0;
@@ -440,7 +440,7 @@ try {
 
 
     // Start Y position for first line
-    $summaryStartY = 180;
+    $summaryStartY = 170;
     $lineHeight = 6;
 
     // Line 1: Total
@@ -524,14 +524,14 @@ try {
     $pdf->SetX(20); // Move the X-coordinate to 30 (10mm to the right of the original 20)
 
     // Write the second line of the message
-    $pdf->Cell(0, 0, 'fruitful relationship with our company', 0, 1);
+    $pdf->Cell(0, 0, 'fruitful relationship with our company.', 0, 1);
 
     // Add paid stamp if invoice is paid
     if ($invoice['status'] == "PAID") {
         $stampPath = !empty($invoiceSettings['invoice_stamp_url']) ? $invoiceSettings['invoice_stamp_url'] : 'public/assets/stamp/paid_stamp.png';
         if (file_exists($stampPath)) {
             // Medium stamp (30x30 pixels) - recommended
-            $pdf->Image($stampPath, 140, 210, 50, 30);
+            $pdf->Image($stampPath, 140, 220, 45, 30);
         }
     }
     // Add paid stamp if invoice is PENDING 
@@ -539,7 +539,7 @@ try {
         $stampPath = 'public/assets/stamp/pending_stamp.png';
         if (file_exists($stampPath)) {
             // Medium stamp (30x30 pixels) - recommended
-            $pdf->Image($stampPath, 130, 215, 50, 20);
+            $pdf->Image($stampPath, 130, 220, 50, 20);
         }
     }
     // Add paid stamp if invoice is REFUNDED
@@ -562,7 +562,7 @@ try {
     // // Payment Information Section
     // $pdf->SetFont('Helvetica', 'B', 12);
     // $pdf->SetXY(20, 160);
-    // $pdf->SetTextColor(62, 144, 237); // Blue (#3e90ed)
+    // $pdf->SetTextColor(0, 101, 156); // Blue (#3e90ed)
     // $pdf->Cell(0, 5, 'Payment Information:', 0, 1);
     // $pdf->SetTextColor(0, 0, 0); // Black
 
@@ -572,7 +572,7 @@ try {
     // $pdf->SetTextColor(0, 0, 0); // Black for label
     // $pdf->Write(5, 'Payment Method: ');
     // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
-    // $pdf->SetTextColor(62, 144, 237); // Blue for value
+    // $pdf->SetTextColor(0, 101, 156); // Blue for value
     // $pdf->Write(5, $invoice['payment_method'] . "\n");
 
     // // Transaction ID
@@ -581,7 +581,7 @@ try {
     // $pdf->SetTextColor(0, 0, 0); // Black for label
     // $pdf->Write(5, 'Transaction ID: ');
     // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
-    // $pdf->SetTextColor(62, 144, 237); // Blue for value
+    // $pdf->SetTextColor(0, 101, 156); // Blue for value
     // $pdf->Write(5, $invoice['transaction_id'] . "\n");
 
     // // Payment Status
@@ -590,7 +590,7 @@ try {
     // $pdf->SetTextColor(0, 0, 0); // Black for label
     // $pdf->Write(5, 'Payment Status: ');
     // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
-    // $pdf->SetTextColor(62, 144, 237); // Blue for value
+    // $pdf->SetTextColor(0, 101, 156); // Blue for value
     // $pdf->Write(5, $invoice['paymentStatus'] . "\n");
 
     // // Due Date
@@ -599,7 +599,7 @@ try {
     // $pdf->SetTextColor(0, 0, 0); // Black for label
     // $pdf->Write(5, 'Due Date: ');
     // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
-    // $pdf->SetTextColor(62, 144, 237); // Blue for value
+    // $pdf->SetTextColor(0, 101, 156); // Blue for value
     // $pdf->Write(5, $invoice['due_date'] . "\n");
 
 
