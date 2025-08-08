@@ -301,9 +301,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                                 <div class="col-sm-4">
                                                     <div class="localization-select">
                                                         <select class="select" name="timezone">
-                                                            <?php foreach ($timezones as $timezone) { ?>
-                                                                <option <?php echo $localizationSettings['timezone'] == $timezone ? "selected" : "" ?> value='<?= $timezone ?>'>
-                                                                    <?= htmlspecialchars($timezone) ?>
+                                                            <?php foreach ($timezones as $timezone) {
+
+                                                                $tz = new DateTimeZone($timezone);
+                                                                $now = new DateTime("now", $tz);
+                                                                $offset = $tz->getOffset($now);
+                                                                $hours = floor($offset / 3600);
+                                                                $minutes = floor(abs($offset % 3600) / 60);
+                                                                $gmtOffset = sprintf("GMT%+d:%02d", $hours, $minutes);
+                                                                ?>
+                                                                <option value="<?= htmlspecialchars($timezone) ?>"
+                                                                    <?= $localizationSettings['timezone'] == $timezone ? "selected" : "" ?>>
+                                                                    <?= htmlspecialchars($timezone) ?> (<?= $gmtOffset ?>)
                                                                 </option>
                                                             <?php } ?>
                                                         </select>
@@ -448,7 +457,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             document.body.appendChild(script);
         });
     </script> -->
-    
+
 </body>
 
 </html>

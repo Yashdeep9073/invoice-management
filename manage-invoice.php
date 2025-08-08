@@ -220,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForReminder']
         ON customer.customer_id = invoice.customer_id
         INNER JOIN tax
         ON tax.tax_id = invoice.tax
-        WHERE invoice.is_active = 1 AND invoice.invoice_id = ? AND invoice.status IN ('PENDING', 'CANCELLED', 'REFUNDED') ");
+        WHERE invoice.is_active = 1 AND invoice.invoice_id = ? AND invoice.status IN ('PENDING') ");
 
         $stmtFetchCustomer->bind_param('i', $invoiceId);
 
@@ -502,7 +502,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForSend'])) {
         ON customer.customer_id = invoice.customer_id
         INNER JOIN tax
         ON tax.tax_id = invoice.tax
-        WHERE invoice.is_active = 1 AND invoice.invoice_id = ? AND invoice.status IN ('PENDING', 'CANCELLED', 'REFUNDED')");
+        WHERE invoice.is_active = 1 AND invoice.invoice_id = ? AND invoice.status IN ('PENDING', 'PAID')");
 
         $stmtFetchCustomer->bind_param('i', $invoiceId);
 

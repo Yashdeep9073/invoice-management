@@ -9,7 +9,25 @@ require './utility/env.php';
 
 
 
-$siteKey = getenv('GOOGLE_RECAPTCHA_SITE_KEY');
+
+
+try {
+    $stmtFetch = $db->prepare("SELECT * FROM system_settings");
+    $stmtFetch->execute();
+    $data = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
+    $imageUrl = $data['auth_banner'];
+
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+
+} catch (Exception $e) {
+    $_SESSION['error'] = $e->getMessage();
+}
+
+$siteKey = !empty($data['site_key']) ? $data['site_key'] : getenv('GOOGLE_RECAPTCHA_SITE_KEY');
+$secret_key = !empty($data['secret_key']) ? $data['secret_key'] : getenv('GOOGLE_RECAPTCHA_SECRET_KEY');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Sanitize and validate user input
@@ -26,8 +44,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit;
         }
 
-        // Google reCAPTCHA verification
-        $secret_key = getenv('GOOGLE_RECAPTCHA_SECRET_KEY');
         if (!$secret_key) {
             $_SESSION['error'] = "reCAPTCHA configuration error. Please contact the administrator.";
             header("Location: index.php");
@@ -113,22 +129,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Redirect to admin dashboard
     header("Location: admin-dashboard.php");
     exit;
-}
-
-try {
-    $stmtFetch = $db->prepare("SELECT * FROM system_settings");
-    $stmtFetch->execute();
-    $data = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
-    $imageUrl = $data['auth_banner'];
-
-    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
-    $stmtFetchCompanySettings->execute();
-    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
-
-
-
-} catch (Exception $e) {
-    $_SESSION['error'] = $e->getMessage();
 }
 
 ob_end_flush();

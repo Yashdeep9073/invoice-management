@@ -569,7 +569,7 @@ ob_end_flush();
                                             <select class="form-select" name="editTaxStatus" id="editTaxStatus"
                                                 required>
                                                 <option value="1">Enable</option>
-                                                <option value="0">Unable</option>
+                                                <option value="0">Disable</option>
                                             </select>
                                         </div>
                                     </div>

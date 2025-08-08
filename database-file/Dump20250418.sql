@@ -44,7 +44,7 @@ CREATE TABLE `admin` (
 
 LOCK TABLES `admin` WRITE;
 /*!40000 ALTER TABLE `admin` DISABLE KEYS */;
-INSERT INTO `admin` VALUES (1,'Admin','admin@gmail.com','$2y$10$vItEhNfuzS1vkcSW8vje/OgUYN7.3fWmxXq910KNZB3My1K1OG6K6','7412589630',11,1,'2025-04-23 04:49:44','2025-04-24 06:17:57'),(7,'Yash','accountant@vibrantick.in','$2y$10$Pmvp4fCBPfYqDmQc5ufSlOzgVijrj46CIgEAuLz8qQJQ9mzy54nFu','1234567890',14,1,'2025-04-24 06:22:38','2025-04-24 07:29:06');
+INSERT INTO `admin` VALUES (1,'Admin','admin@gmail.com','$2y$10$vItEhNfuzS1vkcSW8vje/OgUYN7.3fWmxXq910KNZB3My1K1OG6K6','7412589630',11,1,'2025-04-23 04:49:44','2025-04-24 06:17:57'),(7,'Yash','accountant@vibrantick.in','$2y$10$Pmvp4fCBPfYqDmQc5ufSlOzgVijrj46CIgEAuLz8qQJQ9mzy54nFu','1234567890',14,0,'2025-04-24 06:22:38','2025-07-25 07:01:24');
 /*!40000 ALTER TABLE `admin` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -176,7 +176,7 @@ CREATE TABLE `customer` (
 
 LOCK TABLES `customer` WRITE;
 /*!40000 ALTER TABLE `customer` DISABLE KEYS */;
-INSERT INTO `customer` VALUES (77,'John Doe','+12025550123','john.doe@example.com','123 Main St, Springfield, IL 62701','Jane Doe','+12025550124','jane.doe@example.com','456 Oak Ave, Springfield, IL 62702',1,'2025-04-01 04:30:00','2025-04-24 08:23:08',NULL,NULL,'27ABCDE1234F1Z1'),(78,'Alice Smith','+12025550125','yashdeep@vibrantick.in','789 Pine Rd, Chicago, IL 60601',NULL,NULL,NULL,NULL,1,'2025-04-02 07:00:00','2025-04-24 08:23:02',NULL,NULL,'27ABCDE1234F1Z0'),(79,'Bob\"JJohnson','+12025550126',NULL,NULL,NULL,NULL,NULL,NULL,0,'2025-04-03 10:15:00','2025-04-24 08:22:58',NULL,NULL,'27ABCDE1234F1Z9'),(80,'Emma Wilson','+12025550127','emma.wilson@example.com','321 Elm St, Boston, MA 02108','Emma Wilson','+12025550128','emma.ship@example.com','321 Elm St, Boston, MA 02108',1,'2025-04-04 03:45:00','2025-04-24 08:22:53',NULL,NULL,'27ABCDE1234F1Z8'),(83,'Yashdeep','6239334177','ydeep9073@gmail.com','45 Direction, Drive Tarneit 3029 Victoria, Australia','Yashdeep','6239334177','yashdeep@vibrantick.in','yashdeep@vibrantick.in',1,'2025-04-21 06:49:57','2025-07-03 10:07:58','PB',269,'27ABCDE1234F1Z7'),(84,'Test','1234567890','test@gmail.com','Phase-8, D-185,Mohali ','Test','1234567890','test@gmail.com','test@gmail.com',1,'2025-04-24 08:21:47','2025-04-24 08:32:52','HP',387,'27ABCDE1234F1X5'),(85,'John Doe','9876543210','john@example.com','123 Main St, Delhi',NULL,NULL,NULL,NULL,1,'2025-06-06 09:35:23',NULL,NULL,NULL,'22AAAAA0000A1Z5'),(86,'Jane Smith','9123456789','jane@example.com','456 Park Ave, Mumbai',NULL,NULL,NULL,NULL,1,'2025-06-06 09:35:23',NULL,NULL,NULL,'27BBBBB1111B2Z6');
+INSERT INTO `customer` VALUES (77,'John Doe','+12025550123','john.doe@example.com','123 Main St, Springfield, IL 62701','Jane Doe','+12025550124','jane.doe@example.com','jane.doe@example.com',1,'2025-04-01 04:30:00','2025-07-25 05:10:26','AP',1689,'27ABCDE1234F1Z1'),(78,'Alice Smith','+12025550125','yashdeep@vibrantick.in','789 Pine Rd, Chicago, IL 60601',NULL,NULL,NULL,NULL,1,'2025-04-02 07:00:00','2025-04-24 08:23:02',NULL,NULL,'27ABCDE1234F1Z0'),(79,'Bob','+12025550126',NULL,NULL,NULL,NULL,NULL,NULL,1,'2025-04-03 10:15:00','2025-07-25 06:54:20',NULL,NULL,'27ABCDE1234F1Z9'),(80,'Emma Wilson','+12025550127','emma.wilson@example.com','321 Elm St, Boston, MA 02108','Emma Wilson','+12025550128','emma.ship@example.com','321 Elm St, Boston, MA 02108',1,'2025-04-04 03:45:00','2025-04-24 08:22:53',NULL,NULL,'27ABCDE1234F1Z8'),(83,'Yashdeep','6239334177','ydeep9073@gmail.com','45 Direction, Drive Tarneit 3029 Victoria, Australia','Yashdeep','6239334177','yashdeep@vibrantick.in','yashdeep@vibrantick.in',1,'2025-04-21 06:49:57','2025-07-25 05:09:36','PB',3416,'27ABCDE1234F1Z7'),(85,'John Doe','9876543210','john@example.com','123 Main St, Delhi',NULL,NULL,NULL,NULL,1,'2025-06-06 09:35:23',NULL,NULL,NULL,'22AAAAA0000A1Z5');
 /*!40000 ALTER TABLE `customer` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -197,6 +197,13 @@ CREATE TABLE `email_settings` (
   `is_active` int DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `logo_url` varchar(255) DEFAULT NULL,
+  `support_email` varchar(255) DEFAULT NULL,
+  `phone` varchar(45) DEFAULT NULL,
+  `address_line1` longtext,
+  `ig_url` longtext,
+  `fb_url` longtext,
+  `linkedin_url` longtext,
   PRIMARY KEY (`email_settings_id`),
   UNIQUE KEY `email_address_UNIQUE` (`email_address`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -208,8 +215,39 @@ CREATE TABLE `email_settings` (
 
 LOCK TABLES `email_settings` WRITE;
 /*!40000 ALTER TABLE `email_settings` DISABLE KEYS */;
-INSERT INTO `email_settings` VALUES (3,'VIS Solution','mailerbot@vibrantick.in','7F2gaC>7jU','smtp.hostinger.com',465,1,'2025-06-13 08:27:04','2025-06-13 08:34:17');
+INSERT INTO `email_settings` VALUES (3,'VIS Solution','mailerbot@vibrantick.in','Mailerbot@123','smtp.hostinger.com',465,1,'2025-06-13 08:27:04','2025-07-28 06:37:51','public/upload/emailSetting/images/img_687f330290cd37.39816977.png','support@vibrantick.org','+919870443528','Vibrantick InfoTech Solution | D-185, Phase 8B, Sector 74, SAS Nagar |','https://www.instagram.com/vibrantickinfotech/','https://www.facebook.com/vibranticksolutions/','https://www.linkedin.com/company/vibrantick-infotech-solutions/posts/?feedView=all');
 /*!40000 ALTER TABLE `email_settings` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `email_template`
+--
+
+DROP TABLE IF EXISTS `email_template`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `email_template` (
+  `idemail_template` int NOT NULL AUTO_INCREMENT,
+  `email_template_title` varchar(255) DEFAULT NULL,
+  `email_template_subject` varchar(255) DEFAULT NULL,
+  `content_1` longtext,
+  `content_2` longtext,
+  `type` enum('REMINDER','ISSUED') DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `is_active` int DEFAULT '1',
+  PRIMARY KEY (`idemail_template`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `email_template`
+--
+
+LOCK TABLES `email_template` WRITE;
+/*!40000 ALTER TABLE `email_template` DISABLE KEYS */;
+INSERT INTO `email_template` VALUES (2,'Payment Reminder','Payment Reminder: Overdue Invoices','<p>We hope this message finds you well. The following invoice(s) are overdue. Kindly make the payment at your earliest convenience to avoid any service interruptions.</p>','<p>Please settle the outstanding amount at your earliest convenience. For any questions or assistance, contact our support team at <a href=\"mailto:support@vibrantick.org\" rel=\"noopener noreferrer\" target=\"_blank\">support@vibrantick.org</a> or call <a href=\"tel:+919870443528\" rel=\"noopener noreferrer\" target=\"_blank\">+91-9870443528</a>.</p><p>Thank you for your prompt attention to this matter.</p><p>Best regards,</p><p>Vibrantick InfoTech Solution Team.</p>','REMINDER','2025-07-21 13:12:06','2025-07-22 06:46:44',1),(4,'Invoice Issued','Payment Request: Invoice from Vibrantick InfoTech','<p>We<strong> </strong>are pleased to inform you that your invoice has been successfully generated. Please review the details below and make the payment before the due date to ensure uninterrupted service.</p>','<p>If you have already made this payment, thank you! Please disregard this email or contact us if you need a receipt. For any questions or assistance, contact our support team at <a href=\"mailto:support@vibrantick.org\" rel=\"noopener noreferrer\" target=\"_blank\">support@vibrantick.org</a> or call <a href=\"tel:+919870443528\" rel=\"noopener noreferrer\" target=\"_blank\">+91-9870443528</a>.</p><p>Thank you for choosing Vibrantick InfoTech Solution.</p><p>Best regards,</p><p>Vibrantick InfoTech Solution Team.</p>','ISSUED','2025-07-22 05:23:33','2025-07-22 08:44:15',1);
+/*!40000 ALTER TABLE `email_template` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -250,7 +288,7 @@ CREATE TABLE `invoice` (
   PRIMARY KEY (`invoice_id`),
   UNIQUE KEY `invoice_number_UNIQUE` (`invoice_number`),
   UNIQUE KEY `transaction_id_UNIQUE` (`transaction_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=209 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=222 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -259,7 +297,7 @@ CREATE TABLE `invoice` (
 
 LOCK TABLES `invoice` WRITE;
 /*!40000 ALTER TABLE `invoice` DISABLE KEYS */;
-INSERT INTO `invoice` VALUES (195,'VIS-20250624-00004','CASH','TX-20250624-19380-AG4P','PENDING',514.00,1,12,0.00,606.52,'2025-07-05',83,'[2, 3, 7, 8]','This shows you&amp;amp;amp;amp;amp;amp;#039;ve been operating since 2021 till now.\r\nLet me know if you want the PHP code to handle that automatically too.','2025-06-24 05:33:56','2025-07-11 10:17:55',1,0,0,1,'2025-06-10','2025-06-25','RECURSIVE','App Service','HOLD','MONTHLY',3),(196,'VIS-20250624-00005','CASH','TX-20250624-53815-NJAV','CANCELLED',5000.00,1,8,0.00,5750.00,'2025-07-11',78,'[2]','This is testing','2025-06-24 05:47:10','2025-07-11 11:19:17',1,0,0,1,'2025-06-01','2025-06-30','RECURSIVE',NULL,'HOLD','WEEKLY',3),(197,'VIS-20250624-00029','CASH','TX-20250624-89682-SE1A','PAID',120000.00,1,8,0.00,138000.00,'2025-06-25',77,'[2]','Description','2025-06-24 11:36:17','2025-07-04 14:31:22',1,0,0,1,'','','FIXED',NULL,'HOLD',NULL,NULL),(198,'VIS-20250630-00001','PAYPAL','TX-20250630-16563-23A8','PENDING',5000.00,1,8,0.00,5750.00,'2025-06-30',83,'[2, 3, 7]','This is testing invoice seo service ','2025-06-30 14:28:11','2025-07-04 14:08:56',1,0,0,1,'','','FIXED','Seo Service','HOLD',NULL,NULL),(199,'VIS-20250704-00002','DEBIT_CARD','TX-20250704-54667-6N7N','PENDING',10000.00,1,12,0.00,11800.00,'2025-07-09',80,'[8, 9, 10]','998365','2025-07-04 07:28:36','2025-07-11 11:19:17',1,0,0,1,'2025-06-01','2025-06-30','RECURSIVE','Digital Marketing','HOLD','DAILY',3),(200,'VIS-20250704-00003','DEBIT_CARD','TX-20250704-39295-5I7A','PENDING',10000.00,1,12,0.00,11800.00,'2025-07-17',80,'[8, 9, 10]','998365','2025-07-04 07:30:41','2025-07-04 14:08:56',1,0,0,1,'','','FIXED','Seo Service','HOLD',NULL,NULL),(202,'VIS-20250704-00004','DEBIT_CARD','TX-20250704-51851-EZN2','PENDING',10000.00,2,12,0.00,23600.00,'2025-07-18',80,'[8, 9, 10]','998365','2025-07-04 07:31:18','2025-07-04 14:08:56',1,0,0,1,'','','FIXED','Web Service','HOLD',NULL,NULL),(203,'VIS-20250704-00005','DEBIT_CARD','TX-20250704-62119-1HP3','PENDING',10000.00,2,12,0.00,23600.00,'2025-09-16',85,'[0, 3, 9, 10]','998365','2025-07-04 07:32:06','2025-07-11 11:19:17',1,0,0,1,'2025-07-01','2025-08-04','RECURSIVE','App Service','HOLD','WEEKLY',3),(204,'VIS-20250704-00006','DEBIT_CARD','TX-20250704-99874-7NGO','PENDING',10000.00,3,12,0.00,35400.00,'2025-07-24',86,'[0, 2, 3]','998365','2025-07-04 07:32:49','2025-07-04 14:08:56',1,0,0,1,'','','FIXED','Website Service','HOLD',NULL,NULL),(205,'VIS-20250704-00007','DEBIT_CARD','TX-20250704-93768-SBIL','PENDING',10001.00,2,12,0.00,23602.36,'2025-07-17',86,'[0, 2, 3]','998365','2025-07-04 07:33:22','2025-07-04 14:08:56',1,0,0,1,'','','FIXED','Website Service','HOLD',NULL,NULL),(206,'VIS-20250704-00008','CREDIT_CARD','TX-20250704-46379-4Y5I','PENDING',350000.00,1,12,0.00,413000.00,'2025-08-02',78,'[3]','998365','2025-07-04 07:33:59','2025-07-04 14:08:56',1,0,0,1,'','','FIXED','App Service','HOLD',NULL,NULL),(207,'VIS-20250711-00001','CASH','TX-20250711-50705-FBXZ','PENDING',10000.00,1,11,0.00,10300.00,'2025-07-11',78,'[3, 7]','This is testing','2025-07-11 08:45:18','2025-07-11 11:51:24',1,0,0,1,'2025-07-11','2025-08-09','RECURSIVE','Seo Service  ','HOLD','DAILY',3),(208,'VIS-20250711-00080','CASH','TX-20250711-75570-60DE','PENDING',10000.00,1,11,0.00,10300.00,'2025',78,'\"[3, 7]\"','This is testing','2025-07-11 12:52:29','2025-07-11 12:52:29',1,0,0,1,'2025','2025-08-09','RECURSIVE','Seo Service  ','HOLD','DAILY',3);
+INSERT INTO `invoice` VALUES (211,'VIS-20250722-00001','CREDIT_CARD','TX-20250722-65313-WBGX','PAID',10000.00,1,12,0.00,11800.00,'2025-07-24',78,'[7, 8]','GST','2025-07-22 08:09:23','2025-07-25 06:53:26',1,0,0,1,'','','FIXED','Website Service','HOLD',NULL,0),(217,'VIS-20250722-00002','CREDIT_CARD','TX-20250722-33917-FNWU','PENDING',10000.00,1,11,0.00,10300.00,'2025-07-22',78,'[7, 8]','GST','2025-07-22 08:16:28','2025-07-28 06:38:09',1,0,3,1,'','','FIXED','Website Service','HOLD',NULL,0),(218,'VIS-20250722-00004','DEBIT_CARD','TX-20250722-16984-EKCD','CANCELLED',123213.00,1,12,0.00,145391.34,'2025-07-25',78,'[8]','// Optional: Set to NULL if not required\r\n','2025-07-22 08:32:36','2025-07-25 07:18:07',1,0,1,1,'','','FIXED','Seo Service  ','HOLD',NULL,0),(219,'VIS-20250725-00002','CASH','TX-20250725-39798-KQLU','REFUNDED',10000.00,1,12,0.00,11800.00,'2025-07-26',78,'[9]','REFUNDED','2025-07-25 06:39:21','2025-07-25 06:39:21',1,0,0,1,'','','FIXED','Air-ticket invoice','HOLD',NULL,0),(220,'VIS-20250725-00003','PAYPAL','TX-20250725-16270-C6V9','PAID',10000.00,1,12,0.00,11800.00,'2025-07-16',78,'[2]','Remark...','2025-07-25 06:43:17','2025-07-25 06:43:17',1,0,0,1,'','','FIXED','Air-ticket invoice','HOLD',NULL,0),(221,'VIS-20250728044805-00003','DEBIT_CARD','TX-20250728-74548-PAHX','PENDING',10000.00,1,12,0.00,11800.00,'2025-07-29',78,'[8]','Remark...','2025-07-28 04:48:36','2025-07-28 04:48:36',1,0,0,1,'2025-07-01','2025-07-31','RECURSIVE','Logo Designing ','HOLD','MONTHLY',1);
 /*!40000 ALTER TABLE `invoice` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -272,13 +310,11 @@ DROP TABLE IF EXISTS `invoice_sequence`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `invoice_sequence` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `date` varchar(8) NOT NULL,
   `last_sequence` int NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `date` (`date`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -287,7 +323,7 @@ CREATE TABLE `invoice_sequence` (
 
 LOCK TABLES `invoice_sequence` WRITE;
 /*!40000 ALTER TABLE `invoice_sequence` DISABLE KEYS */;
-INSERT INTO `invoice_sequence` VALUES (3,'20250606',19,'2025-06-06 07:17:17','2025-06-06 08:47:30'),(4,'20250613',1,'2025-06-13 09:47:44','2025-06-13 09:47:44'),(5,'20250617',1,'2025-06-17 06:49:58','2025-06-17 06:49:58'),(6,'20250623',1,'2025-06-23 05:39:12','2025-06-23 05:39:12'),(7,'20250624',29,'2025-06-24 05:10:24','2025-06-24 11:30:58'),(8,'20250630',1,'2025-06-30 14:26:46','2025-06-30 14:26:46'),(9,'20250704',9,'2025-07-04 07:26:25','2025-07-04 13:46:40'),(10,'20250711',80,'2025-07-11 08:34:06','2025-07-11 12:52:29');
+INSERT INTO `invoice_sequence` VALUES (1,3,'2025-07-25 09:55:31','2025-07-28 04:48:05');
 /*!40000 ALTER TABLE `invoice_sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -309,6 +345,7 @@ CREATE TABLE `invoice_settings` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `is_show_hsn` int DEFAULT '0',
   `is_show_bill_date` int DEFAULT '0',
+  `invoice_stamp_url` text,
   PRIMARY KEY (`invoice_settings_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -319,7 +356,7 @@ CREATE TABLE `invoice_settings` (
 
 LOCK TABLES `invoice_settings` WRITE;
 /*!40000 ALTER TABLE `invoice_settings` DISABLE KEYS */;
-INSERT INTO `invoice_settings` VALUES (1,'VIS','public/upload/invoice/images/img_684fc980c2c6f3.96229369.png','It checks if a file was uploaded using $_FILES[\"...\"][\"error\"] === 0.\r\n\r\nUpdates logo/favicon only if new ones are uploaded.\r\n\r\nSafely binds dynamic number of parameters based on what’s uploaded.\r\n\r\nUse id as primary key for update logic.','It checks if a file was uploaded using $_FILES[\"...\"][\"error\"] === 0.\r\n\r\nUpdates logo/favicon only if new ones are uploaded.\r\n\r\nSafely binds dynamic number of parameters based on what’s uploaded.\r\n\r\nUse id as primary key for update logic.','public/upload/invoice/images/img_684fe475a6b0f8.35010741.pdf','2025-06-16 07:36:32','2025-06-24 06:45:42',1,1);
+INSERT INTO `invoice_settings` VALUES (1,'VIS','public/upload/invoice/images/img_684fc980c2c6f3.96229369.png','It checks if a file was uploaded using $_FILES[\"...\"][\"error\"] === 0.\r\n\r\nUpdates logo/favicon only if new ones are uploaded.\r\n\r\nSafely binds dynamic number of parameters based on what’s uploaded.\r\n\r\nUse id as primary key for update logic.','It checks if a file was uploaded using $_FILES[\"...\"][\"error\"] === 0.\r\n\r\nUpdates logo/favicon only if new ones are uploaded.\r\n\r\nSafely binds dynamic number of parameters based on what’s uploaded.\r\n\r\nUse id as primary key for update logic.','public/upload/invoice/images/img_684fe475a6b0f8.35010741.pdf','2025-06-16 07:36:32','2025-07-24 12:05:43',1,1,'public/upload/invoice/stamps/img_688221972399d7.28403621.png');
 /*!40000 ALTER TABLE `invoice_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -349,7 +386,7 @@ CREATE TABLE `localization_settings` (
 
 LOCK TABLES `localization_settings` WRITE;
 /*!40000 ALTER TABLE `localization_settings` DISABLE KEYS */;
-INSERT INTO `localization_settings` VALUES (1,'ja','Asia/Kolkata','Y年m月d日','24',1,'2025-07-10 18:13:31','2025-07-11 16:16:53');
+INSERT INTO `localization_settings` VALUES (1,NULL,'Asia/Kolkata','d M Y H:i','24',1,'2025-07-10 18:13:31','2025-07-18 13:39:09');
 /*!40000 ALTER TABLE `localization_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -366,7 +403,7 @@ CREATE TABLE `permissions` (
   `status` int DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`permission_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=82 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=83 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -375,7 +412,7 @@ CREATE TABLE `permissions` (
 
 LOCK TABLES `permissions` WRITE;
 /*!40000 ALTER TABLE `permissions` DISABLE KEYS */;
-INSERT INTO `permissions` VALUES (28,'Dashboard',1,'2025-04-24 05:03:55'),(30,'Invoice',1,'2025-04-24 05:20:22'),(32,'Manage Invoice',1,'2025-04-24 06:05:26'),(33,'Edit Invoice',1,'2025-04-24 07:10:34'),(39,'Add Invoice',1,'2025-04-24 07:49:12'),(40,'Delete Invoice',1,'2025-04-24 07:49:12'),(41,'Send Mail',1,'2025-04-24 07:49:12'),(42,'Recycle Bin',1,'2025-04-24 07:49:12'),(43,'Restore',1,'2025-04-24 07:49:12'),(44,'Permanently delete',1,'2025-04-24 07:49:12'),(45,'Payments',1,'2025-04-24 07:49:12'),(46,'All Payments',1,'2025-04-24 10:50:06'),(47,'Paid Payments',1,'2025-04-24 10:50:16'),(48,'Pending Payments',1,'2025-04-24 10:50:47'),(49,'Cancelled Payments',1,'2025-04-24 10:50:59'),(50,'Refunded Payments',1,'2025-04-24 10:51:07'),(60,'Utility',1,'2025-04-24 11:00:28'),(61,'Customers',1,'2025-04-24 11:00:36'),(62,'Add Customer',1,'2025-04-24 11:00:44'),(63,'Delete Customer',1,'2025-04-24 11:00:49'),(64,'Edit Customer ',1,'2025-04-24 11:00:56'),(65,'Services',1,'2025-04-24 11:01:02'),(66,'Add Service',1,'2025-04-24 11:01:07'),(67,'Edit Service',1,'2025-04-24 11:01:14'),(68,'Delete Service ',1,'2025-04-24 11:01:19'),(69,'Tax',1,'2025-04-24 11:01:25'),(70,'Add Tax',1,'2025-04-24 11:01:39'),(71,'Edit Tax',1,'2025-04-24 11:01:50'),(72,'Delete Tax',1,'2025-04-24 11:01:57'),(73,'Reports',1,'2025-04-24 11:03:16'),(74,'Customers Report',1,'2025-04-24 11:03:26'),(75,'Monthly Report',1,'2025-04-24 11:03:59'),(76,'Yearly Report',1,'2025-04-24 11:04:11'),(77,'User Management',1,'2025-04-24 11:04:26'),(78,'Users',1,'2025-04-24 11:04:41'),(79,'Add User',1,'2025-04-24 11:04:59'),(80,'Edit User',1,'2025-04-24 11:05:09'),(81,'Delete User',1,'2025-04-24 11:05:23');
+INSERT INTO `permissions` VALUES (28,'Dashboard',1,'2025-04-24 05:03:55'),(30,'Invoice',1,'2025-04-24 05:20:22'),(32,'Manage Invoice',1,'2025-04-24 06:05:26'),(33,'Edit Invoice',1,'2025-04-24 07:10:34'),(39,'Add Invoice',1,'2025-04-24 07:49:12'),(40,'Delete Invoice',1,'2025-04-24 07:49:12'),(41,'Send Reminder',1,'2025-07-22 08:34:07'),(42,'Recycle Bin',1,'2025-04-24 07:49:12'),(43,'Restore',1,'2025-04-24 07:49:12'),(44,'Permanently delete',1,'2025-04-24 07:49:12'),(45,'Payments',1,'2025-04-24 07:49:12'),(46,'All Payments',1,'2025-04-24 10:50:06'),(47,'Paid Payments',1,'2025-04-24 10:50:16'),(48,'Pending Payments',1,'2025-04-24 10:50:47'),(49,'Cancelled Payments',1,'2025-04-24 10:50:59'),(50,'Refunded Payments',1,'2025-04-24 10:51:07'),(60,'Utility',1,'2025-04-24 11:00:28'),(61,'Customers',1,'2025-04-24 11:00:36'),(62,'Add Customer',1,'2025-04-24 11:00:44'),(63,'Delete Customer',1,'2025-04-24 11:00:49'),(64,'Edit Customer ',1,'2025-04-24 11:00:56'),(65,'Services',1,'2025-04-24 11:01:02'),(66,'Add Service',1,'2025-04-24 11:01:07'),(67,'Edit Service',1,'2025-04-24 11:01:14'),(68,'Delete Service ',1,'2025-04-24 11:01:19'),(69,'Tax',1,'2025-04-24 11:01:25'),(70,'Add Tax',1,'2025-04-24 11:01:39'),(71,'Edit Tax',1,'2025-04-24 11:01:50'),(72,'Delete Tax',1,'2025-04-24 11:01:57'),(73,'Reports',1,'2025-04-24 11:03:16'),(74,'Customers Report',1,'2025-04-24 11:03:26'),(75,'Monthly Report',1,'2025-04-24 11:03:59'),(76,'Yearly Report',1,'2025-04-24 11:04:11'),(77,'User Management',1,'2025-04-24 11:04:26'),(78,'Users',1,'2025-04-24 11:04:41'),(79,'Add User',1,'2025-04-24 11:04:59'),(80,'Edit User',1,'2025-04-24 11:05:09'),(81,'Delete User',1,'2025-04-24 11:05:23'),(82,'Send Invoice',1,'2025-07-22 08:34:12');
 /*!40000 ALTER TABLE `permissions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -460,7 +497,7 @@ CREATE TABLE `services` (
 
 LOCK TABLES `services` WRITE;
 /*!40000 ALTER TABLE `services` DISABLE KEYS */;
-INSERT INTO `services` VALUES (2,'Website Development ',998314,'2025-04-16 11:53:29','2025-04-21 13:10:13',1),(3,'App Development ',998314,'2025-04-16 11:53:39','2025-04-21 13:10:13',1),(7,'Graphic Designing',998391,'2025-04-21 13:15:15','2025-04-21 13:23:20',1),(8,'Digital Marketing ',998365,'2025-06-30 14:58:57',NULL,1),(9,'Backlink Creation',998365,'2025-07-04 07:27:02',NULL,1),(10,'Google Ads',998365,'2025-07-04 07:27:19',NULL,1);
+INSERT INTO `services` VALUES (2,'Website Development ',998314,'2025-04-16 11:53:29','2025-04-21 13:10:13',1),(3,'App Development ',998314,'2025-04-16 11:53:39','2025-04-21 13:10:13',1),(7,'Graphic Designing',998391,'2025-04-21 13:15:15','2025-04-21 13:23:20',1),(8,'Digital Marketing ',998365,'2025-06-30 14:58:57',NULL,1),(9,'Backlink Creation',998365,'2025-07-04 07:27:02',NULL,1);
 /*!40000 ALTER TABLE `services` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -501,10 +538,12 @@ CREATE TABLE `system_settings` (
   `id` int NOT NULL AUTO_INCREMENT,
   `is_recaptcha_active` int DEFAULT '0',
   `auth_banner` varchar(255) DEFAULT NULL,
+  `site_key` text,
+  `secret_key` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -513,7 +552,7 @@ CREATE TABLE `system_settings` (
 
 LOCK TABLES `system_settings` WRITE;
 /*!40000 ALTER TABLE `system_settings` DISABLE KEYS */;
-INSERT INTO `system_settings` VALUES (1,1,'public/upload/auth/images/img_680a2f54a65f11.67037738.jpg','2025-04-24 12:28:37','2025-06-06 16:48:14');
+INSERT INTO `system_settings` VALUES (1,1,'public/upload/auth/images/img_680a2f54a65f11.67037738.jpg','6LcEyhwrAAAAAFcEnKna3YfABlFJQ1q6LzcsFP8r','6LcEyhwrAAAAAOL6X0vXGMd92316XjKu0jEDSDpF','2025-04-24 12:28:37','2025-08-08 06:30:24');
 /*!40000 ALTER TABLE `system_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -541,7 +580,7 @@ CREATE TABLE `tax` (
 
 LOCK TABLES `tax` WRITE;
 /*!40000 ALTER TABLE `tax` DISABLE KEYS */;
-INSERT INTO `tax` VALUES (8,'VatEthiopia','15%',1,'2025-04-17 08:51:58','2025-04-18 09:36:04'),(9,'SGST ','9%',1,'2025-04-18 08:51:58',NULL),(10,'CGST ','9%',1,'2025-04-18 08:51:58',NULL),(11,'Professinol Tax','3%',1,'2025-04-18 08:51:58',NULL),(12,'CGST + SGST','18%',1,'2025-04-18 08:51:58',NULL),(13,'IGST12','15%',1,'2025-04-18 08:51:58',NULL),(14,'Ret ISR','1.25%',1,'2025-04-18 08:51:58',NULL),(19,'GST','18%',1,'2025-04-18 09:46:39',NULL);
+INSERT INTO `tax` VALUES (8,'VatEthiopia','15%',1,'2025-04-17 08:51:58','2025-04-18 09:36:04'),(9,'SGST ','9%',1,'2025-04-18 08:51:58',NULL),(10,'CGST ','9%',1,'2025-04-18 08:51:58',NULL),(11,'Professinol Tax','3%',1,'2025-04-18 08:51:58',NULL),(12,'CGST + SGST','18%',1,'2025-04-18 08:51:58',NULL),(13,'IGST12','15%',1,'2025-04-18 08:51:58',NULL);
 /*!40000 ALTER TABLE `tax` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -554,4 +593,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-07-11 18:37:44
+-- Dump completed on 2025-08-08 12:01:21

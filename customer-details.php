@@ -15,10 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
     try {
 
-
-
-
-
         $customerName = filter_input(INPUT_POST, 'customerName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $customerPhone = filter_input(INPUT_POST, 'customerPhone', FILTER_SANITIZE_NUMBER_INT);
         $customerEmail = filter_input(INPUT_POST, 'customerEmail', FILTER_SANITIZE_EMAIL);
@@ -32,6 +28,71 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
         $customerState = filter_input(INPUT_POST, 'customerState', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $customerCity = filter_input(INPUT_POST, 'customerCity', FILTER_SANITIZE_NUMBER_INT);
         $gstNumber = filter_input(INPUT_POST, 'gstNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        // Validation Patterns
+        $namePattern = "/^[a-zA-Z\s]{2,50}$/";                 // Only letters & spaces, 2-50 chars
+        $phonePattern = "/^\+?[1-9]\d{1,14}$/";
+        $emailPattern = "/^[\w.\-]+@[\w\-]+\.[a-zA-Z]{2,}$/";   // Basic email format
+        $addressPattern = "/^[\p{L}0-9\s,.\-#\/()':]{5,200}$/u";
+        $gstPattern = "/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/"; // GSTIN
+
+        // Validate Customer Data
+        if (!preg_match($namePattern, $customerName)) {
+            $_SESSION['error'] = 'Invalid customer name';
+            header("Location: customer-details.php");
+            exit();
+        }
+        if (!preg_match($phonePattern, $customerPhone)) {
+            $_SESSION['error'] = 'Invalid customer phone';
+            header("Location: customer-details.php");
+            exit();
+        }
+        if (!preg_match($emailPattern, $customerEmail)) {
+            $_SESSION['error'] = 'Invalid customer email';
+            header("Location: customer-details.php");
+            exit();
+        }
+        if (!preg_match($addressPattern, $customerAddress)) {
+            $_SESSION['error'] = 'Invalid customer address';
+            header("Location: customer-details.php");
+            exit();
+        }
+
+        // Validate Shipping Data
+        if (!preg_match($namePattern, $shippingName)) {
+            $_SESSION['error'] = 'Invalid shipping name';
+            header("Location: customer-details.php");
+            exit();
+        }
+        if (!preg_match($phonePattern, $shippingPhone)) {
+            $_SESSION['error'] = 'Invalid shipping phone';
+            header("Location: customer-details.php");
+            exit();
+        }
+        if (!preg_match($emailPattern, $shippingEmail)) {
+            $_SESSION['error'] = 'Invalid shipping email';
+            header("Location: customer-details.php");
+            exit();
+        }
+        if (!preg_match($addressPattern, $shippingAddress)) {
+            $_SESSION['error'] = 'Invalid shipping address';
+            header("Location: customer-details.php");
+            exit();
+        }
+
+        // Validate GST Number
+        if (!preg_match($gstPattern, strtoupper($gstNumber))) {
+            $_SESSION['error'] = 'Invalid GST number';
+            header("Location: customer-details.php");
+            exit();
+        }
+
+        // City validation (numeric check already from filter_input)
+        if (!is_numeric($customerCity)) {
+            $_SESSION['error'] = 'Invalid city ID';
+            header("Location: customer-details.php");
+            exit();
+        }
 
         $stmtInsert = $db->prepare('INSERT INTO customer 
         (
@@ -73,6 +134,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
         }
     } catch (Exception $e) {
         $_SESSION['error'] = $e;
+        header("Location: customer-details.php");
+        exit;
     }
 
 }

@@ -147,6 +147,56 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaStatus'])) {
 }
 
 
+if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaSubmit'])) {
+    try {
+        $id = $_POST['id'];
+        $siteKey = $_POST['siteKey'];
+        $secretKey = $_POST['secretKey'];
+        if (empty($id)) {
+            $stmtInsert = $db->prepare("INSERT INTO system_settings  (site_key,secret_key) VALUES(?,?)");
+            $stmtInsert->bind_param(
+                "ssi",
+                $siteKey,
+                $secretKey
+            );
+
+            if ($stmtInsert->execute()) {
+                $_SESSION['success'] = "Captcha keys created";
+                 header("Location: system-settings.php");
+                exit;
+            } else {
+                throw new Exception($stmtInsert->error);
+            }
+
+
+        } else {
+            $stmtUpdate = $db->prepare("UPDATE system_settings SET site_key = ? , secret_key = ?
+            WHERE id = ?
+            ");
+
+            $stmtUpdate->bind_param(
+                "ssi",
+                $siteKey,
+                $secretKey,
+                $id
+            );
+
+
+            if ($stmtUpdate->execute()) {
+                $_SESSION['success'] = "Captcha keys updated";
+                 header("Location: system-settings.php");
+                exit;
+            } else {
+                throw new Exception($stmtInsert->error);
+            }
+        }
+    } catch (\Throwable $th) {
+        $_SESSION['error'] = $th->getMessage();
+         header("Location: system-settings.php");
+        exit;
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -323,6 +373,22 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaStatus'])) {
                                                     <p>Captcha helps protect you from spam and password decryption</p>
                                                 </li>
 
+                                                <li>
+                                                    <div class="integration-btn">
+                                                        <a href="" data-bs-toggle="modal"
+                                                            data-bs-target="#google-captcha"><svg
+                                                                xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                height="24" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                class="feather feather-tool me-2">
+                                                                <path
+                                                                    d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+                                                                </path>
+                                                            </svg>View Integration</a>
+                                                    </div>
+                                                </li>
+
                                             </ul>
                                         </div>
                                     </div>
@@ -346,8 +412,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaStatus'])) {
                                                             <label for="user4" class="checktoggle"> </label>
                                                         </div> -->
                                                     </div>
-                                                    <p>Provides detailed information about geographical regions and
-                                                        sites worldwide.</p>
+                                                    <p>Change authentication form background wallpaper from here.</p>
                                                 </li>
                                                 <li>
                                                     <div class="integration-btn">
@@ -383,26 +448,29 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaStatus'])) {
                             </button>
                         </div>
                         <div class="modal-body custom-modal-body">
-                            <form action="">
+                            <form action="" method="post">
+                                <input type="hidden" name="id" value="<?= !empty($data['id']) ? $data['id'] : "" ?>">
                                 <div class="row">
                                     <div class="col-lg-12">
                                         <div class="mb-3">
                                             <label class="form-label">Google Rechaptcha Site Key <span> *</span></label>
-                                            <input type="text" class="form-control">
+                                            <input type="text" class="form-control" name="siteKey" required
+                                                value="<?= !empty($data['site_key']) ? $data['site_key'] : "" ?>">
                                         </div>
                                     </div>
                                     <div class="col-lg-12">
                                         <div class="mb-0">
                                             <label class="form-label">Google Rechaptcha Secret Key <span>
                                                     *</span></label>
-                                            <input type="text" class="form-control">
+                                            <input type="text" class="form-control" name="secretKey" required
+                                                value="<?= !empty($data['secret_key']) ? $data['secret_key'] : "" ?>">
                                         </div>
                                     </div>
                                 </div>
                                 <div class="modal-footer-btn">
                                     <button type="button" class="btn btn-cancel me-2"
                                         data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-submit">Submit</button>
+                                    <button type="submit" name="captchaSubmit" class="btn btn-submit">Submit</button>
                                 </div>
                             </form>
                         </div>
