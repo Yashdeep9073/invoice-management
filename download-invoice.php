@@ -427,11 +427,11 @@ try {
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(20, 85);
-    $pdf->Cell(90, 10, 'Kindly Attention!', 0, 0);
+    $pdf->Cell(90, 10, 'Kind Attention!', 0, 0);
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(20, 90);
-    $pdf->Cell(90, 10, 'Dear,', 0, 0);
+    $pdf->Cell(90, 10, 'Dear Sir/Madam,', 0, 0);
 
     // Summary (center-aligned, below table)
     $discount = isset($invoice['discount']) ? $invoice['discount'] : 0;
