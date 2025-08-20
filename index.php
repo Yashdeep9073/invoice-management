@@ -317,7 +317,7 @@ ob_end_flush();
 
                                 <div class="form-sociallink">
                                     <div class="my-4 d-flex justify-content-center align-items-center copyright-text">
-                                        <p>Copyright &copy; 2020 - <?php echo date('Y'); ?> <a
+                                        <p> &copy; 2020 - <?php echo date('Y'); ?> <a
                                                 href="<?php echo isset($companySettings['company_website']) ? $companySettings['company_website'] : "https://vibrantick.in/" ?>"
                                                 target="_blank"><?php echo isset($companySettings['company_name']) ? $companySettings['company_name'] : "Vibrantick
                                                 Infotech Solutions Pvt Ltd." ?>
