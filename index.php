@@ -289,9 +289,9 @@ ob_end_flush();
                                                     <span class="checkmarks"></span> Remember me
                                                 </label>
                                             </div> -->
-                                            <div class="text-end">
+                                            <!-- <div class="text-end">
                                                 <a class="forgot-link" href="forgot-password.php">Forgot Password?</a>
-                                            </div>
+                                            </div> -->
                                         </div>
                                     </div>
                                 </div>
