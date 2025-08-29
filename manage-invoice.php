@@ -17,7 +17,7 @@ if (!isset($_SESSION["admin_id"])) {
 
 try {
 
-    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id WHERE currency.is_active = 1 ;");
     $stmtFetchLocalizationSettings->execute();
     $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
@@ -85,7 +85,9 @@ try {
             INNER JOIN customer ON customer.customer_id = invoice.customer_id
             LEFT JOIN admin ON admin.admin_id = invoice.created_by 
              INNER JOIN tax ON tax.tax_id = invoice.tax
-            WHERE invoice.is_active = 1";
+            WHERE invoice.is_active = 1
+             
+            ";
 
             $conditions = [];
             $paramsToBind = [];
@@ -149,6 +151,7 @@ try {
                 ON admin.admin_id = invoice.created_by 
                   INNER JOIN tax ON tax.tax_id = invoice.tax
                 WHERE invoice.is_active = 1
+                ORDER BY invoice.invoice_id ASC
                 ");
             if ($stmtFetchInvoices->execute()) {
                 $invoices = $stmtFetchInvoices->get_result();
@@ -164,6 +167,10 @@ try {
         }
     }
 
+
+                    //     echo "<pre>";
+                    //     print_r($invoices->fetch_all(MYSQLI_ASSOC));
+                    // exit;
 
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
