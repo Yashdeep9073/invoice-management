@@ -15,7 +15,7 @@ $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_A
 
 // Check if the admin is logged in
 if (!isset($_SESSION["admin_id"])) {
-    header("Location: login.php"); // Redirect to login if not logged in
+    header("Location: index.php"); // Redirect to login if not logged in
     exit();
 }
 
