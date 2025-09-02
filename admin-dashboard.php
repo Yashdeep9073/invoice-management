@@ -305,7 +305,10 @@ ob_end_flush();
                         <div class="dash-count das1">
                             <div class="dash-counts">
                                 <h4>
-                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $totalAmount[0]['total_payment'];
+                                    <?php
+                                    $currency = isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$";
+                                    $totalAmount = !empty($totalAmount[0]['total_payment']) ? $totalAmount[0]['total_payment'] : 0;
+                                    echo $currency . " " . $totalAmount;
                                     ?>
                                 </h4>
                                 <h5><a class="text-white" href="reports.php">Total Payment</a></h5>
