@@ -152,17 +152,19 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaSubmit'])) {
         $id = $_POST['id'];
         $siteKey = $_POST['siteKey'];
         $secretKey = $_POST['secretKey'];
+        $domain = $_POST['domain'];
         if (empty($id)) {
-            $stmtInsert = $db->prepare("INSERT INTO system_settings  (site_key,secret_key) VALUES(?,?)");
+            $stmtInsert = $db->prepare("INSERT INTO system_settings  (site_key,secret_key,domain) VALUES(?,?,?)");
             $stmtInsert->bind_param(
-                "ssi",
+                "sss",
                 $siteKey,
-                $secretKey
+                $secretKey,
+                $domain
             );
 
             if ($stmtInsert->execute()) {
                 $_SESSION['success'] = "Captcha keys created";
-                 header("Location: system-settings.php");
+                header("Location: system-settings.php");
                 exit;
             } else {
                 throw new Exception($stmtInsert->error);
@@ -170,21 +172,22 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaSubmit'])) {
 
 
         } else {
-            $stmtUpdate = $db->prepare("UPDATE system_settings SET site_key = ? , secret_key = ?
+            $stmtUpdate = $db->prepare("UPDATE system_settings SET site_key = ? , secret_key = ? , domain = ?
             WHERE id = ?
             ");
 
             $stmtUpdate->bind_param(
-                "ssi",
+                "sssi",
                 $siteKey,
                 $secretKey,
+                $domain,
                 $id
             );
 
 
             if ($stmtUpdate->execute()) {
                 $_SESSION['success'] = "Captcha keys updated";
-                 header("Location: system-settings.php");
+                header("Location: system-settings.php");
                 exit;
             } else {
                 throw new Exception($stmtInsert->error);
@@ -192,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaSubmit'])) {
         }
     } catch (\Throwable $th) {
         $_SESSION['error'] = $th->getMessage();
-         header("Location: system-settings.php");
+        header("Location: system-settings.php");
         exit;
     }
 }
@@ -451,6 +454,13 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaSubmit'])) {
                             <form action="" method="post">
                                 <input type="hidden" name="id" value="<?= !empty($data['id']) ? $data['id'] : "" ?>">
                                 <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-3">
+                                            <label class="form-label">Domain <span> *</span></label>
+                                            <input type="text" class="form-control" name="domain" required
+                                                value="<?= !empty($data['domain']) ? $data['domain'] : "" ?>">
+                                        </div>
+                                    </div>
                                     <div class="col-lg-12">
                                         <div class="mb-3">
                                             <label class="form-label">Google Rechaptcha Site Key <span> *</span></label>

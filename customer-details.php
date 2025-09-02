@@ -789,27 +789,28 @@ ob_end_flush();
                                         <div class="input-blocks">
                                             <label>Customer Name <span> *</span></label>
                                             <input type="text" class="form-control" name="customerName"
-                                                placeholder="Enter customer name">
+                                                placeholder="Enter customer name" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer Phone <span> *</span></label>
                                             <input type="tel" class="form-control" name="customerPhone"
-                                                placeholder="Enter customer phone">
+                                                placeholder="Enter customer phone" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer Email <span> *</span></label>
                                             <input type="email" class="form-control" name="customerEmail"
-                                                placeholder="Enter customer email">
+                                                placeholder="Enter customer email" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer State <span> *</span></label>
-                                            <select class="form-select" id="customerState" name="customerState">
+                                            <select class="form-select" id="customerState" name="customerState"
+                                                required>
                                                 <option>Select</option>
                                                 <?php foreach ($states as $state) { ?>
                                                     <option value="<?php echo $state['state_code']; ?>">
@@ -822,7 +823,7 @@ ob_end_flush();
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer City <span> *</span></label>
-                                            <select class="form-select" id="customerCity" name="customerCity">
+                                            <select class="form-select" id="customerCity" name="customerCity" required>
                                                 <option>Select a city</option>
                                             </select>
                                         </div>
@@ -831,42 +832,42 @@ ob_end_flush();
                                         <div class="input-blocks">
                                             <label>Customer Address <span> *</span></label>
                                             <input type="text" class="form-control" name="customerAddress"
-                                                placeholder="Enter customer address">
+                                                placeholder="Enter customer address" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Name <span> *</span></label>
                                             <input type="text" class="form-control" name="shippingName"
-                                                placeholder="Enter shipping name">
+                                                placeholder="Enter shipping name" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Phone <span> *</span></label>
                                             <input type="tel" class="form-control" name="shippingPhone"
-                                                placeholder="Enter shipping phone">
+                                                placeholder="Enter shipping phone" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Email <span> *</span></label>
                                             <input type="email" class="form-control" name="shippingEmail"
-                                                placeholder="Enter shipping email">
+                                                placeholder="Enter shipping email" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Address <span> *</span></label>
                                             <input type="text" class="form-control" name="shippingAddress"
-                                                placeholder="Enter shipping address">
+                                                placeholder="Enter shipping address" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>GST Numbers <span> *</span></label>
                                             <input type="text" class="form-control" name="gstNumber"
-                                                placeholder="Enter GST number">
+                                                placeholder="Enter GST number" required>
                                         </div>
                                     </div>
                                 </div>

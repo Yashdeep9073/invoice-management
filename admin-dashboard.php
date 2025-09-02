@@ -318,8 +318,15 @@ ob_end_flush();
                     <div class="col-xl-3 col-sm-6 col-12 d-flex">
                         <div class="dash-count das2">
                             <div class="dash-counts">
-                                <h4> <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $totalPaidAmount['0']['total_paid_payment']; ?>
+
+                                <h4>
+                                    <?php
+                                    $currency = isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$";
+                                    $totalPaidAmount = !empty($totalPaidAmount[0]['total_paid_payment']) ? $totalPaidAmount[0]['total_paid_payment'] : 0;
+                                    echo $currency . " " . $totalPaidAmount;
+                                    ?>
                                 </h4>
+
                                 <h5><a class="text-white" href="reports.php">Received</a></h5>
                             </div>
                             <div class="dash-imgs">
@@ -330,8 +337,14 @@ ob_end_flush();
                     <div class="col-xl-3 col-sm-6 col-12 d-flex">
                         <div class="dash-count das3">
                             <div class="dash-counts">
-                                <h4> <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $totalDueAmount['0']['total_due_payment']; ?>
+                                <h4>
+                                    <?php
+                                    $currency = isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$";
+                                    $dueAmount = !empty($totalDueAmount[0]['total_due_payment']) ? $totalDueAmount[0]['total_due_payment'] : 0;
+                                    echo $currency . " " . $dueAmount;
+                                    ?>
                                 </h4>
+
                                 <h5><a class="text-white" href="reports.php">Due Payment</a></h5>
                             </div>
                             <div class="dash-imgs">

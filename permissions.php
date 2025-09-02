@@ -43,6 +43,13 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
     $permissionName = filter_input(INPUT_POST, "permissionName", FILTER_SANITIZE_STRING);
 
+
+    if (empty($permissionName)) {
+        $_SESSION['error'] = "Invalid permission name";
+        header("Location: permissions.php");
+        exit;
+    }
+
     try {
         $stmtPermission = $db->prepare("INSERT INTO permissions (permission_name) VALUES (?)");
 
@@ -384,7 +391,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['update'])) {
                             <form action="" method="POST">
                                 <div class="mb-0">
                                     <label class="form-label">Permission Name</label>
-                                    <input type="text" name="permissionName" class="form-control">
+                                    <input type="text" name="permissionName" class="form-control" required>
                                 </div>
                                 <div class="modal-footer-btn">
                                     <button type="button" class="btn btn-cancel me-2"
@@ -419,7 +426,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['update'])) {
                                     <input type="hidden" id="editPermissionId" name="editPermissionId">
                                     <label class="form-label">Permission Name</label>
                                     <input type="text" id="editPermissionName" name="editPermissionName"
-                                        class="form-control">
+                                        class="form-control" required>
                                 </div>
                                 <div class="mb-0">
                                     <label class="form-label">Status</label>

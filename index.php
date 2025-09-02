@@ -8,34 +8,7 @@ require './database/config.php';
 require './utility/env.php';
 
 
-
-
-
 try {
-
-    // Function to validate site key (unchanged from your code)
-    function isValidSiteKey($siteKey, $secretKey)
-    {
-        $url = 'https://www.google.com/recaptcha/api/siteverify';
-        $data = [
-            'secret' => $secretKey,
-            'response' => 'test', // Dummy response for validation
-            'remoteip' => $_SERVER['REMOTE_ADDR']
-        ];
-
-        $options = [
-            'http' => [
-                'method' => 'POST',
-                'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
-                'content' => http_build_query($data)
-            ]
-        ];
-        $context = stream_context_create($options);
-        $response = @file_get_contents($url, false, $context); // Suppress warnings for network issues
-        $result = json_decode($response, true);
-
-        return !isset($result['error-codes']) || !in_array('invalid-site-public-key', $result['error-codes']);
-    }
 
     $stmtFetch = $db->prepare("SELECT * FROM system_settings");
     $stmtFetch->execute();
@@ -46,6 +19,9 @@ try {
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
+    $domain = $_SERVER['HTTP_HOST'];
+
+
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
 }
@@ -54,11 +30,6 @@ try {
 $siteKey = !empty($data['site_key']) ? $data['site_key'] : getenv('GOOGLE_RECAPTCHA_SITE_KEY');
 $secretKey = !empty($data['secret_key']) ? $data['secret_key'] : getenv('GOOGLE_RECAPTCHA_SECRET_KEY');
 
-// Basic format check for site key (Google reCAPTCHA site keys are typically 40 characters, alphanumeric with hyphens/underscores)
-// $siteKeyValid = !empty($siteKey) && preg_match('/^[A-Za-z0-9_-]{40}$/', $siteKey) && !empty($secretKey);
-
-// Optionally validate with Google's API (use with caution due to performance impact)
-$siteKeyValid = isValidSiteKey($siteKey, $secretKey);
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Sanitize and validate user input
@@ -67,7 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $recaptcha = filter_input(INPUT_POST, 'g-recaptcha-response', FILTER_SANITIZE_STRING);
 
     // Check if reCAPTCHA is active in the database
-    if (isset($data['is_recaptcha_active']) && $data['is_recaptcha_active'] == 1 && $siteKeyValid) {
+    if (isset($data['is_recaptcha_active']) && $data['is_recaptcha_active'] == 1 && $data['domain'] == $domain) {
         // If reCAPTCHA is active, g-recaptcha-response must be present
         if (empty($recaptcha)) {
             $_SESSION['error'] = "Please complete the reCAPTCHA verification.";
@@ -296,21 +267,16 @@ ob_end_flush();
                                     </div>
                                 </div>
                                 <div class="form-login">
-                                    <?php if ($data['is_recaptcha_active'] == 1 && $siteKeyValid): ?>
+                                    <?php if ($data['is_recaptcha_active'] == 1 && $data['domain'] == $domain): ?>
                                         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
                                         <div class="g-recaptcha"
                                             data-sitekey="<?= htmlspecialchars($siteKey, ENT_QUOTES, 'UTF-8') ?>"
                                             data-callback="enableSubmit" style="border:none;" align="center"></div>
-                                    <?php elseif ($data['is_recaptcha_active'] == 1 && !$siteKeyValid): ?>
-                                        <div class="alert alert-danger" role="alert">
-                                            reCAPTCHA is not available due to an invalid site key. Please contact the site
-                                            administrator.
-                                        </div>
                                     <?php endif; ?>
                                 </div>
 
                                 <div class="form-login">
-                                    <button type="submit" name="submit" id="submit" class="btn btn-login" <?php echo ($data['is_recaptcha_active'] == 1 && $siteKeyValid) ? 'disabled' : ''; ?>>
+                                    <button type="submit" name="submit" id="submit" class="btn btn-login" <?php echo ($data['is_recaptcha_active'] == 1  && $data['domain'] == $domain) ? 'disabled' : ''; ?>>
                                         Sign In
                                     </button>
                                 </div>
@@ -348,15 +314,6 @@ ob_end_flush();
         document.getElementById('submit').disabled = false;
     }
 
-    // Prevent form submission if reCAPTCHA is active but not completed
-    document.querySelector('form').addEventListener('submit', function (e) {
-        <?php if (isset($data['is_recaptcha_active']) && $data['is_recaptcha_active'] == 1): ?>
-            if (!grecaptcha.getResponse()) {
-                e.preventDefault();
-                alert('Please complete the reCAPTCHA verification.');
-            }
-        <?php endif; ?>
-    });
 </script>
 <script>
     if (window.history.replaceState) {
