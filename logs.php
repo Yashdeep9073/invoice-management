@@ -14,7 +14,6 @@ if (!isset($_SESSION["admin_id"])) {
     exit();
 }
 
-
 try {
 
     $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id WHERE currency.is_active = 1 ;");
