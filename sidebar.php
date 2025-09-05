@@ -249,6 +249,26 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                 </li>
             <?php endif; ?>
 
+
+            <?php if ($isAdmin || hasPermission('Logs', $privileges, $roleData['0']['role_name'])): ?>
+                <li class="submenu-open">
+                    <h6 class="submenu-hdr">Logs</h6>
+                    <ul>
+                        <li class="submenu">
+                            <a href="javascript:void(0);"><i data-feather="book"></i><span>Logs</span><span
+                                    class="menu-arrow"></span></a>
+                            <ul>
+                                <li>
+                                    <a href="logs.php">Manage Logs</a>
+                                </li>
+                            </ul>
+                        </li>
+
+
+                    </ul>
+                </li>
+            <?php endif; ?>
+
             <li class="submenu-open">
                 <ul>
 

@@ -6,9 +6,84 @@ error_reporting(0);
 require './vendor/autoload.php';
 require './database/config.php';
 require './utility/env.php';
-
+require './utility/logGenerator.php';
 
 try {
+
+    function logRequestData($db, $requestInfo, $userId)
+    {
+        // Prepare the SQL statement
+        $stmt = $db->prepare("
+        INSERT INTO logs (
+            request_type, browser_name, browser_version, platform, is_mobile,
+            user_agent, ip_address, request_method, request_uri, query_string,
+            headers, content_type, accept_header, referer, xhr_requested,
+            request_body, response_status, response_time,user_id
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    ");
+
+        if ($stmt === false) {
+            error_log("Failed to prepare statement: " . $db->error);
+            return false;
+        }
+
+        // Prepare the values
+        $request_type = $requestInfo['type'] ?? null;
+        $browser_name = $requestInfo['browser']['name'] ?? 'Unknown';
+        $browser_version = $requestInfo['browser']['version'] ?? 'Unknown';
+        $platform = $requestInfo['browser']['platform'] ?? 'Unknown';
+        $is_mobile = $requestInfo['browser']['is_mobile'] ?? 0;
+        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+        $ip_address = $_SERVER['REMOTE_ADDR'] ?? null;
+        $request_method = $_SERVER['REQUEST_METHOD'] ?? null;
+        $request_uri = $_SERVER['REQUEST_URI'] ?? null;
+        $query_string = $_SERVER['QUERY_STRING'] ?? null;
+        $headers = json_encode(getallheaders());
+        $content_type = $_SERVER['CONTENT_TYPE'] ?? null;
+        $accept_header = $_SERVER['HTTP_ACCEPT'] ?? null;
+        $referer = $_SERVER['HTTP_REFERER'] ?? null;
+        $xhr_requested = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) ? 1 : 0;
+        $request_body = file_get_contents('php://input');
+        $response_status = http_response_code();
+        $response_time = null; // Set this if measuring response time
+
+        // Bind parameters
+        $stmt->bind_param(
+            "ssssissssssssssiiii",
+            $request_type,
+            $browser_name,
+            $browser_version,
+            $platform,
+            $is_mobile,
+            $user_agent,
+            $ip_address,
+            $request_method,
+            $request_uri,
+            $query_string,
+            $headers,
+            $content_type,
+            $accept_header,
+            $referer,
+            $xhr_requested,
+            $request_body,
+            $response_status,
+            $response_time,
+            $userId
+        );
+
+        // Execute the statement
+        if ($stmt->execute()) {
+            $insert_id = $db->insert_id;
+            $stmt->close();
+            return $insert_id;
+        } else {
+            error_log("Failed to log request: " . $stmt->error);
+            $stmt->close();
+            return false;
+        }
+    }
 
     $stmtFetch = $db->prepare("SELECT * FROM system_settings");
     $stmtFetch->execute();
@@ -127,6 +202,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $roleData = $stmtRolesData->get_result()->fetch_all(MYSQLI_ASSOC);
 
     $_SESSION['admin_role'] = $roleData[0]['role_name'];
+
+    // Example usage 
+    $requestInfo = detectRequestType();
+    logRequestData($db, $requestInfo, $row['admin_id']);
 
     // Redirect to admin dashboard
     header("Location: admin-dashboard.php");
@@ -276,7 +355,7 @@ ob_end_flush();
                                 </div>
 
                                 <div class="form-login">
-                                    <button type="submit" name="submit" id="submit" class="btn btn-login" <?php echo ($data['is_recaptcha_active'] == 1  && $data['domain'] == $domain) ? 'disabled' : ''; ?>>
+                                    <button type="submit" name="submit" id="submit" class="btn btn-login" <?php echo ($data['is_recaptcha_active'] == 1 && $data['domain'] == $domain) ? 'disabled' : ''; ?>>
                                         Sign In
                                     </button>
                                 </div>
