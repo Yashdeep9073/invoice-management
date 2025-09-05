@@ -354,11 +354,10 @@ try {
                                                 <span class="checkmarks"></span>
                                             </label>
                                         </th>
-                                        <th>Request Type</th>
                                         <th>Browser Name</th>
                                         <th>IP Address</th>
                                         <th>User</th>
-                                        <th>Created At</th>
+                                        <th>Login At</th>
                                         <th>Platform</th>
                                         <th>Is Mobile</th>
                                     </tr>
@@ -373,7 +372,6 @@ try {
                                                     <span class="checkmarks"></span>
                                                 </label>
                                             </td>
-                                            <td class="ref-number"><?php echo $log['request_type'] ?></td>
                                             <td><?php echo $log['browser_name'] ?></td>
                                             <td><?php echo $log['ip_address'] ?></td>
                                             </td>
