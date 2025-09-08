@@ -181,7 +181,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['otp'])) {
             "status" => 200,
             "message" => "OTP Verified Successfully. Redirecting to dashboard...",
         ]);
+
+        unset($_SESSION["token"]);
         exit();
+
+
 
     } catch (\Throwable $th) {
         error_log("OTP Verification Error: " . $th->getMessage()); // Log the actual error
