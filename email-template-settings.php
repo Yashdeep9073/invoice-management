@@ -520,6 +520,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit'])) {
                                                 <option>Select</option>
                                                 <option value="ISSUED">Issued</option>
                                                 <option value="REMINDER">Reminder</option>
+                                                <option value="2FA">2FA</option>
                                             </select>
                                         </div>
                                     </div>

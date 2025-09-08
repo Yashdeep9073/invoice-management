@@ -15,6 +15,7 @@ try {
     $data = $stmtFetch->get_result()->fetch_array(MYSQLI_ASSOC);
     $imageUrl = $data['auth_banner'];
     $isRecaptchaActive = $data['is_recaptcha_active'];
+    $isOtpActive = $data['is_otp_active'];
 
     $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
     $stmtFetchCompanySettings->execute();
@@ -140,6 +141,34 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaStatus'])) {
             "status" => 500,
             "error" => $th->getMessage(),
             "message" => "Error while updating captcha status",
+
+        ]);
+        exit;
+    }
+}
+if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['otpStatus'])) {
+    try {
+
+        $status = $_POST['otpStatus'];
+
+        $stmtUpdate = $db->prepare("UPDATE system_settings SET is_otp_active = ? ");
+        $stmtUpdate->bind_param("i", $status);
+        $stmtUpdate->execute();
+
+        //throw $th;
+        echo json_encode([
+            "status" => 200,
+            "message" => "2FA status updated successfully",
+
+        ]);
+        exit;
+
+    } catch (\Throwable $th) {
+        //throw $th;
+        echo json_encode([
+            "status" => 500,
+            "error" => $th->getMessage(),
+            "message" => "Error while updating captcha 2FA",
 
         ]);
         exit;
@@ -395,6 +424,39 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaSubmit'])) {
                                             </ul>
                                         </div>
                                     </div>
+
+                                    <div class="col-xxl-4 col-xl-6 col-lg-12 col-md-6 d-flex">
+                                        <div class="connected-app-card d-flex w-100">
+                                            <ul class="w-100">
+                                                <li class="flex-column align-items-start">
+                                                    <div
+                                                        class="d-flex align-items-center justify-content-between w-100">
+                                                        <div class="security-type d-flex align-items-center">
+                                                            <span class="system-app-icon">
+                                                                <img src="assets/img/icons/sms-icon-02.svg" alt="">
+                                                            </span>
+                                                            <div class="security-title">
+                                                                <h5>(2FA) Auth</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="status-toggle modal-status d-flex justify-content-between align-items-center ms-2">
+                                                            <input type="checkbox" id="2faStatus" class="check"
+                                                                <?= $isOtpActive ? 'checked' : '' ?>>
+                                                            <label for="2faStatus" class="checktoggle"></label>
+                                                        </div>
+                                                    </div>
+                                                    <p>Two-Factor Authentication adds extra security to your account.
+                                                    </p>
+
+                                                </li>
+
+
+
+                                            </ul>
+                                        </div>
+                                    </div>
+
                                     <div class="col-xxl-4 col-xl-6 col-lg-12 col-md-6 d-flex">
                                         <div class="connected-app-card d-flex w-100">
                                             <ul class="w-100">
@@ -633,6 +695,56 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['captchaSubmit'])) {
                         url: "system-settings.php",
                         type: "POST",
                         data: { captchaStatus: 0 },
+                        success: function (response, xhr) {
+                            let result = JSON.parse(response);
+
+                            console.log(result);
+
+                            if (result.status == 200) {
+                                notyf.success(result.message || "Status updated successfully");
+                            }
+
+
+                        },
+                        error: function (error, xhr) {
+                            console.error(error);
+                            notyf.error(error || "Error while updating status");
+                        }
+                    })
+                }
+            });
+
+            $(document).on("change", "#2faStatus", function () {
+                if ($(this).is(":checked")) {
+                    console.log("Status: Checked (ON)");
+
+                    $.ajax({
+                        url: "system-settings.php",
+                        type: "POST",
+                        data: { otpStatus: 1 },
+                        success: function (response, xhr) {
+                            let result = JSON.parse(response);
+
+                            console.log(result);
+
+                            if (result.status == 200) {
+                                notyf.success(result.message || "Status updated successfully");
+                            }
+
+
+                        },
+                        error: function (error, xhr) {
+                            console.error(error);
+                            notyf.error(error || "Error while updating status");
+                        }
+                    })
+
+                } else {
+
+                    $.ajax({
+                        url: "system-settings.php",
+                        type: "POST",
+                        data: { otpStatus: 0 },
                         success: function (response, xhr) {
                             let result = JSON.parse(response);
 
