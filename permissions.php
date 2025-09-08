@@ -4,6 +4,7 @@ ob_start();
 require './vendor/autoload.php';
 require './database/config.php';
 require './utility/env.php';
+require './utility/formatDateTime.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
@@ -345,8 +346,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['update'])) {
                                                     <span class="badge badge-lg bg-danger">Inactive</span>
                                                 <?php } ?>
                                             </td>
-                                            <td><?php $date = date_create($permission['created_at'])->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y");
-                                            echo $date; ?></td>
+                                            <td><?php echo formatDateTime($permission['created_at'], $localizationSettings); ?>
+                                            </td>
                                             <td class="action-table-data">
                                                 <div class="edit-delete-action">
                                                     <a class="editButton me-2 p-2" data-bs-toggle="modal"

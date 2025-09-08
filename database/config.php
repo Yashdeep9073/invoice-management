@@ -1,6 +1,5 @@
 <?php
 
-date_default_timezone_set('Asia/Kolkata');
 require __DIR__ . "/../utility/env.php";
 
 if (!defined('DB_SERVER')) {

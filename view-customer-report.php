@@ -2,6 +2,7 @@
 
 session_start();
 require "./database/config.php";
+require './utility/formatDateTime.php';
 
 if (!isset($_SESSION["admin_id"]) || !isset($_GET['id'])) {
     header("location: index.php");
@@ -330,8 +331,7 @@ ob_end_clean();
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
-                                                        <td><?php $date = new DateTime($paidInvoice['due_date']);
-                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
+                                                        <td><?php echo formatDateTime($paidInvoice['due_date'], $localizationSettings); ?>
                                                         </td>
                                                         <td>
                                                             <a
@@ -406,8 +406,7 @@ ob_end_clean();
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
-                                                        <td><?php $date = new DateTime($pendingInvoice['due_date']);
-                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
+                                                        <td><?php echo formatDateTime($pendingInvoice['due_date'], $localizationSettings); ?>
                                                         </td>
                                                         </td>
                                                         <td>
@@ -484,8 +483,8 @@ ob_end_clean();
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
-                                                        <td><?php $date = new DateTime($cancelledInvoice['due_date']);
-                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
+                                                        <td><?php echo formatDateTime($cancelledInvoice['due_date'], $localizationSettings);
+                                                        ?>
                                                         </td>
                                                         <td>
                                                             <a
@@ -563,8 +562,7 @@ ob_end_clean();
                                                             </label>
                                                         </td>
 
-                                                        <td><?php $date = new DateTime($refundedInvoice['due_date']);
-                                                        echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
+                                                        <td><?php echo formatDateTime($refundedInvoice['due_date'], $localizationSettings); ?>
                                                         </td>
                                                         <td>
                                                             <a

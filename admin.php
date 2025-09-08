@@ -5,6 +5,7 @@ if (!isset($_SESSION["admin_id"])) {
   header("location: index.php");
 }
 require "./database/config.php";
+require './utility/formatDateTime.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
@@ -419,8 +420,7 @@ try {
                         <?php echo $admin['admin_email'] ?>
                       </td>
                       <td>
-                        <?php $date = new DateTime($admin['created_at']);
-                        echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
+                        <?php echo formatDateTime($admin['created_at'], $localizationSettings); ?>
                       </td>
                       <td>
                         <?php if ($admin['is_active'] == 1) { ?>

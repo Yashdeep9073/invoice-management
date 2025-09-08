@@ -5,7 +5,7 @@ if (!isset($_SESSION["admin_id"])) {
     header("location: index.php");
 }
 require "./database/config.php";
-
+require './utility/formatDateTime.php';
 
 
 
@@ -225,8 +225,7 @@ try {
                                                     <span class="checkmarks"></span>
                                                 </label>
                                             </td>
-                                            <td><?php $date = new DateTime($invoice['due_date']);
-                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
+                                            <td><?php echo formatDateTime($invoice['due_date'], $localizationSettings); ?>
                                             </td>
                                             <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
                                             <td>

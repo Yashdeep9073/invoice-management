@@ -357,7 +357,7 @@ try {
                                         <th>Browser Name</th>
                                         <th>IP Address</th>
                                         <th>User</th>
-                                        <th>Login At</th>
+                                        <th>Login    At</th>
                                         <th>Platform</th>
                                         <th>Is Mobile</th>
                                     </tr>

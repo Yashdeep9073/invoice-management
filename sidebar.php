@@ -277,7 +277,7 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                         </a>
                     </li>
                     <li>
-                        <a href="javascript:void(0);"><i data-feather="lock"></i><span> v1.0.7</span></a>
+                        <a href="javascript:void(0);"><i data-feather="lock"></i><span> v1.1.7</span></a>
                     </li>
                 </ul>
             </li>

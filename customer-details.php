@@ -5,6 +5,7 @@ if (!isset($_SESSION["admin_id"])) {
     header("location: index.php");
 }
 require "./database/config.php";
+require './utility/formatDateTime.php';
 require 'vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
 // error_reporting(E_ALL);
@@ -701,8 +702,7 @@ ob_end_flush();
                                                 <?php echo $customer['customer_email'] ?>
                                             </td>
                                             <td class="ref-number"><?php echo $customer['gst_number'] ?></td>
-                                            <td><?php $date = new DateTime($customer['created_at']);
-                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
+                                            <td><?php echo formatDateTime($customer['created_at'], $localizationSettings); ?>
                                             </td>
                                             <td>
                                                 <?php if ($customer['isActive'] == 1) { ?>

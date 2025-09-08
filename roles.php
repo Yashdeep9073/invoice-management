@@ -5,7 +5,7 @@ session_start();
 require './vendor/autoload.php';
 require './database/config.php';
 require './utility/env.php';
-
+require './utility/formatDateTime.php';
 
 if (!isset($_SESSION["admin_id"])) {
     header("Location: index.php");
@@ -317,8 +317,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['update'])) {
                                                     <span class="badge badge-lg bg-danger">Inactive</span>
                                                 <?php } ?>
                                             </td>
-                                            <td><?php $date = date_create($role['created_at'])->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y");
-                                            echo $date; ?></td>
+                                            <td><?php echo formatDateTime($role['created_at'], $localizationSettings); ?></td>
 
                                             <td class="text-center">
                                                 <a class="action-set" href="javascript:void(0);" data-bs-toggle="dropdown"

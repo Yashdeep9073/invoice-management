@@ -4,6 +4,7 @@ session_start();
 require './vendor/autoload.php';
 require './database/config.php';
 require './utility/env.php';
+require './utility/formatDateTime.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
@@ -722,11 +723,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                             </td>
                                             <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
                                             <td><?php echo $invoice['customer_name'] ?></td>
-                                            <td><?php $date = new DateTime($invoice['created_at']);
-                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
+                                            <td><?php echo formatDateTime($invoice['created_at'], $localizationSettings); ?>
                                             </td>
-                                            <td><?php $date = new DateTime($invoice['due_date']);
-                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
+                                            <td><?php echo formatDateTime($invoice['due_date'], $localizationSettings); ?>
                                             </td>
                                             <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
                                             </td>

@@ -409,7 +409,6 @@ ob_end_flush();
                                         <th>Tax Name</th>
                                         <th>Tax Rate</th>
                                         <th>Status</th>
-                                        <th>Created On</th>
                                         <th class="no-sort text-center">Action</th>
                                     </tr>
                                 </thead>
@@ -440,9 +439,7 @@ ob_end_flush();
                                                 <?php } ?>
 
                                             </td>
-                                            <td><?php $date = new DateTime($tax['created_at']);
-                                            echo $date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y") ?>
-                                            </td>
+
 
                                             <td class="text-center">
                                                 <a class="action-set" href="javascript:void(0);" data-bs-toggle="dropdown"
