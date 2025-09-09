@@ -1,5 +1,13 @@
 <?php
 
+
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/env.php';
+
+use ipinfo\ipinfo\IPinfo;
+
+
+
 function detectRequestType()
 {
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
@@ -138,9 +146,7 @@ function detectBrowserInfo($userAgent)
 
 function detectGeoInfo($ipAddress)
 {
-    // Skip lookup for invalid or local IPs
     if ($ipAddress === '0.0.0.0' || $ipAddress === '127.0.0.1' || $ipAddress === '::1') {
-        error_log("Skipping geolocation for IP: $ipAddress");
         return [
             'country' => 'Unknown',
             'state' => 'Unknown',
@@ -148,40 +154,27 @@ function detectGeoInfo($ipAddress)
         ];
     }
 
-    // Use ip-api.com PHP endpoint
-    $url = "http://ip-api.com/php/{$ipAddress}";
-    $response = @file_get_contents($url);
+    // If you have a free token from ipinfo.io (recommended)
+    $accessToken = getenv("IP_TOKEN"); // optional
+    $client = new IPinfo($accessToken);
 
-    // Debug: Log the raw response
-    error_log("Geo API Response for IP $ipAddress: " . ($response === false ? 'Failed' : $response));
+    try {
+        $details = $client->getDetails($ipAddress);
 
-    if ($response === false) {
-        error_log("Failed to fetch geolocation data for IP: $ipAddress");
+        return [
+            'country' => $details->country ?? 'Unknown',
+            'state' => $details->region ?? 'Unknown',
+            'city' => $details->city ?? 'Unknown'
+        ];
+    } catch (Exception $e) {
         return [
             'country' => 'Unknown',
             'state' => 'Unknown',
             'city' => 'Unknown'
         ];
     }
-
-    // Unserialize the PHP response
-    $data = @unserialize($response);
-
-    if ($data === false || !is_array($data) || (isset($data['status']) && $data['status'] !== 'success')) {
-        error_log("Invalid or failed geolocation data for IP: $ipAddress");
-        return [
-            'country' => 'Unknown',
-            'state' => 'Unknown',
-            'city' => 'Unknown'
-        ];
-    }
-
-    return [
-        'country' => $data['country'] ?? 'Unknown',
-        'state' => $data['regionName'] ?? 'Unknown',
-        'city' => $data['city'] ?? 'Unknown'
-    ];
 }
+
 
 // Usage
 // $requestInfo = detectRequestType();

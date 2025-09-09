@@ -450,6 +450,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $requestInfo = detectRequestType();
         $geoInfo = $requestInfo['geo'];
 
+        // echo "<pre>";
+        // print_r($geoInfo);
+        // print_r($requestInfo);
+        // exit;
         logRequestData($db, $requestInfo, $adminId, $geoInfo);
 
         // Redirect to admin dashboard
