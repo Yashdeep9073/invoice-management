@@ -23,6 +23,8 @@ function detectRequestType()
     // Get geolocation information
     $geoInfo = detectGeoInfo($ipAddress);
 
+    // ✅ don't return $geoInfo here
+
     // Check for AJAX/API requests
     if (!empty($xhr) && strtolower($xhr) === 'xmlhttprequest') {
         return [
@@ -40,7 +42,6 @@ function detectRequestType()
         ];
     }
 
-    // Check for browser characteristics
     if (strpos($accept, 'text/html') !== false && !empty($userAgent)) {
         $browserPatterns = [
             '/Chrome/i',
@@ -56,7 +57,8 @@ function detectRequestType()
             if (preg_match($pattern, $userAgent)) {
                 return [
                     'type' => 'browser',
-                    'browser' => $browserInfo
+                    'browser' => $browserInfo,
+                    'geo' => $geoInfo
                 ];
             }
         }
@@ -68,6 +70,7 @@ function detectRequestType()
         'geo' => $geoInfo
     ];
 }
+
 
 function detectBrowserInfo($userAgent)
 {
@@ -178,6 +181,8 @@ function detectGeoInfo($ipAddress)
 
 // Usage
 // $requestInfo = detectRequestType();
+// print_r($requestInfo);
+// print_r($requestInfo['geo']);
 // $requestType = $requestInfo['type'];
 // $browserName = $requestInfo['browser'];
 
