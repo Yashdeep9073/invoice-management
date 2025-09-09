@@ -159,6 +159,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['otp'])) {
 
         $adminData = $result->fetch_assoc();
 
+        $adminId = $adminData['admin_id'];
+
         // Store session values securely
         $_SESSION['admin_id'] = base64_encode($adminData['admin_id']);
         $_SESSION['admin_name'] = $adminData['admin_username'];
@@ -199,6 +201,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['otp'])) {
         echo json_encode([
             "status" => 500,
             "message" => "Server Error. Please try again later.",
+            "error" => $th->getMessage(),
         ]);
         exit();
     }
