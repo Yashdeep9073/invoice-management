@@ -107,7 +107,7 @@ try {
             $customers = $stmtFetchCustomers->get_result()->fetch_all(MYSQLI_ASSOC);
             $stmtFetchCustomers->close();
         } else {
-            $stmtFetchLogs = $db->prepare("SELECT logs.*,admin.admin_username FROM logs  
+            $stmtFetchLogs = $db->prepare("SELECT logs.*,admin.admin_username,admin.admin_email FROM logs  
             INNER JOIN admin ON logs.user_id = admin.admin_id  ;
                 ");
             if ($stmtFetchLogs->execute()) {
@@ -355,10 +355,14 @@ try {
                                                 <span class="checkmarks"></span>
                                             </label>
                                         </th>
-                                        <th>Browser Name</th>
-                                        <th>IP Address</th>
                                         <th>User</th>
-                                        <th>Login At</th>
+                                        <th>Email</th>
+                                        <th>Login Date</th>
+                                        <th>IP Address</th>
+                                        <th>County</th>
+                                        <th>State</th>
+                                        <th>City</th>
+                                        <th>Browser Name</th>
                                         <th>Platform</th>
                                         <th>Is Mobile</th>
                                     </tr>
@@ -373,11 +377,15 @@ try {
                                                     <span class="checkmarks"></span>
                                                 </label>
                                             </td>
-                                            <td><?php echo $log['browser_name'] ?></td>
-                                            <td><?php echo $log['ip_address'] ?></td>
-                                            </td>
                                             <td><?php echo $log['admin_username'] ?></td>
+                                            <td><?php echo $log['admin_email'] ?></td>
                                             <td><?php echo formatDateTime($log['created_at'], $localizationSettings); ?>
+                                            </td>
+                                            <td><?php echo $log['ip_address'] ?></td>
+                                            <td><?php echo $log['country'] ?></td>
+                                            <td><?php echo $log['state'] ?></td>
+                                            <td><?php echo $log['city'] ?></td>
+                                            <td><?php echo $log['browser_name'] ?></td>
                                             </td>
                                             <td><?php echo $log['platform'] ?></td>
                                             <td><?php echo $log['is_mobile'] == 0 ? '<span class="badge badge-lg bg-danger">No</span>' : '<span class="badge badge-lg bg-success">Yes</span>' ?>

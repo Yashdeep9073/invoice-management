@@ -15,7 +15,7 @@ if (!isset($_SESSION["token"])) {
 
 try {
 
-    function logRequestData($db, $requestInfo, $userId)
+    function logRequestData($db, $requestInfo, $userId, $geoInfo)
     {
         // Prepare the SQL statement
         $stmt = $db->prepare("
@@ -23,9 +23,9 @@ try {
             request_type, browser_name, browser_version, platform, is_mobile,
             user_agent, ip_address, request_method, request_uri, query_string,
             headers, content_type, accept_header, referer, xhr_requested,
-            request_body, response_status, response_time,user_id
+            request_body, response_status, response_time,user_id, country, state, city
         ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     ");
 
@@ -53,10 +53,13 @@ try {
         $request_body = file_get_contents('php://input');
         $response_status = http_response_code();
         $response_time = null; // Set this if measuring response time
+        $country = $geoInfo['country'];
+        $state = $geoInfo['state'];
+        $city = $geoInfo['city'];
 
         // Bind parameters
         $stmt->bind_param(
-            "ssssissssssssssiiii",
+            "ssssissssssssssiiiisss",
             $request_type,
             $browser_name,
             $browser_version,
@@ -75,7 +78,10 @@ try {
             $request_body,
             $response_status,
             $response_time,
-            $userId
+            $userId,
+            $country,
+            $state,
+            $city
         );
 
         // Execute the statement
@@ -170,7 +176,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['otp'])) {
 
         // Log request data
         $requestInfo = detectRequestType();
-        logRequestData($db, $requestInfo, $adminData['admin_id']);
+        $geoInfo = $requestInfo['geo'];
+        logRequestData($db, $requestInfo, $adminId, $geoInfo);
 
         // Mark OTP as used
         $stmtOtpUpdate = $db->prepare("UPDATE admin_otp SET is_used = 1 WHERE otp_id = ? AND otp_code = ? AND admin_id = ?");

@@ -7,21 +7,28 @@ function detectRequestType()
     $xhr = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
     $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 
+    $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+
     // Get browser, version, platform, and mobile status
     $browserInfo = detectBrowserInfo($userAgent);
+
+    // Get geolocation information
+    $geoInfo = detectGeoInfo($ipAddress);
 
     // Check for AJAX/API requests
     if (!empty($xhr) && strtolower($xhr) === 'xmlhttprequest') {
         return [
             'type' => 'ajax',
-            'browser' => $browserInfo
+            'browser' => $browserInfo,
+            'geo' => $geoInfo
         ];
     }
 
     if (strpos($contentType, 'application/json') !== false) {
         return [
             'type' => 'api',
-            'browser' => $browserInfo
+            'browser' => $browserInfo,
+            'geo' => $geoInfo
         ];
     }
 
@@ -49,7 +56,8 @@ function detectRequestType()
 
     return [
         'type' => 'unknown',
-        'browser' => $browserInfo
+        'browser' => $browserInfo,
+        'geo' => $geoInfo
     ];
 }
 
@@ -124,6 +132,47 @@ function detectBrowserInfo($userAgent)
         'version' => $browserVersion,
         'platform' => $platform,
         'is_mobile' => $isMobile
+    ];
+}
+
+
+function detectGeoInfo($ipAddress)
+{
+    // Skip lookup for invalid or local IPs
+    if ($ipAddress === '0.0.0.0' || $ipAddress === '127.0.0.1' || $ipAddress === '::1') {
+        return [
+            'country' => 'Unknown',
+            'state' => 'Unknown',
+            'city' => 'Unknown'
+        ];
+    }
+
+    // Use ip-api.com for geolocation
+    $url = "http://ip-api.com/json/{$ipAddress}?fields=country,regionName,city,status,message";
+    $response = @file_get_contents($url);
+
+    if ($response === false) {
+        return [
+            'country' => 'Unknown',
+            'state' => 'Unknown',
+            'city' => 'Unknown'
+        ];
+    }
+
+    $data = json_decode($response, true);
+
+    if ($data['status'] === 'success') {
+        return [
+            'country' => $data['country'] ?? 'Unknown',
+            'state' => $data['regionName'] ?? 'Unknown',
+            'city' => $data['city'] ?? 'Unknown'
+        ];
+    }
+
+    return [
+        'country' => 'Unknown',
+        'state' => 'Unknown',
+        'city' => 'Unknown'
     ];
 }
 
