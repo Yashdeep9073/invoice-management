@@ -300,10 +300,11 @@ ob_end_flush();
                             </div>
                         </div>
 
-                        <div class="login-userheading">
+                        <div class="login-userheading text-center">
                             <h3>Login With Your Email Address</h3>
                             <h4 class="verfy-mail-content">We sent a verification code to your email. Enter the code
                                 from the email in the field below</h4>
+
                         </div>
                         <form class="digit-group" onsubmit="return false;">
                             <div class="wallet-add">
@@ -330,7 +331,7 @@ ob_end_flush();
                                     href="<?php echo isset($companySettings['company_website']) ? $companySettings['company_website'] : "https://vibrantick.in/" ?>"
                                     target="_blank"><?php echo isset($companySettings['company_name']) ? $companySettings['company_name'] : "Vibrantick
                                                 Infotech Solutions Pvt Ltd." ?>
-                                </a> All rights reserved</p>
+                                </a></p>
                         </div>
                     </div>
                 </div>

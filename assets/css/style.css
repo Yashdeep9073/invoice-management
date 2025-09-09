@@ -23719,6 +23719,7 @@ body.mini-sidebar.expand-menu
 }
 .login-wrapper .login-content .login-userheading {
   margin: 0 0 24px;
+  text-align: center;
 }
 .login-wrapper .login-content .login-userheading h3 {
   font-size: 24px;
@@ -23734,7 +23735,7 @@ body.mini-sidebar.expand-menu
 }
 .login-wrapper .login-content .login-userheading .verfy-mail-content {
   max-width: 400px;
-  margin-bottom: 40px;
+  margin: 0 auto 40px auto;
 }
 .login-wrapper .login-content .form-login {
   margin-bottom: 15px;
