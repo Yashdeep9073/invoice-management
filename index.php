@@ -110,8 +110,13 @@ try {
     $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
-
     $domain = $_SERVER['HTTP_HOST'];
+
+
+    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id WHERE currency.is_active = 1  ");
+    $stmtFetchLocalizationSettings->execute();
+    $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
 
 
 } catch (Exception $e) {
@@ -217,7 +222,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $adminName = $row['admin_username'];
 
     if ($isOtpActive === 1) {
-        $otpResponse = otpGenerate($adminId, $db);
+        $otpResponse = otpGenerate($adminId, $db,$localizationSettings);
         $otp = $otpResponse['otp'];
         $otpId = base64_encode($otpResponse['otpId']);
 

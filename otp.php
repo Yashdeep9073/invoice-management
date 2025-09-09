@@ -110,7 +110,6 @@ try {
     $_SESSION['error'] = $e->getMessage();
 }
 
-
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['otp'])) {
     try {
         $otpId = base64_decode($_SESSION["token"]);
@@ -126,7 +125,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['otp'])) {
         }
 
         // Database query to fetch admin OTP
-        $stmtOtp = $db->prepare("SELECT * FROM admin_otp WHERE otp_id = ? AND otp_code = ? AND is_used = 0");
+        $stmtOtp = $db->prepare("SELECT * FROM admin_otp WHERE otp_id = ? AND otp_code = ? AND is_used = 0 AND expires_at > NOW()");
         $stmtOtp->bind_param("is", $otpId, $otp);
         $stmtOtp->execute();
         $otpResult = $stmtOtp->get_result();
@@ -135,7 +134,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['otp'])) {
         if ($otpResult->num_rows === 0) {
             echo json_encode([
                 "status" => 400,
-                "message" => "Invalid or expired OTP. Please try again.",
+                "message" => "Invalid, expired, or already used OTP. Please try again.",
                 "clientOtp" => $otp
             ]);
             exit();
@@ -159,8 +158,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['otp'])) {
 
         $adminData = $result->fetch_assoc();
 
-        $adminId = $adminData['admin_id'];
-
         // Store session values securely
         $_SESSION['admin_id'] = base64_encode($adminData['admin_id']);
         $_SESSION['admin_name'] = $adminData['admin_username'];
@@ -179,7 +176,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['otp'])) {
         // Log request data
         $requestInfo = detectRequestType();
         $geoInfo = $requestInfo['geo'];
-        logRequestData($db, $requestInfo, $adminId, $geoInfo);
+        logRequestData($db, $requestInfo, $adminData['admin_id'], $geoInfo);
 
         // Mark OTP as used
         $stmtOtpUpdate = $db->prepare("UPDATE admin_otp SET is_used = 1 WHERE otp_id = ? AND otp_code = ? AND admin_id = ?");
@@ -190,23 +187,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['otp'])) {
             "status" => 200,
             "message" => "OTP Verified Successfully. Redirecting to dashboard...",
         ]);
-
-        unset($_SESSION["token"]);
         exit();
-
-
 
     } catch (\Throwable $th) {
         error_log("OTP Verification Error: " . $th->getMessage()); // Log the actual error
         echo json_encode([
             "status" => 500,
             "message" => "Server Error. Please try again later.",
-            "error" => $th->getMessage(),
         ]);
         exit();
     }
 }
-
 ob_end_flush();
 ?>
 
@@ -328,7 +319,7 @@ ob_end_flush();
                                 </div>
                             </div>
                             <div class="Otp-expire text-center">
-                                <p>Otp will expire in 09 :10</p>
+                                <p>OTP will expire in <span id="timer">2:00</span> minutes</p>
                             </div>
                             <div class="form-login mt-4">
                                 <button type="submit" class="btn btn-login">Verify My Account</button>
@@ -529,6 +520,38 @@ ob_end_flush();
                     return false;
                 }
             });
+
+
+
+            // Simple countdown timer with jQuery
+            let minutes = 2;
+            let seconds = 0;
+            const timerElement = $('#timer');
+
+            const countdown = setInterval(() => {
+                if (seconds === 0) {
+                    if (minutes === 0) {
+                        clearInterval(countdown);
+                        timerElement.text('0:00');
+                        // Optional: Add expired message or action
+                        $('.Otp-expire p').html('<span class="text-danger">OTP has expired!</span>');
+                        return;
+                    }
+                    minutes--;
+                    seconds = 59;
+                } else {
+                    seconds--;
+                }
+
+                // Format the time display
+                const formattedTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                timerElement.text(formattedTime);
+
+                // Optional: Change color when time is running low (last 30 seconds)
+                if (minutes === 0 && seconds <= 30) {
+                    timerElement.addClass('text-danger');
+                }
+            }, 1000);
         });
     </script>
 
