@@ -108,7 +108,8 @@ try {
             $stmtFetchCustomers->close();
         } else {
             $stmtFetchLogs = $db->prepare("SELECT logs.*,admin.admin_username,admin.admin_email FROM logs  
-            INNER JOIN admin ON logs.user_id = admin.admin_id  ;
+            INNER JOIN admin ON logs.user_id = admin.admin_id
+            ORDER BY logs.id DESC  ;
                 ");
             if ($stmtFetchLogs->execute()) {
                 $logs = $stmtFetchLogs->get_result();
