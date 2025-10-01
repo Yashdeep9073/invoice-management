@@ -12,7 +12,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 // ini_set('display_errors', '1');
 
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
 
     try {
 
@@ -28,72 +28,119 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
         $customerState = filter_input(INPUT_POST, 'customerState', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $customerCity = filter_input(INPUT_POST, 'customerCity', FILTER_SANITIZE_NUMBER_INT);
-        $gstNumber = filter_input(INPUT_POST, 'gstNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $gstNumber = !empty($_POST['gstNumber']) ? filter_input(INPUT_POST, 'gstNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS) : null;
+
 
         // Validation Patterns
         $namePattern = "/^[a-zA-Z\s]{2,50}$/";                 // Only letters & spaces, 2-50 chars
         $phonePattern = "/^\+?[1-9]\d{1,14}$/";
         $emailPattern = "/^[\w.\-]+@[\w\-]+\.[a-zA-Z]{2,}$/";   // Basic email format
         $addressPattern = "/^[\p{L}0-9\s,.\-#\/()':]{5,200}$/u";
+
         $gstPattern = "/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/"; // GSTIN
 
         // Validate Customer Data
         if (!preg_match($namePattern, $customerName)) {
-            $_SESSION['error'] = 'Invalid customer name';
-            header("Location: customer-details.php");
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid customer name",
+
+            ]);
             exit();
         }
         if (!preg_match($phonePattern, $customerPhone)) {
-            $_SESSION['error'] = 'Invalid customer phone';
-            header("Location: customer-details.php");
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid customer phone",
+
+            ]);
             exit();
         }
         if (!preg_match($emailPattern, $customerEmail)) {
-            $_SESSION['error'] = 'Invalid customer email';
-            header("Location: customer-details.php");
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid customer email",
+
+            ]);
             exit();
         }
         if (!preg_match($addressPattern, $customerAddress)) {
-            $_SESSION['error'] = 'Invalid customer address';
-            header("Location: customer-details.php");
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid customer address",
+
+            ]);
             exit();
         }
 
         // Validate Shipping Data
         if (!preg_match($namePattern, $shippingName)) {
-            $_SESSION['error'] = 'Invalid shipping name';
-            header("Location: customer-details.php");
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid shipping name",
+
+            ]);
             exit();
         }
         if (!preg_match($phonePattern, $shippingPhone)) {
-            $_SESSION['error'] = 'Invalid shipping phone';
-            header("Location: customer-details.php");
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid shipping phone",
+
+            ]);
             exit();
         }
         if (!preg_match($emailPattern, $shippingEmail)) {
-            $_SESSION['error'] = 'Invalid shipping email';
-            header("Location: customer-details.php");
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid shipping email",
+
+            ]);
             exit();
         }
         if (!preg_match($addressPattern, $shippingAddress)) {
-            $_SESSION['error'] = 'Invalid shipping address';
-            header("Location: customer-details.php");
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid shipping address",
+
+            ]);
             exit();
         }
 
-        // Validate GST Number
-        if (!preg_match($gstPattern, strtoupper($gstNumber))) {
-            $_SESSION['error'] = 'Invalid GST number';
-            header("Location: customer-details.php");
-            exit();
-        }
+        // // Validate GST Number
+        // if (!preg_match($gstPattern, strtoupper($gstNumber))) {
+        //     $_SESSION['error'] = 'Invalid GST number';
+        //     header("Location: customer-details.php");
+        //     exit();
+        // }
 
         // City validation (numeric check already from filter_input)
         if (!is_numeric($customerCity)) {
-            $_SESSION['error'] = 'Invalid city ID';
-            header("Location: customer-details.php");
+
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid city ID",
+
+            ]);
             exit();
         }
+
+        $stmtExistingUser = $db->prepare("SELECT * FROM customer WHERE customer_email = ? OR customer_phone = ?");
+        $stmtExistingUser->bind_param("ss", $customerEmail, $customerPhone);
+        $stmtExistingUser->execute();
+
+        $result = $stmtExistingUser->get_result();
+        if ($result->num_rows > 0) {
+
+            echo json_encode([
+                "status" => 400,
+                "error" => "Customer Phone or Email Already Existing",
+
+            ]);
+            exit();
+        }
+
 
         $stmtInsert = $db->prepare('INSERT INTO customer 
         (
@@ -125,18 +172,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
             $gstNumber
         );
         if ($stmtInsert->execute()) {
-            $_SESSION['success'] = 'Customer Added Successfully';
-            header("Location: customer-details.php");
+            echo json_encode([
+                "status" => 201,
+                "message" => "Customer created Successfully",
+
+            ]);
             exit();
         } else {
-            $_SESSION['error'] = 'Error While adding Customer';
-            header("Location: customer-details.php");
+            echo json_encode([
+                "status" => 400,
+                "error" => "Error While adding Customer",
+
+            ]);
             exit();
         }
     } catch (Exception $e) {
-        $_SESSION['error'] = $e;
-        header("Location: customer-details.php");
-        exit;
+        echo json_encode([
+            "status" => 500,
+            "error" => "Error While adding Customer" . $e->getMessage(),
+
+        ]);
+        exit();
     }
 
 }
@@ -783,34 +839,33 @@ ob_end_flush();
                             </button>
                         </div>
                         <div class="modal-body custom-modal-body">
-                            <form action="" method="post">
+                            <form class="customer-create">
                                 <div class="row">
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer Name <span> *</span></label>
                                             <input type="text" class="form-control" name="customerName"
-                                                placeholder="Enter customer name" required>
+                                                placeholder="Enter customer name">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer Phone <span> *</span></label>
                                             <input type="tel" class="form-control" name="customerPhone"
-                                                placeholder="Enter customer phone" required>
+                                                placeholder="Enter customer phone">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer Email <span> *</span></label>
                                             <input type="email" class="form-control" name="customerEmail"
-                                                placeholder="Enter customer email" required>
+                                                placeholder="Enter customer email">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer State <span> *</span></label>
-                                            <select class="form-select" id="customerState" name="customerState"
-                                                required>
+                                            <select class="form-select" id="customerState" name="customerState">
                                                 <option>Select</option>
                                                 <?php foreach ($states as $state) { ?>
                                                     <option value="<?php echo $state['state_code']; ?>">
@@ -832,42 +887,42 @@ ob_end_flush();
                                         <div class="input-blocks">
                                             <label>Customer Address <span> *</span></label>
                                             <input type="text" class="form-control" name="customerAddress"
-                                                placeholder="Enter customer address" required>
+                                                placeholder="Enter customer address">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Name <span> *</span></label>
                                             <input type="text" class="form-control" name="shippingName"
-                                                placeholder="Enter shipping name" required>
+                                                placeholder="Enter shipping name">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Phone <span> *</span></label>
                                             <input type="tel" class="form-control" name="shippingPhone"
-                                                placeholder="Enter shipping phone" required>
+                                                placeholder="Enter shipping phone">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Email <span> *</span></label>
                                             <input type="email" class="form-control" name="shippingEmail"
-                                                placeholder="Enter shipping email" required>
+                                                placeholder="Enter shipping email">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Shipping Address <span> *</span></label>
                                             <input type="text" class="form-control" name="shippingAddress"
-                                                placeholder="Enter shipping address" required>
+                                                placeholder="Enter shipping address">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>GST Numbers <span> *</span></label>
+                                            <label>GST Numbers </label>
                                             <input type="text" class="form-control" name="gstNumber"
-                                                placeholder="Enter GST number" required>
+                                                placeholder="Enter GST number">
                                         </div>
                                     </div>
                                 </div>
@@ -1124,6 +1179,25 @@ ob_end_flush();
     <script>
         $(document).ready(function (e) {
 
+            const notyf = new Notyf({
+                duration: 3000,
+                position: { x: 'center', y: 'top' },
+                types: [
+                    {
+                        type: 'success',
+                        background: '#4dc76f',
+                        textColor: '#FFFFFF',
+                        dismissible: false
+                    },
+                    {
+                        type: 'error',
+                        background: '#ff1916',
+                        textColor: '#FFFFFF',
+                        dismissible: false
+                    }
+                ]
+            });
+
 
             $(document).on('click', '.editButton', function () {
 
@@ -1366,6 +1440,122 @@ ob_end_flush();
 
 
             });
+
+
+            $(document).on("submit", ".customer-create", async function (e) {
+                e.preventDefault();
+
+                let customerName = $('input[name="customerName"]').val().trim();
+                let customerPhone = $('input[name="customerPhone"]').val().trim();
+                let customerEmail = $('input[name="customerEmail"]').val().trim();
+                let customerState = $('select[name="customerState"]').val().trim();
+                let customerCity = $('select[name="customerCity"]').val().trim();
+                let customerAddress = $('input[name="customerAddress"]').val().trim();
+
+                let shippingName = $('input[name="shippingName"]').val().trim();
+                let shippingPhone = $('input[name="shippingPhone"]').val().trim();
+                let shippingEmail = $('input[name="shippingEmail"]').val().trim();
+                let shippingAddress = $('input[name="shippingAddress"]').val().trim();
+                let gstNumber = $('input[name="gstNumber"]').val().trim();
+
+                // Regex patterns
+                const nameRegex = /^[a-zA-Z\s]{2,50}$/;
+                const mobileRegex = /^[0-9]{10}$/;
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const addressRegex = /^[a-zA-Z0-9\s,.\-#\/()':]{5,200}$/;
+                const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+                // Required fields check
+                if (!customerName || !customerPhone || !customerEmail || !customerState || !customerCity || !customerAddress ||
+                    !shippingName || !shippingPhone || !shippingEmail || !shippingAddress) {
+                    notyf.error("All fields are required. Please fill out the form completely.");
+                    return;
+                }
+
+                // Customer validations
+                if (!nameRegex.test(customerName)) {
+                    notyf.error("Please enter a valid customer name (letters only, 2–50 characters)");
+                    return;
+                }
+                if (!mobileRegex.test(customerPhone)) {
+                    notyf.error("Please enter a valid 10-digit customer phone number");
+                    return;
+                }
+                if (!emailRegex.test(customerEmail)) {
+                    notyf.error("Please enter a valid customer email address");
+                    return;
+                }
+                if (!addressRegex.test(customerAddress)) {
+                    notyf.error("Please enter a valid customer address (5–200 characters)");
+                    return;
+                }
+
+                // Shipping validations
+                if (!nameRegex.test(shippingName)) {
+                    notyf.error("Please enter a valid shipping name (letters only, 2–50 characters)");
+                    return;
+                }
+                if (!mobileRegex.test(shippingPhone)) {
+                    notyf.error("Please enter a valid 10-digit shipping phone number");
+                    return;
+                }
+                if (!emailRegex.test(shippingEmail)) {
+                    notyf.error("Please enter a valid shipping email address");
+                    return;
+                }
+                if (!addressRegex.test(shippingAddress)) {
+                    notyf.error("Please enter a valid shipping address (5–200 characters)");
+                    return;
+                }
+
+                // GST validation (only if provided)
+                if (gstNumber.length > 0 && !gstRegex.test(gstNumber)) {
+                    notyf.error("Please enter a valid GST number");
+                    return;
+                }
+
+                let formData = {
+                    customerName: customerName,
+                    customerPhone: customerPhone,
+                    customerEmail: customerEmail,
+                    customerAddress: customerAddress,
+                    shippingName: shippingName,
+                    shippingPhone: shippingPhone,
+                    shippingEmail: shippingEmail,
+                    shippingAddress: shippingAddress,
+                    customerState: customerState,
+                    customerCity: customerCity,
+                    gstNumber: gstNumber,
+                };
+
+
+                await $.ajax({
+                    url: window.location.href,
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.status == 201) {
+                            // Success - reset form
+                            $('.customer-create')[0].reset();
+                            notyf.success("Customer created successfully");
+                            window.location.reload();
+
+                        } else {
+                            notyf.error(response.error);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("AJAX Error:", status, error);
+                        console.error("Raw Response:", xhr.responseText);
+                        notyf.error("An error occurred while processing your request. Please try again.",);
+                    }
+                });
+
+
+
+
+            })
 
         })
     </script>
