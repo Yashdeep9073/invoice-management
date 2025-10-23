@@ -35004,3 +35004,34 @@ div.dt-buttons > div.dt-button-split .dt-button {
 .VIpgJd-ZVi9od-ORHb-OEVmcd{
   display: none;
 }
+
+/* show hints when focus the input */
+
+input:focus ~ div{
+  opacity: 1;
+}
+
+/* hidden by default */
+.hint {
+  content: "asd";
+  opacity: 0;
+  position: relative;
+  top: 0px;
+  left: 0px;
+  padding: 5px;
+  border: 0;
+  font-size: 13px;
+  color: #767676;
+    -webkit-transition: all .25s ease-in-out .25s;
+    -ms-transition: all .25s ease-in-out .25s;
+    transition: all .25s ease-in-out .25s;
+    display: block;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden
+}
+
+input[name="gstNumber"]:focus~.hint{
+      opacity: 1;
+    max-height: 200px
+}

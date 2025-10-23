@@ -925,6 +925,9 @@ ob_end_flush();
                                             <label>GST Numbers </label>
                                             <input type="text" class="form-control" name="gstNumber"
                                                 placeholder="Enter GST number">
+                                            <div class="hint text-danger">
+                                                Enter 15-digit GST number.eg: 22AAAAA0000A1Z5
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
