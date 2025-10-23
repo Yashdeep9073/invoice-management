@@ -14,7 +14,7 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 if (isset($_SESSION["admin_id"])) {
-    header("Location: admin-dashboard.php");
+    header("Location: " . getenv("BASE_URL") . "dashboard");
     exit();
 }
 
@@ -222,7 +222,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $adminName = $row['admin_username'];
 
     if ($isOtpActive === 1) {
-        $otpResponse = otpGenerate($adminId, $db,$localizationSettings);
+        $otpResponse = otpGenerate($adminId, $db, $localizationSettings);
         $otp = $otpResponse['otp'];
         $otpId = base64_encode($otpResponse['otpId']);
 
@@ -462,7 +462,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         logRequestData($db, $requestInfo, $adminId, $geoInfo);
 
         // Redirect to admin dashboard
-        header("Location: admin-dashboard.php");
+        header("Location: " . getenv("BASE_URL") . "dashboard");
         exit;
     }
 

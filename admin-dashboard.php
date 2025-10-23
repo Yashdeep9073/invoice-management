@@ -97,7 +97,9 @@ try {
 
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
-    header("Location: admin-dashboard.php");
+    // header("Location: admin-dashboard.php");
+      header("Location: " . getenv("BASE_URL")."dashboard");
+
     exit;
 }
 
