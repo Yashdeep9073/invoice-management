@@ -11,7 +11,7 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 if (!isset($_SESSION["admin_id"])) {
-    header("Location: index.php");
+    header("Location: " . getenv("BASE_URL"));
     exit();
 }
 

@@ -1,8 +1,10 @@
 <?php
 
 session_start();
+require './utility/env.php';
 if (!isset($_SESSION["admin_id"])) {
-    header("location: index.php");
+    header("Location: " . getenv("BASE_URL"));
+    exit();
 }
 require "./database/config.php";
 require './utility/formatDateTime.php';

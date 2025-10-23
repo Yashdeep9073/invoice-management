@@ -8,7 +8,7 @@ require './utility/env.php';
 require './utility/formatDateTime.php';
 
 if (!isset($_SESSION["admin_id"])) {
-    header("Location: index.php");
+    header("Location: " . getenv("BASE_URL"));
     exit();
 }
 

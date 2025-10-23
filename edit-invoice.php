@@ -4,7 +4,7 @@ session_start();
 
 require "./database/config.php";
 if (!isset($_SESSION["admin_id"])) {
-    header("Location: index.php");
+    header("Location: " . getenv("BASE_URL"));
     exit();
 }
 
@@ -295,7 +295,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         $stmt->close();
 
         $_SESSION['success'] = 'Invoice Updated successfully!';
-        header('Location: edit-invoice.php?id=' . base64_encode($invoiceId));
+        header('Location: edit-invoice?id=' . base64_encode($invoiceId));
         exit();
     } catch (Exception $e) {
         $_SESSION['error'] = $e->getMessage();
@@ -434,7 +434,7 @@ ob_end_flush();
                     <ul class="table-top-head">
                         <li>
                             <div class="page-btn">
-                                <a href="manage-invoice.php" class="btn btn-secondary"><i data-feather="arrow-left"
+                                <a href="<?= getenv("BASE_URL") . "manage-invoice" ?>" class="btn btn-secondary"><i data-feather="arrow-left"
                                         class="me-2"></i>Back to
                                     Invoices</a>
                             </div>

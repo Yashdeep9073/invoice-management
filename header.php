@@ -1,6 +1,6 @@
 <div class="header">
     <div class="header-left active">
-        <a href="admin-dashboard.php" class="logo logo-normal">
+        <a href="<?= getenv("BASE_URL") . "dashboard" ?>" class="logo logo-normal">
             <img src="<?= isset($companySettings['company_logo']) ? $companySettings['company_logo'] : "assets/img/logo/vis-logo.png" ?>" alt="" />
         </a>
         <a href="admin-dashboard.php" class="logo logo-white">

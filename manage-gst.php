@@ -11,7 +11,7 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 if (!isset($_SESSION["admin_id"])) {
-    header("Location: index.php");
+    header("Location: " . getenv("BASE_URL"));
     exit();
 }
 
@@ -67,7 +67,7 @@ try {
             INNER JOIN customer ON customer.customer_id = invoice.customer_id
             LEFT JOIN admin ON admin.admin_id = invoice.created_by 
              INNER JOIN tax ON tax.tax_id = invoice.tax
-            WHERE invoice.is_active = 1 AND status IN ('PAID', 'PENDING')";
+            WHERE invoice.is_active = 1 AND invoice.status IN ('PAID', 'PENDING')";
 
             $conditions = [];
             $paramsToBind = [];
@@ -90,6 +90,9 @@ try {
             if (!empty($conditions)) {
                 $query .= " AND " . implode(" AND ", $conditions);
             }
+
+            // echo $query;
+            // exit;
 
             $stmtFetchInvoices = $db->prepare($query);
 
@@ -614,8 +617,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                         </li>
 
                         <li>
-                            <a href="manage-invoice.php" data-bs-toggle="tooltip" data-bs-placement="top"
-                                title="Refresh"><i data-feather="rotate-ccw" class="feather-rotate-ccw"></i></a>
+                            <a href="<?= getenv("BASE_URL") . "manage-gst" ?>" data-bs-toggle="tooltip"
+                                data-bs-placement="top" title="Refresh"><i data-feather="rotate-ccw"
+                                    class="feather-rotate-ccw"></i></a>
                         </li>
                         <li>
                             <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i

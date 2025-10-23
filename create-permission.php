@@ -8,7 +8,7 @@ require './utility/env.php';
 
 // Redirect to login if not authenticated
 if (!isset($_SESSION["admin_id"])) {
-    header("Location: index.php");
+    header("Location: " . getenv("BASE_URL"));
     exit();
 }
 

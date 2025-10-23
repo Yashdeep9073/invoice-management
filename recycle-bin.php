@@ -5,7 +5,7 @@ require "./database/config.php";
 require './utility/formatDateTime.php';
 
 if (!isset($_SESSION["admin_id"])) {
-    header("Location: index.php");
+    header("Location: " . getenv("BASE_URL"));
     exit();
 }
 
@@ -428,7 +428,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdsDelete'])) {
                                                 <ul class="dropdown-menu">
                                                     <li>
                                                         <a target="_blank"
-                                                            href="view-invoice.php?id=<?php echo base64_encode($invoice['invoice_id']) ?>"
+                                                            href="<?php echo getenv("BASE_URL") . "view-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
                                                             class="editStatus dropdown-item" data-admin-id=""><i
                                                                 data-feather="eye" class="info-img"></i>Show
                                                             Detail</a>
@@ -442,7 +442,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdsDelete'])) {
                                                     </li>
                                                     <li>
                                                         <a target="_blank"
-                                                            href="download-invoice.php?id=<?php echo base64_encode($invoice['invoice_id']) ?>"
+                                                            href="<?php echo getenv("BASE_URL") . "download-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
                                                             class="qrCode dropdown-item"><i data-feather="download"
                                                                 class="info-img"></i>Download
                                                         </a>

@@ -3,8 +3,10 @@ session_start();
 // error_reporting(0);
 
 //Checking Session Value
+require './utility/env.php';
 if (!isset($_SESSION["admin_id"])) {
-    header("location: index.php");
+    header("Location: " . getenv("BASE_URL"));
+    exit();
 }
 
 // Database Connection

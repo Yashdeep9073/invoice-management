@@ -4,7 +4,7 @@ session_start();
 
 // Checking Session Value
 if (!isset($_SESSION["admin_id"])) {
-    header("Location: index.php");
+    header("Location: " . getenv("BASE_URL"));
     exit();
 }
 

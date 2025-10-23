@@ -1,8 +1,10 @@
 <?php
 ob_start();
 session_start();
+require './utility/env.php';
 if (!isset($_SESSION["admin_id"])) {
-    header("location: index.php");
+    header("Location: " . getenv("BASE_URL"));
+    exit();
 }
 require "./database/config.php";
 require './utility/formatDateTime.php';
@@ -1377,6 +1379,32 @@ ob_end_flush();
             const inputEdit = $(".input-blocks input[name='editCustomerPhone']").get(0); // or use [0]
 
             window.intlTelInput(inputEdit, {
+                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js",
+                initialCountry: "auto",
+                geoIpLookup: function (callback) {
+                    fetch('https://ipapi.co/json')
+                        .then(response => response.json())
+                        .then(data => callback(data.country_code))
+                        .catch(() => callback('us'));
+                }
+            });
+
+            const shippingPhoneInput = $(".input-blocks input[name='shippingPhone']").get(0); // or use [0]
+
+            window.intlTelInput(shippingPhoneInput, {
+                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js",
+                initialCountry: "auto",
+                geoIpLookup: function (callback) {
+                    fetch('https://ipapi.co/json')
+                        .then(response => response.json())
+                        .then(data => callback(data.country_code))
+                        .catch(() => callback('us'));
+                }
+            });
+
+            const shippingPhoneInputEdit = $(".input-blocks input[name='editShippingPhone']").get(0); // or use [0]
+
+            window.intlTelInput(shippingPhoneInputEdit, {
                 utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js",
                 initialCountry: "auto",
                 geoIpLookup: function (callback) {

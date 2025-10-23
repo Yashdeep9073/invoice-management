@@ -11,7 +11,7 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 if (!isset($_SESSION["admin_id"])) {
-    header("Location: index.php");
+    header("Location: " . getenv("BASE_URL"));
     exit();
 }
 
@@ -996,7 +996,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                         </li>
 
                         <li>
-                            <a href="manage-invoice.php" data-bs-toggle="tooltip" data-bs-placement="top"
+                            <a href="<?= getenv("BASE_URL") . "manage-invoice" ?>" data-bs-toggle="tooltip" data-bs-placement="top"
                                 title="Refresh"><i data-feather="rotate-ccw" class="feather-rotate-ccw"></i></a>
                         </li>
                         <li>
@@ -1007,8 +1007,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                     <div class="page-btn">
                         <?php if ($isAdmin || hasPermission('Add Invoice', $privileges, $roleData['0']['role_name'])): ?>
 
-                            <a href="add-invoice.php" class="btn btn-added"><i data-feather="plus-circle"
-                                    class="me-2"></i>Add Invoice
+                            <a href="<?= getenv("BASE_URL") . "add-invoice" ?>" class="btn btn-added"><i
+                                    data-feather="plus-circle" class="me-2"></i>Add Invoice
                             </a>
                         <?php endif; ?>
                     </div>
@@ -1157,7 +1157,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                 <ul class="dropdown-menu">
                                                     <li>
                                                         <a target="_blank"
-                                                            href="view-invoice.php?id=<?php echo base64_encode($invoice['invoice_id']) ?>"
+                                                            href="<?php echo getenv("BASE_URL") . "view-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
                                                             class="editStatus dropdown-item" data-admin-id=""><i
                                                                 data-feather="eye" class="info-img"></i>Show
                                                             Detail</a>
@@ -1165,7 +1165,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                     <?php if ($isAdmin || hasPermission('Edit Invoice', $privileges, $roleData['0']['role_name'])): ?>
 
                                                         <li>
-                                                            <a href="edit-invoice.php?id=<?php echo base64_encode($invoice['invoice_id']) ?>"
+                                                            <a href="<?php echo getenv("BASE_URL") . "edit-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
                                                                 class="editButton dropdown-item"><i data-feather="edit"
                                                                     class="info-img"></i>Edit
                                                             </a>
@@ -1173,7 +1173,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                     <?php endif; ?>
                                                     <li>
                                                         <a target="_blank"
-                                                            href="download-invoice.php?id=<?php echo base64_encode($invoice['invoice_id']) ?>"
+                                                            href="<?php echo getenv("BASE_URL") . "download-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
                                                             class="qrCode dropdown-item"><i data-feather="download"
                                                                 class="info-img"></i>Download
                                                         </a>

@@ -11,7 +11,7 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 if (!isset($_SESSION["admin_id"])) {
-    header("Location: index.php");
+    header("Location: " . getenv("BASE_URL"));
     exit();
 }
 
@@ -273,7 +273,7 @@ try {
                         </li>
 
                         <li>
-                            <a href="logs.php" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
+                            <a href="" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
                                     data-feather="rotate-ccw" class="feather-rotate-ccw"></i></a>
                         </li>
                         <li>

@@ -1,12 +1,14 @@
 <?php
 ob_start();
 session_start();
-if (!isset($_SESSION["admin_id"])) {
-    header("location: index.php");
-}
 require './vendor/autoload.php';
 require './database/config.php';
 require './utility/env.php';
+
+if (!isset($_SESSION["admin_id"])) {
+    header("Location: " . getenv("BASE_URL"));
+    exit();
+}
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;

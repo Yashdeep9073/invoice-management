@@ -4,23 +4,23 @@
         <a href="javascript:void(0);" class="subdrop"><i data-feather="airplay"></i><span>System
                 Settings</span><span class="menu-arrow"></span></a>
         <ul>
-            <li><a href="system-settings.php">System
+            <li><a href="<?= getenv("BASE_URL") . "system-settings" ?>">System
                     Settings</a></li>
-            <li><a href="email-settings.php">Email</a>
+            <li><a href="<?= getenv("BASE_URL") . "email-settings" ?>">Email</a>
             </li>
-            <li><a href="email-template-settings.php">Email Template</a>
+            <li><a href="<?= getenv("BASE_URL") . "email-template-settings" ?>">Email Template</a>
             </li>
-            <li><a href="company-settings.php">Company Settings</a>
+            <li><a href="<?= getenv("BASE_URL") . "company-settings" ?>">Company Settings</a>
             </li>
             <li>
-                <a href="localization-settings.php">Localization</a>
+                <a href="<?= getenv("BASE_URL") . "localization-settings" ?>">Localization</a>
             </li>
 
         </ul>
         <a href="javascript:void(0);"><i data-feather="archive"></i><span>App
                 Settings</span><span class="menu-arrow"></span></a>
         <ul>
-            <li><a href="invoice-settings.php">Invoice</a></li>
+            <li><a href="<?= getenv("BASE_URL") . "invoice-settings" ?>">Invoice</a></li>
         </ul>
     </li>
 
@@ -29,7 +29,7 @@
                 class="menu-arrow"></span></a>
         <ul>
             <li>
-                <a href="currency-settings.php">Currencies</a>
+                <a href="<?= getenv("BASE_URL") . "currency-settings" ?>">Currencies</a>
             </li>
         </ul>
     </li>

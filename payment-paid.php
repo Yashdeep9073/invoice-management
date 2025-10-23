@@ -1,8 +1,10 @@
 <?php
 
 session_start();
+require './utility/env.php';
 if (!isset($_SESSION["admin_id"])) {
-    header("location: index.php");
+    header("Location: " . getenv("BASE_URL"));
+    exit();
 }
 require "./database/config.php";
 require './utility/formatDateTime.php';
@@ -269,7 +271,7 @@ try {
                                                 <ul class="dropdown-menu">
                                                     <li>
                                                         <a target="_blank"
-                                                            href="view-invoice.php?id=<?php echo base64_encode($invoice['invoice_id']) ?>"
+                                                            href="<?php echo getenv("BASE_URL") . "view-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
                                                             class="editStatus dropdown-item" data-admin-id=""><i
                                                                 data-feather="eye" class="info-img"></i>Show
                                                             Detail</a>

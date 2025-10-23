@@ -82,7 +82,8 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                     <h6 class="submenu-hdr">Dashboard</h6>
                     <ul>
                         <li>
-                            <a href="admin-dashboard.php"><i data-feather="grid"></i><span>Dashboard</span></a>
+                            <a href="<?= getenv("BASE_URL") . "dashboard" ?>"><i
+                                    data-feather="grid"></i><span>Dashboard</span></a>
                         </li>
                     </ul>
                 </li>
@@ -98,12 +99,12 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                                     class="menu-arrow"></span></a>
                             <ul>
                                 <?php if ($isAdmin || hasPermission('Manage Invoice', $privileges, $roleData['0']['role_name'])): ?>
-                                    <li><a href="manage-invoice.php">Manage Invoice</a></li>
+                                    <li><a href="<?= getenv("BASE_URL") . "manage-invoice" ?>">Manage Invoice</a></li>
                                 <?php endif; ?>
 
                                 <?php if ($isAdmin || hasPermission('Recycle Bin', $privileges, $roleData['0']['role_name'])): ?>
                                     <li>
-                                        <a href="recycle-bin.php">Recycle-bin</a>
+                                        <a href="<?= getenv("BASE_URL") . "recycle-bin" ?>">Recycle-bin</a>
                                     </li>
                                 <?php endif; ?>
                             </ul>
@@ -123,7 +124,7 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                                     class="menu-arrow"></span></a>
                             <ul>
                                 <?php if ($isAdmin || hasPermission('Manage GST', $privileges, $roleData['0']['role_name'])): ?>
-                                    <li><a href="manage-gst.php">Manage GST</a></li>
+                                    <li><a href="<?= getenv("BASE_URL") . "manage-gst" ?>">Manage GST</a></li>
                                 <?php endif; ?>
 
                             </ul>
@@ -141,18 +142,18 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                             <a href="javascript:void(0);"><i data-feather="credit-card"></i><span>Payments</span><span
                                     class="menu-arrow"></span></a>
                             <ul>
-                                <li><a href="manage-payments.php">All Payments</a></li>
+                                <li><a href="<?= getenv("BASE_URL") . "all-payments" ?>">All Payments</a></li>
                                 <li>
-                                    <a href="payment-paid.php">Paid Payments</a>
+                                    <a href="<?= getenv("BASE_URL") . "paid-payments" ?>">Paid Payments</a>
                                 </li>
                                 <li>
-                                    <a href="payment-pending.php">Pending Payments</a>
+                                    <a href="<?= getenv("BASE_URL") . "pending-payments" ?>">Pending Payments</a>
                                 </li>
                                 <li>
-                                    <a href="payment-cancelled.php">Cancelled Payments</a>
+                                    <a href="<?= getenv("BASE_URL") . "cancelled-payments" ?>">Cancelled Payments</a>
                                 </li>
                                 <li>
-                                    <a href="payment-refunded.php">Refunded Payments</a>
+                                    <a href="<?= getenv("BASE_URL") . "refunded-payments" ?>">Refunded Payments</a>
                                 </li>
                             </ul>
                         </li>
@@ -169,13 +170,13 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                                     class="menu-arrow"></span></a>
                             <ul>
                                 <li>
-                                    <a href="customer-details.php">Customers</a>
+                                    <a href="<?= getenv("BASE_URL") . "customer-details" ?>">Customers</a>
                                 </li>
                                 <li>
-                                    <a href="services.php">Services</a>
+                                    <a href="<?= getenv("BASE_URL") . "services" ?>">Services</a>
                                 </li>
                                 <li>
-                                    <a href="tax-details.php">Tax</a>
+                                    <a href="<?= getenv("BASE_URL") . "tax-details" ?>">Tax</a>
                                 </li>
                             </ul>
                         </li>
@@ -193,9 +194,9 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                             <a href="javascript:void(0);"><i data-feather="file-text"></i><span>Reports</span><span
                                     class="menu-arrow"></span></a>
                             <ul>
-                                <li><a href="reports.php">Invoice Report</a></li>
+                                <li><a href="<?= getenv("BASE_URL") . "reports" ?>">Invoice Report</a></li>
                                 <li>
-                                    <a href="customer-reports.php">Customer Report</a>
+                                    <a href="<?= getenv("BASE_URL") . "customer-reports" ?>">Customer Report</a>
                                 </li>
                             </ul>
                         </li>
@@ -213,13 +214,13 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                             <ul>
 
                                 <li>
-                                    <a href="admin.php">Users</a>
+                                    <a href="<?= getenv("BASE_URL") . "users" ?>">Users</a>
                                 </li>
                                 <li>
-                                    <a href="permissions.php">Permission</a>
+                                    <a href="<?= getenv("BASE_URL") . "permissions" ?>">Permission</a>
                                 </li>
                                 <li>
-                                    <a href="roles.php">Role</a>
+                                    <a href="<?= getenv("BASE_URL") . "roles" ?>">Role</a>
                                 </li>
                             </ul>
                         </li>
@@ -239,7 +240,7 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                                     class="menu-arrow"></span></a>
                             <ul>
                                 <li>
-                                    <a href="system-settings.php">System Settings</a>
+                                    <a href="<?= getenv("BASE_URL") . "system-settings" ?>">System Settings</a>
                                 </li>
                             </ul>
                         </li>
@@ -259,7 +260,7 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                                     class="menu-arrow"></span></a>
                             <ul>
                                 <li>
-                                    <a href="logs.php">Manage Logs</a>
+                                    <a href="<?= getenv("BASE_URL") . "logs" ?>">Manage Logs</a>
                                 </li>
                             </ul>
                         </li>

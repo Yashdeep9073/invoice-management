@@ -3,7 +3,7 @@ session_start();
 
 require "./database/config.php";
 if (!isset($_SESSION["admin_id"])) {
-    header("Location: index.php");
+    header("Location: " . getenv("BASE_URL"));
     exit();
 }
 
@@ -215,7 +215,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         $stmt->close();
 
         $_SESSION['success'] = 'Invoice created successfully!';
-        header("Location: manage-invoice.php");
+        header("Location: " . getenv("BASE_URL") . "manage-invoice");
         exit;
     } catch (Exception $e) {
         $_SESSION['error'] = $e->getMessage();
@@ -351,8 +351,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                     <ul class="table-top-head">
                         <li>
                             <div class="page-btn">
-                                <a href="manage-invoice.php" class="btn btn-secondary"><i data-feather="arrow-left"
-                                        class="me-2"></i>Back to
+                                <a href="<?= getenv("BASE_URL") . "manage-invoice" ?>" class="btn btn-secondary"><i
+                                        data-feather="arrow-left" class="me-2"></i>Back to
                                     Invoices</a>
                             </div>
                         </li>
