@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
         // // Validate GST Number
         // if (!preg_match($gstPattern, strtoupper($gstNumber))) {
         //     $_SESSION['error'] = 'Invalid GST number';
-        //     header("Location: customer-details.php");
+        //     header("Location: customer-details");
         //     exit();
         // }
 
@@ -316,21 +316,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editCustomerId'])) {
 
             if ($stmtUpdate->execute()) {
                 $_SESSION['success'] = 'Customer Updated Successfully';
-                header("Location: customer-details.php");
+                header("Location: customer-details");
                 exit();
             } else {
                 $_SESSION['error'] = 'Error while updating customer';
-                header("Location: customer-details.php");
+                header("Location: customer-details");
                 exit();
             }
         } else {
             $_SESSION['error'] = 'No fields to update';
-            header("Location: customer-details.php");
+            header("Location: customer-details");
             exit();
         }
     } catch (Exception $e) {
         $_SESSION['error'] = 'Exception: ' . $e->getMessage();
-        header("Location: customer-details.php");
+        header("Location: customer-details");
         exit();
     }
 }
@@ -459,7 +459,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_FILES['excel_file'])) {
         file_put_contents("upload_errors.log", implode(PHP_EOL, $errors));
     }
 
-    header("Location: customer-details.php"); // or wherever you want to redirect
+    header("Location: customer-details"); // or wherever you want to redirect
     exit;
 }
 
@@ -1260,7 +1260,7 @@ ob_end_flush();
                     if (result.isConfirmed) {
                         // Send AJAX request to delete the record from the database
                         $.ajax({
-                            url: 'customer-details.php', // The PHP file that will handle the deletion
+                            url: 'customer-details', // The PHP file that will handle the deletion
                             type: 'POST',
                             data: { customerId: customerId },
                             success: function (response) {
@@ -1295,7 +1295,7 @@ ob_end_flush();
 
                 let stateCode = $(this).val();
                 $.ajax({
-                    url: 'customer-details.php', // The PHP file that will handle the deletion
+                    url: 'customer-details', // The PHP file that will handle the deletion
                     type: 'POST',
                     data: { stateCode: stateCode },
                     success: function (response) {
@@ -1336,7 +1336,7 @@ ob_end_flush();
 
                 let stateCode = $(this).val();
                 $.ajax({
-                    url: 'customer-details.php', // The PHP file that will handle the deletion
+                    url: 'customer-details', // The PHP file that will handle the deletion
                     type: 'POST',
                     data: { stateCode: stateCode },
                     success: function (response) {
@@ -1452,7 +1452,7 @@ ob_end_flush();
                     if (result.isConfirmed) {
 
                         $.ajax({
-                            url: "customer-details.php",
+                            url: "customer-details",
                             type: "post",
                             data: { customerIds: customerIds },
                             success: function (response) {

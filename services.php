@@ -18,16 +18,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 
         if ($stmtInsert->execute()) {
             $_SESSION['success'] = 'Service Added Successfully';
-            header("Location: services.php");
+            header("Location: services");
             exit;
         } else {
             $_SESSION['error'] = 'Error While adding service';
-            header("Location: services.php");
+            header("Location: services");
             exit;
         }
     } catch (Exception $e) {
         $_SESSION['error'] = $e;
-        header("Location: services.php");
+        header("Location: services");
         exit;
     }
 
@@ -57,16 +57,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editServiceId'])) {
         );
         if ($stmtUpdate->execute()) {
             $_SESSION['success'] = 'Service Updated Successfully';
-            header("Location: services.php");
+            header("Location: services");
             exit;
         } else {
             $_SESSION['error'] = 'Error While updating service';
-            header("Location: services.php");
+            header("Location: services");
             exit;
         }
     } catch (Exception $e) {
         $_SESSION['error'] = $e;
-        header("Location: services.php");
+        header("Location: services");
         exit;
     }
 }
@@ -563,7 +563,7 @@ try {
                     if (result.isConfirmed) {
                         // Send AJAX request to delete the record from the database
                         $.ajax({
-                            url: 'services.php', // The PHP file that will handle the deletion
+                            url: 'services', // The PHP file that will handle the deletion
                             type: 'POST',
                             data: { serviceId: serviceId },
                             success: function (response) {
@@ -621,7 +621,7 @@ try {
                     if (result.isConfirmed) {
 
                         $.ajax({
-                            url: "services.php",
+                            url: "services",
                             type: "post",
                             data: { serviceIds: serviceIds },
                             success: function (response) {

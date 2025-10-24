@@ -8,15 +8,15 @@ if (!isset($_SESSION["admin_id"])) {
 }
 require "./database/config.php";
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['taxName'])) {
 
     try {
 
         // echo "<pre>";
         // print_r($_POST);
         // exit();
-        $taxName = filter_input(INPUT_POST, 'taxName', FILTER_SANITIZE_STRING);
-        $taxRate = filter_input(INPUT_POST, 'taxRate', FILTER_SANITIZE_STRING);
+        $taxName = $_POST['taxName'];
+        $taxRate = $_POST['taxRate'];
 
         $stmtInsert = $db->prepare('INSERT INTO tax 
         (
@@ -30,16 +30,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
             $taxRate
         );
         if ($stmtInsert->execute()) {
-            $_SESSION['success'] = 'Tax Added Successfully';
-            header("Location: tax-details.php");
-            exit();
+            echo json_encode([
+                "status" => 201,
+                "message" => "Tax Added Successfully"
+            ]);
+            exit;
         } else {
-            $_SESSION['error'] = 'Error While adding Tax';
-            header("Location: tax-details.php");
-            exit();
+            echo json_encode([
+                "status" => 400,
+                "error" => "Error While adding Tax"
+            ]);
+            exit;
         }
     } catch (Exception $e) {
-        $_SESSION['error'] = $e;
+        echo json_encode([
+            "status" => 500,
+            "error" => $e->getMessage()
+        ]);
+        exit;
     }
 
 }
@@ -74,11 +82,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editTaxId'])) {
 
         if ($stmtUpdate->execute()) {
             $_SESSION['success'] = 'Tax Updated Successfully';
-            header("Location: tax-details.php");
+            header("Location: tax-details");
             exit();
         } else {
             $_SESSION['error'] = 'Error while tax customer';
-            header("Location: tax-details.php");
+            header("Location: tax-details");
             exit();
         }
     } catch (Exception $e) {
@@ -499,20 +507,19 @@ ob_end_flush();
                             </button>
                         </div>
                         <div class="modal-body custom-modal-body">
-                            <form action="" method="post">
+                            <form class="tax-rate-form">
                                 <div class="row">
                                     <div class="col-lg-12">
                                         <div class="mb-3">
                                             <label class="form-label">Name <span> *</span></label>
-                                            <input type="text" name="taxName" placeholder="Name" class="form-control"
-                                                required>
+                                            <input type="text" name="taxName" placeholder="Name" class="form-control">
                                         </div>
                                     </div>
                                     <div class="col-lg-12">
                                         <div class="mb-0">
                                             <label class="form-label">Tax Rate % <span> *</span></label>
                                             <input type="text" class="form-control" name="taxRate"
-                                                placeholder="Tax Rate %" required>
+                                                placeholder="Tax Rate %">
                                         </div>
                                     </div>
                                 </div>
@@ -620,6 +627,25 @@ ob_end_flush();
 
     <script>
         $(document).ready(function (e) {
+
+            const notyf = new Notyf({
+                duration: 5000,
+                position: { x: 'center', y: 'top' },
+                types: [
+                    {
+                        type: 'success',
+                        background: '#4dc76f',
+                        textColor: '#FFFFFF',
+                        dismissible: false
+                    },
+                    {
+                        type: 'error',
+                        background: '#ff1916',
+                        textColor: '#FFFFFF',
+                        dismissible: false
+                    }
+                ]
+            });
 
             $(document).on('click', '.multi-delete-button', function (e) {
                 e.preventDefault();
@@ -737,6 +763,69 @@ ob_end_flush();
                     }
                 });
             });
+
+
+            $(document).on("submit", ".tax-rate-form", async function (e) {
+                e.preventDefault();
+                let taxName = $('input[name="taxName"]').val().trim();
+                let taxRate = $('input[name="taxRate"]').val().trim();
+
+                // Regex patterns
+                const nameRegex = /^[a-zA-Z\s]{2,50}$/;
+                const rateRegex = /^\d{1,3}(\.\d{1,2})?%$/;
+
+                // Required fields check
+                if (!taxName || !taxRate) {
+                    notyf.error("All fields are required. Please fill out the form completely.");
+                    return;
+                }
+
+                // Customer validations
+                if (!nameRegex.test(taxName)) {
+                    notyf.error("Please enter a valid tax name (letters only, 2–50 characters)");
+                    return;
+                }
+
+                // Customer validations
+                if (!rateRegex.test(taxRate)) {
+                    notyf.error("Please enter a valid tax rate (e.g., 10%, 18%, 10.2%, 100%).");
+                    return;
+                }
+
+
+                let formData = {
+                    taxName: taxName,
+                    taxRate: taxRate,
+                };
+
+
+                await $.ajax({
+                    url: window.location.href,
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.status == 201) {
+                            // Success - reset form
+                            $('.tax-rate-form')[0].reset();
+                            notyf.success("Tax created successfully");
+                            window.location.reload();
+
+                        } else {
+                            notyf.error(response.error);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("AJAX Error:", status, error);
+                        console.error("Raw Response:", xhr.responseText);
+                        notyf.error("An error occurred while processing your request. Please try again.",);
+                    }
+                });
+
+
+
+
+            })
 
         })
     </script>
