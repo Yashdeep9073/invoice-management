@@ -35035,3 +35035,78 @@ input[name="gstNumber"]:focus~.hint{
       opacity: 1;
     max-height: 200px
 }
+/* Elegant input box */
+  .stylish-input {
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    padding-right: 45px;
+    padding-left: 15px;
+    height: 45px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+  }
+  .stylish-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+  }
+
+  /* Eye icon styling */
+  .gst-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    cursor: pointer;
+    transition: color 0.3s ease, transform 0.2s ease;
+  }
+  .gst-icon:hover {
+    color: #007bff;
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  /* Tooltip styling */
+  .gst-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 130%;
+    right: -10px;
+    width: 240px;
+    background-color: #212529;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(5px);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .gst-icon:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  /* Little tooltip arrow */
+  .gst-icon::before {
+    content: '';
+    position: absolute;
+    bottom: 120%;
+    right: 15px;
+    border: 6px solid transparent;
+    border-top-color: #212529;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .gst-icon:hover::before {
+    opacity: 1;
+    visibility: visible;
+  }

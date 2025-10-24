@@ -303,16 +303,16 @@ ob_end_clean();
                     </div>
                     <ul class="table-top-head">
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportToPDF()" data-bs-placement="top" title="Pdf"><img
-                                    src="assets/img/icons/pdf.svg" alt="img" /></a>
+                            <a data-bs-toggle="tooltip" onclick="exportActiveTabToPDF()" data-bs-placement="top"
+                                title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img" /></a>
                         </li>
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportToExcel()" data-bs-placement="top"
+                            <a data-bs-toggle="tooltip" onclick="exportActiveTabToExcel()" data-bs-placement="top"
                                 title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a>
                         </li>
 
                         <li>
-                            <a href="reports.php" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
+                            <a href="reports" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
                                     data-feather="rotate-ccw" class="feather-rotate-ccw"></i></a>
                         </li>
                         <li>
@@ -329,22 +329,23 @@ ob_end_clean();
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link active" id="paid-tab" data-bs-toggle="tab"
                                         data-bs-target="#paid-report" type="button" role="tab"
-                                        aria-controls="paid-report" aria-selected="true">Paid</button>
+                                        aria-controls="paid-report" aria-selected="true">Paid Invoices</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="pending-tab" data-bs-toggle="tab"
                                         data-bs-target="#pending-report" type="button" role="tab"
-                                        aria-controls="pending-report" aria-selected="false">Pending</button>
+                                        aria-controls="pending-report" aria-selected="false">Pending Invoices</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab"
                                         data-bs-target="#cancelled-report" type="button" role="tab"
-                                        aria-controls="cancelled-report" aria-selected="false">Cancelled</button>
+                                        aria-controls="cancelled-report" aria-selected="false">Cancelled
+                                        Invoices</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="refunded-tab" data-bs-toggle="tab"
                                         data-bs-target="#refunded-report" type="button" role="tab"
-                                        aria-controls="refunded-report" aria-selected="false">Refunded</button>
+                                        aria-controls="refunded-report" aria-selected="false">Refunded Invoices</button>
                                 </li>
                             </ul>
                             <div class="tab-content" id="myTabContent">
@@ -410,7 +411,7 @@ ob_end_clean();
                                         </div>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table datanew">
+                                        <table id="paidTable" class="table datanew">
                                             <thead>
                                                 <tr>
                                                     <th>
@@ -440,7 +441,8 @@ ob_end_clean();
                                                     <tr>
                                                         <td>
                                                             <label class="checkboxs">
-                                                                <input type="checkbox">
+                                                                <input type="checkbox" name="invoiceIds"
+                                                                    value="<?php echo $paidInvoice['invoice_id'] ?>">
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
@@ -554,7 +556,7 @@ ob_end_clean();
 
 
                                     <div class="table-responsive">
-                                        <table class="table datanew">
+                                        <table id="pendingTable" class="table datanew">
                                             <thead>
                                                 <tr>
                                                     <th>
@@ -582,7 +584,8 @@ ob_end_clean();
                                                     <tr>
                                                         <td>
                                                             <label class="checkboxs">
-                                                                <input type="checkbox">
+                                                                <input type="checkbox" name="invoiceIds"
+                                                                    value="<?php echo $pendingInvoice['invoice_id'] ?>">
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
@@ -704,7 +707,7 @@ ob_end_clean();
 
 
                                     <div class="table-responsive">
-                                        <table class="table datanew">
+                                        <table id="cancelledTable" class="table datanew">
                                             <thead>
                                                 <tr>
                                                     <th>
@@ -733,7 +736,8 @@ ob_end_clean();
                                                     <tr>
                                                         <td>
                                                             <label class="checkboxs">
-                                                                <input type="checkbox">
+                                                                <input type="checkbox" name="invoiceIds"
+                                                                    value="<?php echo $cancelledInvoice['invoice_id'] ?>">
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
@@ -848,7 +852,7 @@ ob_end_clean();
 
 
                                     <div class="table-responsive">
-                                        <table class="table datanew">
+                                        <table id="refundedTable" class="table datanew">
                                             <thead>
                                                 <tr>
                                                     <th>
@@ -876,7 +880,8 @@ ob_end_clean();
                                                     <tr>
                                                         <td>
                                                             <label class="checkboxs">
-                                                                <input type="checkbox">
+                                                                <input type="checkbox" name="invoiceIds"
+                                                                    value="<?php echo $refundedInvoice['invoice_id'] ?>">
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
@@ -959,7 +964,7 @@ ob_end_clean();
     <script src="assets/plugins/sweetalert/sweetalerts.min.js" type="94853a405675f53c594300da-text/javascript"></script>
     <script src="assets/js/script.js" type="94853a405675f53c594300da-text/javascript"></script>
     <script src="assets/js/rocket-loader-min.js" data-cf-settings="94853a405675f53c594300da-|49" defer=""></script>
-
+    <script src="assets/js/custom.js"></script>
     <script>
         $(document).ready(function () {
             // Initialize Notyf
@@ -1057,7 +1062,7 @@ ob_end_clean();
                 console.log("Customer ID -", customerId);
                 console.log("From Date -", fromDate);
                 console.log("To Date -", toDate);
-                window.location.href = `reports.php?customer=${customerId}&from=${fromDate}&to=${toDate}`;
+                window.location.href = `reports?customer=${customerId}&from=${fromDate}&to=${toDate}`;
             });
 
         });

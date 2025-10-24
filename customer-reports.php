@@ -240,7 +240,7 @@ ob_end_flush();
                                                 <div class="userimgname">
                                                     <div>
                                                         <a class="text-primary"
-                                                            href="view-customer-report.php?id=<?php echo base64_encode($customer['customer_id']) ?>"><?php echo $customer['customer_name'] ?></a>
+                                                            href="<?php echo getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($customer['customer_id']) ?>"><?php echo $customer['customer_name'] ?></a>
                                                     </div>
                                                 </div>
                                             </td>

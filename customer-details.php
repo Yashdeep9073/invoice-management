@@ -920,13 +920,19 @@ ob_end_flush();
                                                 placeholder="Enter shipping address">
                                         </div>
                                     </div>
+                                    <!-- GST Input with Stylish Eye Tooltip -->
                                     <div class="col-lg-6">
-                                        <div class="input-blocks">
-                                            <label>GST Numbers </label>
-                                            <input type="text" class="form-control" name="gstNumber"
-                                                placeholder="Enter GST number">
-                                            <div class="hint text-danger">
-                                                Enter 15-digit GST number.eg: 22AAAAA0000A1Z5
+                                        <div class="input-blocks position-relative mb-4">
+                                            <label for="gstNumber" class="form-label fw-semibold text-secondary">GST
+                                                Number</label>
+                                            <div class="gst-input-wrapper position-relative">
+                                                <input type="text" id="gstNumber" name="gstNumber"
+                                                    class="form-control stylish-input"
+                                                    placeholder="Enter 15-digit GST number">
+                                                <span class="gst-icon"
+                                                    data-tooltip="GST must be a 15-digit alphanumeric code. Example: 22AAAAA0000A1Z5">
+                                                    <i class="fas fa-eye"></i>
+                                                </span>
                                             </div>
                                         </div>
                                     </div>

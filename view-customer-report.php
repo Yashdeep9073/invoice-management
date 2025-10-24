@@ -15,6 +15,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['id'])) {
 
         $customerId = intval(base64_decode($_GET['id']));
 
+
+        // all invoices 
+        $stmtFetchAll = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
+        INNER JOIN customer
+        ON customer.customer_id = invoice.customer_id
+        INNER JOIN tax
+        ON tax.tax_id = invoice.tax
+        WHERE invoice.is_active = 1 AND customer.customer_id = ? ");
+
+        $stmtFetchAll->bind_param('i', $customerId);
+
+        if ($stmtFetchAll->execute()) {
+            $allInvoices = $stmtFetchAll->get_result();
+        }
+
         // paid 
         $stmtFetchPaid = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
         INNER JOIN customer
@@ -266,29 +281,130 @@ ob_end_clean();
                 <div class="table-tab">
                     <ul class="nav nav-pills" id="pills-tab" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="paid-report-tab" data-bs-toggle="pill"
+                            <button class="nav-link active" id="all-report-tab" data-bs-toggle="pill"
+                                data-bs-target="#all-report" type="button" role="tab" aria-controls="all-report"
+                                aria-selected="true">All Invoices</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="paid-report-tab" data-bs-toggle="pill"
                                 data-bs-target="#paid-report" type="button" role="tab" aria-controls="paid-report"
-                                aria-selected="true">Paid</button>
+                                aria-selected="true">Paid Invoices</button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="pending-report-tab" data-bs-toggle="pill"
                                 data-bs-target="#pending-report" type="button" role="tab" aria-controls="pending-report"
-                                aria-selected="false">Pending</button>
+                                aria-selected="false">Pending Invoices</button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="cancelled-report-tab" data-bs-toggle="pill"
                                 data-bs-target="#cancelled-report" type="button" role="tab"
-                                aria-controls="cancelled-report" aria-selected="false">Cancelled</button>
+                                aria-controls="cancelled-report" aria-selected="false">Cancelled Invoices
+                            </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="refunded-report-tab" data-bs-toggle="pill"
                                 data-bs-target="#refunded-report" type="button" role="tab"
-                                aria-controls="refunded-report" aria-selected="false">Refunded</button>
+                                aria-controls="refunded-report" aria-selected="false">Refunded Invoices</button>
                         </li>
                     </ul>
                     <div class="tab-content" id="pills-tabContent">
+                        <!-- All Invoices Tab -->
+                        <div class="tab-pane fade show active" id="all-report" role="tabpanel"
+                            aria-labelledby="all-report-tab">
+                            <div class="card table-list-card">
+                                <div class="card-body">
+                                    <div class="table-top">
+                                        <div class="search-set">
+                                            <div class="search-input">
+                                                <a href="" class="btn btn-searchset"><i data-feather="search"
+                                                        class="feather-search"></i></a>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="table-responsive">
+                                        <table id="allTable" class="table datanew">
+                                            <thead>
+                                                <tr>
+                                                    <th class="no-sort">
+                                                        <label class="checkboxs">
+                                                            <input type="checkbox" id="select-all">
+                                                            <span class="checkmarks"></span>
+                                                        </label>
+                                                    </th>
+                                                    <th>Due Date</th>
+                                                    <th>Customer</th>
+                                                    <th>Service</th>
+                                                    <th>Amount</th>
+                                                    <th>Discount</th>
+                                                    <th>Tax</th>
+                                                    <th>Total Amount</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                $totalAmountSum = 0; // Initialize total
+                                                foreach ($allInvoices->fetch_all(MYSQLI_ASSOC) as $allInvoice) {
+                                                    $totalAmountSum += $allInvoice['total_amount']; // Add to total
+                                                    ?>
+                                                    <tr>
+                                                        <td>
+                                                            <label class="checkboxs">
+                                                                <input type="checkbox" name="invoiceIds"
+                                                                    value="<?php echo $allInvoice['invoice_id'] ?>">
+                                                                <span class="checkmarks"></span>
+                                                            </label>
+                                                        </td>
+                                                        <td><?php echo formatDateTime($allInvoice['due_date'], $localizationSettings); ?>
+                                                        </td>
+                                                        <td>
+                                                            <a
+                                                                href="javascript:void(0);"><?php echo htmlspecialchars($allInvoice['customer_name']); ?></a>
+                                                        </td>
+                                                        <td><a href="#" class="view-note view-service"
+                                                                data-bs-toggle="modal"
+                                                                data-service-id="<?php echo htmlspecialchars($allInvoice['service_id']); ?>"
+                                                                data-status="<?php echo htmlspecialchars($allInvoice['paymentStatus']); ?>"
+                                                                data-bs-target="#view-notes">View</a></td>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($allInvoice['amount']); ?>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($allInvoice['discount']); ?>%</td>
+                                                        <td><?php echo htmlspecialchars($allInvoice['tax_name'] . "-" . $allInvoice['tax_rate']); ?>
+                                                        </td>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($allInvoice['total_amount']); ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php if ($allInvoice['paymentStatus'] == 'PAID') { ?>
+                                                                <span class="badge badge-lg bg-success">Paid</span>
+                                                            <?php } elseif ($allInvoice['paymentStatus'] == 'CANCELLED') { ?>
+                                                                <span class="badge badge-lg bg-danger">Cancelled</span>
+                                                            <?php } elseif ($allInvoice['paymentStatus'] == 'PENDING') { ?>
+                                                                <span class="badge badge-lg bg-warning">Pending</span>
+                                                            <?php } elseif ($allInvoice['paymentStatus'] == 'REFUNDED') { ?>
+                                                                <span class="badge badge-lg bg-primary">Refunded</span>
+                                                            <?php } ?>
+                                                        </td>
+                                                    </tr>
+                                                <?php } ?>
+                                            </tbody>
+                                            <tfoot>
+                                                <tr>
+                                                    <td colspan="7"></td>
+                                                    <td><strong><span class="text-danger">Total:
+                                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalAmountSum, 2); ?></span></strong>
+                                                    </td>
+                                                    <td colspan="1"></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Paid Invoices Tab -->
-                        <div class="tab-pane fade show active" id="paid-report" role="tabpanel"
+                        <div class="tab-pane fade show" id="paid-report" role="tabpanel"
                             aria-labelledby="paid-report-tab">
                             <div class="card table-list-card">
                                 <div class="card-body">
@@ -327,8 +443,8 @@ ob_end_clean();
                                                     <tr>
                                                         <td>
                                                             <label class="checkboxs">
-                                                                <input type="checkbox">
-                                                                <span class="checkmarks"></span>
+                                                                <input type="checkbox" name="invoiceIds" value="<?php echo $paidInvoice['invoice_id'] ?>>
+                                                                <span class=" checkmarks"></span>
                                                             </label>
                                                         </td>
                                                         <td><?php echo formatDateTime($paidInvoice['due_date'], $localizationSettings); ?>
@@ -402,8 +518,8 @@ ob_end_clean();
                                                     <tr>
                                                         <td>
                                                             <label class="checkboxs">
-                                                                <input type="checkbox">
-                                                                <span class="checkmarks"></span>
+                                                                <input type="checkbox" name="invoiceIds" value="<?php echo $pendingInvoice['invoice_id'] ?>>
+                                                                <span class=" checkmarks"></span>
                                                             </label>
                                                         </td>
                                                         <td><?php echo formatDateTime($pendingInvoice['due_date'], $localizationSettings); ?>
@@ -479,8 +595,8 @@ ob_end_clean();
                                                     <tr>
                                                         <td>
                                                             <label class="checkboxs">
-                                                                <input type="checkbox">
-                                                                <span class="checkmarks"></span>
+                                                                <input type="checkbox" name="invoiceIds" value="<?php echo $cancelledInvoice['invoice_id'] ?>>
+                                                                <span class=" checkmarks"></span>
                                                             </label>
                                                         </td>
                                                         <td><?php echo formatDateTime($cancelledInvoice['due_date'], $localizationSettings);
@@ -557,8 +673,8 @@ ob_end_clean();
                                                     <tr>
                                                         <td>
                                                             <label class="checkboxs">
-                                                                <input type="checkbox">
-                                                                <span class="checkmarks"></span>
+                                                                <input type="checkbox" name="invoiceIds" value="<?php echo $refundedInvoice['invoice_id'] ?>>
+                                                                <span class=" checkmarks"></span>
                                                             </label>
                                                         </td>
 
