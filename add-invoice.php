@@ -426,7 +426,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
                                                 <div class="col-lg-4 col-sm-6 col-12">
                                                     <div class="input-blocks add-product list">
-                                                        <label>Transaction ID: <span> *</span></label>
+                                                        <label>Transaction ID: </label>
                                                         <input type="text" id="transaction_id" name="transaction_id"
                                                             placeholder="Enter Transaction ID" class="form-control">
                                                         <button type="button"

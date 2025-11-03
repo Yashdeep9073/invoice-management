@@ -18,15 +18,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
 
     try {
 
+        // Validate required fields
+        $required_fields = ['customerName', 'customerPhone', 'customerEmail', 'customerAddress'];
+        foreach ($required_fields as $field) {
+            if (!isset($_POST[$field]) || $_POST[$field] === '') {
+                echo json_encode([
+                    "status" => 400,
+                    "error" => "Missing required field: " . $field
+                ]);
+                exit;
+            }
+        }
+
         $customerName = filter_input(INPUT_POST, 'customerName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $customerPhone = filter_input(INPUT_POST, 'customerPhone', FILTER_SANITIZE_NUMBER_INT);
         $customerEmail = filter_input(INPUT_POST, 'customerEmail', FILTER_SANITIZE_EMAIL);
         $customerAddress = filter_input(INPUT_POST, 'customerAddress', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $shippingName = filter_input(INPUT_POST, 'shippingName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $shippingPhone = filter_input(INPUT_POST, 'shippingPhone', FILTER_SANITIZE_NUMBER_INT);
-        $shippingEmail = filter_input(INPUT_POST, 'shippingEmail', FILTER_SANITIZE_EMAIL);
-        $shippingAddress = filter_input(INPUT_POST, 'shippingAddress', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        // Get shipping data (will be null if not provided)
+        $shippingName = isset($_POST['shippingName']) ? filter_input(INPUT_POST, 'shippingName', FILTER_SANITIZE_FULL_SPECIAL_CHARS) : null;
+        $shippingPhone = isset($_POST['shippingPhone']) ? filter_input(INPUT_POST, 'shippingPhone', FILTER_SANITIZE_NUMBER_INT) : null;
+        $shippingEmail = isset($_POST['shippingEmail']) ? filter_input(INPUT_POST, 'shippingEmail', FILTER_SANITIZE_EMAIL) : null;
+        $shippingAddress = isset($_POST['shippingAddress']) ? filter_input(INPUT_POST, 'shippingAddress', FILTER_SANITIZE_FULL_SPECIAL_CHARS) : null;
 
         $customerState = filter_input(INPUT_POST, 'customerState', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $customerCity = filter_input(INPUT_POST, 'customerCity', FILTER_SANITIZE_NUMBER_INT);
@@ -76,38 +89,45 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
             exit();
         }
 
-        // Validate Shipping Data
-        if (!preg_match($namePattern, $shippingName)) {
-            echo json_encode([
-                "status" => 400,
-                "error" => "Invalid shipping name",
-
-            ]);
-            exit();
+        // Validate Shipping Data (only if provided)
+        if (!is_null($shippingName) && $shippingName !== '') {
+            if (!preg_match($namePattern, $shippingName)) {
+                echo json_encode([
+                    "status" => 400,
+                    "error" => "Invalid shipping name",
+                ]);
+                exit();
+            }
         }
-        if (!preg_match($phonePattern, $shippingPhone)) {
-            echo json_encode([
-                "status" => 400,
-                "error" => "Invalid shipping phone",
 
-            ]);
-            exit();
+        if (!is_null($shippingPhone) && $shippingPhone !== '') {
+            if (!preg_match($phonePattern, $shippingPhone)) {
+                echo json_encode([
+                    "status" => 400,
+                    "error" => "Invalid shipping phone",
+                ]);
+                exit();
+            }
         }
-        if (!preg_match($emailPattern, $shippingEmail)) {
-            echo json_encode([
-                "status" => 400,
-                "error" => "Invalid shipping email",
 
-            ]);
-            exit();
+        if (!is_null($shippingEmail) && $shippingEmail !== '') {
+            if (!preg_match($emailPattern, $shippingEmail)) {
+                echo json_encode([
+                    "status" => 400,
+                    "error" => "Invalid shipping email",
+                ]);
+                exit();
+            }
         }
-        if (!preg_match($addressPattern, $shippingAddress)) {
-            echo json_encode([
-                "status" => 400,
-                "error" => "Invalid shipping address",
 
-            ]);
-            exit();
+        if (!is_null($shippingAddress) && $shippingAddress !== '') {
+            if (!preg_match($addressPattern, $shippingAddress)) {
+                echo json_encode([
+                    "status" => 400,
+                    "error" => "Invalid shipping address",
+                ]);
+                exit();
+            }
         }
 
         // // Validate GST Number
@@ -894,28 +914,28 @@ ob_end_flush();
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Shipping Name <span> *</span></label>
+                                            <label>Shipping Name </label>
                                             <input type="text" class="form-control" name="shippingName"
                                                 placeholder="Enter shipping name">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Shipping Phone <span> *</span></label>
+                                            <label>Shipping Phone </label>
                                             <input type="tel" class="form-control" name="shippingPhone"
                                                 placeholder="Enter shipping phone">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Shipping Email <span> *</span></label>
+                                            <label>Shipping Email </label>
                                             <input type="email" class="form-control" name="shippingEmail"
                                                 placeholder="Enter shipping email">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
-                                            <label>Shipping Address <span> *</span></label>
+                                            <label>Shipping Address </label>
                                             <input type="text" class="form-control" name="shippingAddress"
                                                 placeholder="Enter shipping address">
                                         </div>
@@ -1210,6 +1230,20 @@ ob_end_flush();
             });
 
 
+
+            $(document).on('input', "#gstNumber", function () {
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(start, end);
+            });
+            $(document).on('input', "#editGstNumber", function () {
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(start, end);
+            });
+
             $(document).on('click', '.editButton', function () {
 
                 let customerId = $(this).data("customer-id");
@@ -1503,8 +1537,7 @@ ob_end_flush();
                 const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
                 // Required fields check
-                if (!customerName || !customerPhone || !customerEmail || !customerState || !customerCity || !customerAddress ||
-                    !shippingName || !shippingPhone || !shippingEmail || !shippingAddress) {
+                if (!customerName || !customerPhone || !customerEmail || !customerState || !customerCity || !customerAddress) {
                     notyf.error("All fields are required. Please fill out the form completely.");
                     return;
                 }
@@ -1527,23 +1560,23 @@ ob_end_flush();
                     return;
                 }
 
-                // Shipping validations
-                if (!nameRegex.test(shippingName)) {
-                    notyf.error("Please enter a valid shipping name (letters only, 2–50 characters)");
-                    return;
-                }
-                if (!mobileRegex.test(shippingPhone)) {
-                    notyf.error("Please enter a valid 10-digit shipping phone number");
-                    return;
-                }
-                if (!emailRegex.test(shippingEmail)) {
-                    notyf.error("Please enter a valid shipping email address");
-                    return;
-                }
-                if (!addressRegex.test(shippingAddress)) {
-                    notyf.error("Please enter a valid shipping address (5–200 characters)");
-                    return;
-                }
+                // // Shipping validations
+                // if (!nameRegex.test(shippingName)) {
+                //     notyf.error("Please enter a valid shipping name (letters only, 2–50 characters)");
+                //     return;
+                // }
+                // if (!mobileRegex.test(shippingPhone)) {
+                //     notyf.error("Please enter a valid 10-digit shipping phone number");
+                //     return;
+                // }
+                // if (!emailRegex.test(shippingEmail)) {
+                //     notyf.error("Please enter a valid shipping email address");
+                //     return;
+                // }
+                // if (!addressRegex.test(shippingAddress)) {
+                //     notyf.error("Please enter a valid shipping address (5–200 characters)");
+                //     return;
+                // }
 
                 // GST validation (only if provided)
                 if (gstNumber.length > 0 && !gstRegex.test(gstNumber)) {

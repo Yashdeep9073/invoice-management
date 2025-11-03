@@ -6,6 +6,7 @@ header('Content-Type: text/html; charset=utf-8');
 
 require "./database/config.php";
 require 'vendor/autoload.php';
+require_once __DIR__ . "/utility/numberToWords.php";
 
 
 use setasign\Fpdi\Fpdi;
@@ -18,116 +19,6 @@ if (!isset($_GET['id'])) {
 }
 
 try {
-
-    function numberToWords($number)
-    {
-        $ones = array(
-            0 => 'Zero',
-            1 => 'One',
-            2 => 'Two',
-            3 => 'Three',
-            4 => 'Four',
-            5 => 'Five',
-            6 => 'Six',
-            7 => 'Seven',
-            8 => 'Eight',
-            9 => 'Nine',
-            10 => 'Ten',
-            11 => 'Eleven',
-            12 => 'Twelve',
-            13 => 'Thirteen',
-            14 => 'Fourteen',
-            15 => 'Fifteen',
-            16 => 'Sixteen',
-            17 => 'Seventeen',
-            18 => 'Eighteen',
-            19 => 'Nineteen'
-        );
-        $tens = array(
-            2 => 'Twenty',
-            3 => 'Thirty',
-            4 => 'Forty',
-            5 => 'Fifty',
-            6 => 'Sixty',
-            7 => 'Seventy',
-            8 => 'Eighty',
-            9 => 'Ninety'
-        );
-        $units = array('Hundred', 'Thousand', 'Lakh', 'Crore');
-
-        // Format number to two decimal places
-        $number = number_format($number, 2, '.', '');
-        list($integerPart, $decimalPart) = explode('.', $number);
-
-        // Convert integer part (rupees)
-        $integerWords = '';
-        if ($integerPart == 0) {
-            $integerWords = 'Zero';
-        } else {
-            $integerPart = (int) $integerPart;
-            $parts = array();
-
-            // Crores
-            if ($integerPart >= 10000000) {
-                $crores = floor($integerPart / 10000000);
-                $parts[] = numberToWords($crores) . ' Crore';
-                $integerPart %= 10000000;
-            }
-            // Lakhs
-            if ($integerPart >= 100000) {
-                $lakhs = floor($integerPart / 100000);
-                $parts[] = numberToWords($lakhs) . ' Lakh';
-                $integerPart %= 100000;
-            }
-            // Thousands
-            if ($integerPart >= 1000) {
-                $thousands = floor($integerPart / 1000);
-                $parts[] = numberToWords($thousands) . ' Thousand';
-                $integerPart %= 1000;
-            }
-            // Hundreds
-            if ($integerPart >= 100) {
-                $hundreds = floor($integerPart / 100);
-                $parts[] = $ones[$hundreds] . ' Hundred';
-                $integerPart %= 100;
-            }
-            // Tens and Ones
-            if ($integerPart > 0) {
-                if ($integerPart < 20) {
-                    $parts[] = $ones[$integerPart];
-                } else {
-                    $tensVal = floor($integerPart / 10);
-                    $onesVal = $integerPart % 10;
-                    $parts[] = $tens[$tensVal] . ($onesVal > 0 ? ' ' . $ones[$onesVal] : '');
-                }
-            }
-
-            $integerWords = implode(' ', array_filter($parts));
-        }
-
-        // Convert decimal part (paise)
-        $decimalWords = '';
-        if ($decimalPart > 0) {
-            $decimalPart = (int) $decimalPart;
-            if ($decimalPart < 20) {
-                $decimalWords = $ones[$decimalPart];
-            } else {
-                $tensVal = floor($decimalPart / 10);
-                $onesVal = $decimalPart % 10;
-                $decimalWords = $tens[$tensVal] . ($onesVal > 0 ? ' ' . $ones[$onesVal] : '');
-            }
-            $decimalWords .= ' Paise';
-        }
-
-        // Combine rupees and paise
-        $result = $integerWords;
-        if ($decimalWords) {
-            $result .= ($result ? ' and ' : '') . $decimalWords;
-        }
-        $result = trim($result) . ' Only';
-        return $result;
-    }
-
     // Decode Invoice ID
     $invoiceId = intval(base64_decode($_GET['id']));
     if ($invoiceId <= 0)

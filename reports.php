@@ -84,6 +84,53 @@ try {
                 return [];
             }
 
+            // Build query for all invoices (without status filter)
+            function buildAllInvoicesQuery($db, $customerId, $startDate, $endDate)
+            {
+                $query = "
+            SELECT *, invoice.status as paymentStatus 
+            FROM invoice 
+            INNER JOIN customer ON customer.customer_id = invoice.customer_id
+            INNER JOIN tax ON tax.tax_id = invoice.tax
+            WHERE invoice.is_active = 1
+        ";
+
+                $types = "";
+                $values = [];
+
+                if ($customerId) {
+                    $query .= " AND customer.customer_id = ?";
+                    $types .= "i";
+                    $values[] = $customerId;
+                }
+
+                if ($startDate && $endDate) {
+                    $query .= " AND DATE(invoice.created_at) BETWEEN ? AND ?";
+                    $types .= "ss";
+                    $values[] = $startDate;
+                    $values[] = $endDate;
+                }
+
+                $stmt = $db->prepare($query);
+                if (!$stmt)
+                    return false;
+
+                if (!empty($types)) {
+                    $stmt->bind_param($types, ...$values);
+                }
+
+                if ($stmt->execute()) {
+                    return $stmt->get_result();
+                }
+
+                return [];
+            }
+
+            // Fetch all invoices (without status filter)
+            $allInvoices = buildAllInvoicesQuery($db, $customerId, $startDate, $endDate);
+            // print_r($allInvoices);
+            // exit;
+
             // Fetch all statuses
             $paidInvoices = buildInvoiceQuery($db, 'PAID', $customerId, $startDate, $endDate);
             $pendingInvoices = buildInvoiceQuery($db, 'PENDING', $customerId, $startDate, $endDate);
@@ -97,6 +144,18 @@ try {
             $stmtFetchCustomers->close();
 
         } else {
+
+            // all invoices 
+            $stmtFetchAll = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
+            INNER JOIN customer
+            ON customer.customer_id = invoice.customer_id
+            INNER JOIN tax
+            ON tax.tax_id = invoice.tax
+            WHERE invoice.is_active = 1 ");
+            if ($stmtFetchAll->execute()) {
+                $allInvoices = $stmtFetchAll->get_result();
+            }
+
             // paid 
             $stmtFetchPaid = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
             INNER JOIN customer
@@ -327,7 +386,12 @@ ob_end_clean();
                         <div class="tabs-set">
                             <ul class="nav nav-tabs" id="myTab" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="paid-tab" data-bs-toggle="tab"
+                                    <button class="nav-link active" id="all-report-tab" data-bs-toggle="tab"
+                                        data-bs-target="#all-report" type="button" role="tab" aria-controls="all-report"
+                                        aria-selected="true">All Invoices</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="paid-tab" data-bs-toggle="tab"
                                         data-bs-target="#paid-report" type="button" role="tab"
                                         aria-controls="paid-report" aria-selected="true">Paid Invoices</button>
                                 </li>
@@ -349,8 +413,146 @@ ob_end_clean();
                                 </li>
                             </ul>
                             <div class="tab-content" id="myTabContent">
-                                <div class="tab-pane fade show active" id="paid-report" role="tabpanel"
-                                    aria-labelledby="paid-tab">
+                                <div class="tab-pane fade show active" id="all-report" role="tabpanel"
+                                    aria-labelledby="all-report-tab">
+                                    <div class="table-top">
+                                        <div class="search-set">
+                                            <div class="search-input">
+                                                <a href="" class="btn btn-searchset"><i data-feather="search"
+                                                        class="feather-search"></i></a>
+                                            </div>
+                                        </div>
+                                        <div class="search-path">
+                                            <div class="d-flex align-items-center">
+                                                <a class="btn btn-filter" id="filter_search">
+                                                    <i data-feather="filter" class="filter-icon"></i>
+                                                    <span><img src="assets/img/icons/closes.svg" alt="img" /></span>
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="card" id="filter_inputs">
+                                        <div class="card-body pb-0">
+                                            <div class="row">
+                                                <div class="col-lg-3 col-sm-6 col-12">
+                                                    <div class="input-blocks">
+                                                        <i data-feather="user" class="info-img"></i>
+                                                        <select class="select" name="customerId">
+                                                            <option value="">Choose Name</option>
+                                                            <?php foreach ($customers as $customer) { ?>
+                                                                <option value="<?php echo $customer['customer_id'] ?>">
+                                                                    <?php echo $customer['customer_name'] ?>
+                                                                </option>
+                                                            <?php } ?>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-lg-3 col-sm-6 col-12">
+                                                    <div class="input-blocks">
+                                                        <div class="position-relative daterange-wraper">
+                                                            <input type="date" class="form-control" name="from">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-3 col-sm-6 col-12">
+                                                    <div class="input-blocks">
+                                                        <div class="position-relative daterange-wraper">
+                                                            <input type="date" class="form-control" name="to">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-3 col-sm-6 col-12">
+                                                    <div class="input-blocks">
+                                                        <a class="btn btn-filters ms-auto">
+                                                            <i data-feather="search" class="feather-search"></i>
+                                                            Search
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table id="allTable" class="table datanew">
+                                            <thead>
+                                                <tr>
+                                                    <th class="no-sort">
+                                                        <label class="checkboxs">
+                                                            <input type="checkbox" id="select-all">
+                                                            <span class="checkmarks"></span>
+                                                        </label>
+                                                    </th>
+                                                    <th>Due Date</th>
+                                                    <th>Customer</th>
+                                                    <th>Service</th>
+                                                    <th>Amount</th>
+                                                    <th>Discount</th>
+                                                    <th>Tax</th>
+                                                    <th>Total Amount</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                $totalAmountSum = 0; // Initialize total
+                                                foreach ($allInvoices->fetch_all(MYSQLI_ASSOC) as $allInvoice) {
+                                                    $totalAmountSum += $allInvoice['total_amount']; // Add to total
+                                                    ?>
+                                                    <tr>
+                                                        <td>
+                                                            <label class="checkboxs">
+                                                                <input type="checkbox" name="invoiceIds"
+                                                                    value="<?php echo $allInvoice['invoice_id'] ?>">
+                                                                <span class="checkmarks"></span>
+                                                            </label>
+                                                        </td>
+                                                        <td><?php echo formatDateTime($allInvoice['due_date'], $localizationSettings); ?>
+                                                        </td>
+                                                        <td>
+                                                            <a
+                                                                href="javascript:void(0);"><?php echo htmlspecialchars($allInvoice['customer_name']); ?></a>
+                                                        </td>
+                                                        <td><a href="#" class="view-note view-service"
+                                                                data-bs-toggle="modal"
+                                                                data-service-id="<?php echo htmlspecialchars($allInvoice['service_id']); ?>"
+                                                                data-status="<?php echo htmlspecialchars($allInvoice['paymentStatus']); ?>"
+                                                                data-bs-target="#view-notes">View</a></td>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($allInvoice['amount']); ?>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($allInvoice['discount']); ?>%</td>
+                                                        <td><?php echo htmlspecialchars($allInvoice['tax_name'] . "-" . $allInvoice['tax_rate']); ?>
+                                                        </td>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($allInvoice['total_amount']); ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php if ($allInvoice['paymentStatus'] == 'PAID') { ?>
+                                                                <span class="badge badge-lg bg-success">Paid</span>
+                                                            <?php } elseif ($allInvoice['paymentStatus'] == 'CANCELLED') { ?>
+                                                                <span class="badge badge-lg bg-danger">Cancelled</span>
+                                                            <?php } elseif ($allInvoice['paymentStatus'] == 'PENDING') { ?>
+                                                                <span class="badge badge-lg bg-warning">Pending</span>
+                                                            <?php } elseif ($allInvoice['paymentStatus'] == 'REFUNDED') { ?>
+                                                                <span class="badge badge-lg bg-primary">Refunded</span>
+                                                            <?php } ?>
+                                                        </td>
+                                                    </tr>
+                                                <?php } ?>
+                                            </tbody>
+                                            <tfoot>
+                                                <tr>
+                                                    <td colspan="7"></td>
+                                                    <td><strong><span class="text-danger">Total:
+                                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalAmountSum, 2); ?></span></strong>
+                                                    </td>
+                                                    <td colspan="1"></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="paid-report" role="tabpanel" aria-labelledby="paid-tab">
                                     <div class="table-top">
                                         <div class="search-set">
                                             <div class="search-input">
