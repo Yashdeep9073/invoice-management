@@ -9,7 +9,7 @@
                 alt="" />
         </a>
         <a href="admin-dashboard.php" class="logo-small">
-            <img src="<?= isset($companySettings['company_logo']) ? $companySettings['company_logo'] : "assets/img/logo/vis-logo.png" ?>"
+            <img src="<?= isset($companySettings['company_logo']) ? $companySettings['company_logo'] : "assets/img/logo/col-logo.png" ?>"
                 alt="" />
         </a>
         <a id="toggle_btn" href="javascript:void(0);">

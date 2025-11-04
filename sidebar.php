@@ -85,6 +85,21 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                             <a href="<?= getenv("BASE_URL") . "dashboard" ?>"><i
                                     data-feather="grid"></i><span>Dashboard</span></a>
                         </li>
+                        <li class="submenu">
+                            <?php if ($isAdmin || hasPermission('Application', $privileges, $roleData['0']['role_name'])): ?>
+                                <a href="javascript:void(0);" class=""><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                        height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" class="feather feather-smartphone">
+                                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                                    </svg><span>Application</span><span class="menu-arrow"></span></a>
+                            <?php endif; ?>
+                            <ul style="display: none;">
+                                <?php if ($isAdmin || hasPermission('Spread Sheet', $privileges, $roleData['0']['role_name'])): ?>
+                                    <li><a href="spreadsheet">Spread Sheet</a></li>
+                                <?php endif; ?>
+                            </ul>
+                        </li>
                     </ul>
                 </li>
             <?php endif; ?>

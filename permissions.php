@@ -27,7 +27,7 @@ try {
         $permissions = $stmtFetch->get_result()->fetch_all(MYSQLI_ASSOC);
     } else {
         $_SESSION['error'] = "Error While Fetching Result";
-        header("Location: permissions.php");
+        header("Location: permissions");
         exit;
     }
 
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
     if (empty($permissionName)) {
         $_SESSION['error'] = "Invalid permission name";
-        header("Location: permissions.php");
+        header("Location: permissions");
         exit;
     }
 
@@ -58,11 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
         if ($stmtPermission->execute()) {
             $_SESSION['success'] = "Permission added successfully.";
-            header("Location: permissions.php");
+            header("Location: permissions");
             exit();
         } else {
             $_SESSION['error'] = "Failed to add permission.";
-            header("Location: permissions.php");
+            header("Location: permissions");
             exit();
         }
 
@@ -79,11 +79,11 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['permissionId'])) {
         $stmtDelete->bind_param('i', $permissionId);
         if ($stmtDelete->execute()) {
             $_SESSION['success'] = "Permission deleted successfully.";
-            header("Location: permissions.php");
+            header("Location: permissions");
             exit();
         } else {
             $_SESSION['error'] = "Failed to delete permission.";
-            header("Location: permissions.php");
+            header("Location: permissions");
             exit();
         }
     } catch (PDOException $e) {
@@ -113,11 +113,11 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['update'])) {
 
         if ($stmtPermission->execute()) {
             $_SESSION['success'] = "Permission updated successfully.";
-            header("Location: permissions.php");
+            header("Location: permissions");
             exit();
         } else {
             $_SESSION['error'] = "Failed to update permission.";
-            header("Location: permissions.php");
+            header("Location: permissions");
             exit();
         }
     } catch (PDOException $error) {
