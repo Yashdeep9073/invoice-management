@@ -2,6 +2,7 @@
 session_start();
 
 require "./database/config.php";
+require "./utility/env.php";
 if (!isset($_SESSION["admin_id"])) {
     header("Location: " . getenv("BASE_URL"));
     exit();
@@ -33,21 +34,23 @@ try {
     $result = $stmt->get_result();
     $file = $result->fetch_assoc();
 
-    if (!$file || $file['type'] !== 'file') {
+
+
+    if (!$file || $file['type'] !== 'FILE') {
         $_SESSION['error'] = "File not found or you don't have access";
-        header("Location: file-manager.php");
+        header("Location: " . getenv("BASE_URL") . "spreadsheet");
         exit;
     }
 
     if (!$file['file_path'] || !file_exists($file['file_path'])) {
         $_SESSION['error'] = "File not found on server";
-        header("Location: file-manager.php");
+        header("Location: " . getenv("BASE_URL") . "spreadsheet");
         exit;
     }
 
 } catch (Exception $e) {
     $_SESSION['error'] = "Failed to download file: " . $e->getMessage();
-    header("Location: file-manager.php");
+    header("Location: " . getenv("BASE_URL") . "spreadsheet");
     exit;
 }
 
@@ -152,7 +155,7 @@ $spreadsheetData = json_decode($fileContent, true);
 // Check if JSON decoding was successful
 if ($spreadsheetData === null) {
     $_SESSION['error'] = "Invalid file format";
-    header("Location: file-manager.php");
+    header("Location: " . getenv("BASE_URL") . "spreadsheet");
     exit;
 }
 
