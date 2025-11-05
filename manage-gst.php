@@ -707,6 +707,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                         <th>Due Date</th>
                                         <th>Amount</th>
                                         <th>GST Amount</th>
+                                        <th>Total Amount</th>
                                         <th>Created By</th>
                                         <th>GST Status</th>
                                         <th class="no-sort text-center">Action</th>
@@ -731,17 +732,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                             </td>
                                             <td><?php echo formatDateTime($invoice['due_date'], $localizationSettings); ?>
                                             </td>
-                                            <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
+                                            <td><?php
+                                            $taxRateStr = $invoice['tax_rate'];
+                                            $taxRate = intval(str_replace('%', '', $taxRateStr));
+                                            $priceWithoutTax = $taxRate > 0 ? $invoice['total_amount'] / (1 + $taxRate / 100) : $invoice['total_amount'];
+
+                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
+                                                $totalBaseAmount += $invoice['total_amount'];
+                                            }
+
+                                            $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
+                                            echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $priceWithoutTax;
+                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
+                                                $totalTaxAmount += $taxAmount;
+                                            }
+                                            ?>
                                             </td>
                                             <td><?php
                                             $taxRateStr = $invoice['tax_rate'];
                                             $taxRate = intval(str_replace('%', '', $taxRateStr));
                                             $priceWithoutTax = $taxRate > 0 ? $invoice['total_amount'] / (1 + $taxRate / 100) : $invoice['total_amount'];
-                                            $totalBaseAmount += $invoice['total_amount'];
+
+                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
+                                                $totalBaseAmount += $invoice['total_amount'];
+                                            }
+
                                             $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
                                             echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $taxAmount;
-                                            $totalTaxAmount += $taxAmount;
+                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
+                                                $totalTaxAmount += $taxAmount;
+                                            }
                                             ?>
+                                            </td>
+                                            <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
                                             </td>
                                             <td><?php echo $invoice['admin_username'] ?></td>
                                             <td>

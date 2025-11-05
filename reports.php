@@ -227,6 +227,28 @@ try {
     $_SESSION['error'] = $e->getMessage();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['servicesIds'])) {
+    $servicesIds = $_POST['servicesIds'];
+
+    $stmtFetchService = $db->prepare('SELECT * FROM services WHERE service_id = ?');
+
+    $results = [];
+    foreach ($servicesIds as $id) {
+        // Ensure the ID is an integer to prevent SQL injection
+        $id = (int) $id;
+        $stmtFetchService->execute([$id]);
+        $service = $stmtFetchService->get_result()->fetch_all(MYSQLI_ASSOC);
+        if ($service) {
+            $results[] = $service;
+        }
+    }
+    echo json_encode([
+        'status' => 200,
+        'data' => $results
+    ]);
+    exit;
+}
+
 ob_end_clean();
 ?>
 
@@ -1143,6 +1165,29 @@ ob_end_clean();
         </div>
     </div>
 
+    <div class="modal fade" id="view-notes">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="page-wrapper-new p-0">
+                    <div class="content">
+                        <div class="modal-header border-0 custom-modal-header">
+                            <div class="page-title">
+                                <h4>Service</h4>
+                            </div>
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body custom-modal-body">
+                            <p>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script src="assets/js/jquery-3.7.1.min.js"></script>
 
@@ -1188,6 +1233,41 @@ ob_end_clean();
                         duration: 3000,
                     },
                 ],
+            });
+
+
+            $(document).on('click', '.view-service', function (e) {
+                e.preventDefault();
+
+                let servicesIds = $(this).data('service-id');
+                console.log(servicesIds);
+
+
+                $.ajax({
+                    url: 'reports.php',
+                    type: 'POST',
+                    data: { servicesIds: servicesIds },
+                    success: function (response) {
+                        try {
+                            let result = JSON.parse(response);
+                            const serviceNames = result.data
+                                .flat()
+                                .map(service => service.service_name)
+                                .filter(name => name);
+
+                            $('#view-notes .custom-modal-body p').text(serviceNames);
+
+                        } catch (e) {
+                            console.error('JSON parse error:', e);
+                            console.error('Response content:', response);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('AJAX error:', error);
+                        console.error('Status:', status);
+                        console.error('XHR:', xhr);
+                    }
+                });
             });
 
             // Initialize Clipboard.js for .admin-email links

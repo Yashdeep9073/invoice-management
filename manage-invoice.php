@@ -996,8 +996,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                         </li>
 
                         <li>
-                            <a href="<?= getenv("BASE_URL") . "manage-invoice" ?>" data-bs-toggle="tooltip" data-bs-placement="top"
-                                title="Refresh"><i data-feather="rotate-ccw" class="feather-rotate-ccw"></i></a>
+                            <a href="<?= getenv("BASE_URL") . "manage-invoice" ?>" data-bs-toggle="tooltip"
+                                data-bs-placement="top" title="Refresh"><i data-feather="rotate-ccw"
+                                    class="feather-rotate-ccw"></i></a>
                         </li>
                         <li>
                             <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i
@@ -1093,6 +1094,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         <th>Due Date</th>
                                         <th>Amount</th>
                                         <th>GST Amount</th>
+                                        <th>Total Amount</th>
                                         <th>Created By</th>
                                         <th>Status</th>
                                         <th class="no-sort text-center">Action</th>
@@ -1119,7 +1121,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                             <td><?php echo formatDateTime($invoice['due_date'], $localizationSettings); ?>
                                             </td>
 
-                                            <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
+                                            
+                                            <td><?php
+                                            $taxRateStr = $invoice['tax_rate'];
+                                            $taxRate = intval(str_replace('%', '', $taxRateStr));
+                                            $priceWithoutTax = $taxRate > 0 ? $invoice['total_amount'] / (1 + $taxRate / 100) : $invoice['total_amount'];
+
+                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
+                                                $totalBaseAmount += $invoice['total_amount'];
+                                            }
+
+                                            $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
+                                            echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $priceWithoutTax;
+                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
+                                                $totalTaxAmount += $taxAmount;
+                                            }
+                                            ?>
                                             </td>
                                             <td><?php
                                             $taxRateStr = $invoice['tax_rate'];
@@ -1136,6 +1153,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                 $totalTaxAmount += $taxAmount;
                                             }
                                             ?>
+                                            </td>
+                                            <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
                                             </td>
                                             <td><?php echo $invoice['admin_username'] ?></td>
                                             <td>
