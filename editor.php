@@ -193,6 +193,11 @@ $currentPermission = 'view';
 $fileSharedUsers = [];
 
 try {
+
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
     // Get all admins except current user
     $stmt = $db->prepare("SELECT admin_id, admin_username FROM admin WHERE admin_id != ? ORDER BY admin_username");
     $stmt->bind_param("i", $admin_id);

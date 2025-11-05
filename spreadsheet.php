@@ -289,6 +289,11 @@ function shareFolderContents($folderId, $add, $remove, $perm, $adminId, $db)
 $myTree = [];
 $fileSharedUsers = [];
 try {
+
+    $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
+    $stmtFetchCompanySettings->execute();
+    $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
     $stmt = $db->prepare("
         SELECT ff.id, 
                ff.name,
@@ -420,103 +425,103 @@ function renderMyTree($items, $level = 0)
         $isShared = $shared['count'] > 0;
         $encodedId = base64_encode($item['id']);
         ?>
-        <?php if ($item['type'] === 'FOLDER'): ?>
-            <li class="fm-folder-item">
-                <div class="fm-item">
-                    <div class="d-flex align-items-center flex-grow-1">
-                        <?php if ($hasChildren): ?>
-                            <span class="fm-folder-toggle collapsed" title="Toggle folder">
-                                <i class="fas fa-chevron-down"></i>
-                            </span>
-                        <?php else: ?>
-                            <span class="fm-folder-toggle" style="visibility: hidden;">
-                                <i class="fas fa-chevron-down"></i>
-                            </span>
-                        <?php endif; ?>
-                        <div class="fm-item-icon">
-                            <i class="fas fa-folder"></i>
-                        </div>
-                        <div class="fm-item-content">
-                            <div class="fm-item-name">
-                                <?= htmlspecialchars($item['name']) ?>
-                                <?php if ($isShared): ?>
-                                    <span class="badge bg-success shared-badge"><?= $shared['count'] ?> shared</span>
-                                <?php endif; ?>
+                <?php if ($item['type'] === 'FOLDER'): ?>
+                        <li class="fm-folder-item">
+                            <div class="fm-item">
+                                <div class="d-flex align-items-center flex-grow-1">
+                                    <?php if ($hasChildren): ?>
+                                            <span class="fm-folder-toggle collapsed" title="Toggle folder">
+                                                <i class="fas fa-chevron-down"></i>
+                                            </span>
+                                    <?php else: ?>
+                                            <span class="fm-folder-toggle" style="visibility: hidden;">
+                                                <i class="fas fa-chevron-down"></i>
+                                            </span>
+                                    <?php endif; ?>
+                                    <div class="fm-item-icon">
+                                        <i class="fas fa-folder"></i>
+                                    </div>
+                                    <div class="fm-item-content">
+                                        <div class="fm-item-name">
+                                            <?= htmlspecialchars($item['name']) ?>
+                                            <?php if ($isShared): ?>
+                                                    <span class="badge bg-success shared-badge"><?= $shared['count'] ?> shared</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="fm-item-meta">
+                                            Folder
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="fm-item-actions">
+                                    <button data-bs-toggle="modal" data-bs-target="#modalFile" class="btn btn-sm btn-outline-primary add-in-btn"
+                                        data-id="<?= $item['id'] ?>" title="Add File">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary share-btn" data-id="<?= $item['id'] ?>"
+                                        data-name="<?= htmlspecialchars($item['name']) ?>" data-type="folder"
+                                        data-shared-users='<?= json_encode($shared['users']) ?>' data-permission="<?= $shared['permission'] ?>">
+                                        <i class="fas fa-share-alt"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger deleteButton" data-id="<?= $item['id'] ?>"
+                                        data-name="<?= htmlspecialchars($item['name']) ?>" data-type="folder"
+                                        data-shared="<?= $isShared ? '1' : '0' ?>">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="fm-item-meta">
-                                Folder
+                            <?php if ($hasChildren): ?>
+                                    <ul class="fm-folder-children" style="display: none;">
+                                        <?php renderMyTree($item['children'], $level + 1); ?>
+                                    </ul>
+                            <?php endif; ?>
+                        </li>
+                <?php else: ?>
+                        <li class="fm-file-item">
+                            <div class="fm-item">
+                                <div class="d-flex align-items-center flex-grow-1">
+                                    <span class="fm-folder-toggle" style="visibility: hidden;">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </span>
+                                    <div class="fm-item-icon">
+                                        <i class="fas fa-file"></i>
+                                    </div>
+                                    <div class="fm-item-content">
+                                        <div class="fm-item-name">
+                                            <a href="editor?file=<?= $encodedId ?>" class="text-decoration-none">
+                                                <?= htmlspecialchars($item['name']) ?>
+                                            </a>
+                                            <?php if ($isShared): ?>
+                                                    <span class="badge bg-success shared-badge"><?= $shared['count'] ?> shared</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="fm-item-meta">
+                                            Spreadsheet File
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="fm-item-actions">
+                                    <button class="btn btn-sm btn-outline-primary share-btn" data-id="<?= $item['id'] ?>"
+                                        data-name="<?= htmlspecialchars($item['name']) ?>" data-type="file"
+                                        data-shared-users='<?= json_encode($shared['users']) ?>' data-permission="<?= $shared['permission'] ?>">
+                                        <i class="fas fa-share-alt"></i>
+                                    </button>
+                                    <a href="editor?file=<?= $encodedId ?>" class="btn btn-sm btn-outline-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="download-excel?file=<?= $encodedId ?>" class="btn btn-sm btn-outline-info" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger deleteButton" data-id="<?= $item['id'] ?>"
+                                        data-name="<?= htmlspecialchars($item['name']) ?>" data-type="file"
+                                        data-shared="<?= $isShared ? '1' : '0' ?>">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="fm-item-actions">
-                        <button data-bs-toggle="modal" data-bs-target="#modalFile" class="btn btn-sm btn-outline-primary add-in-btn"
-                            data-id="<?= $item['id'] ?>" title="Add File">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary share-btn" data-id="<?= $item['id'] ?>"
-                            data-name="<?= htmlspecialchars($item['name']) ?>" data-type="folder"
-                            data-shared-users='<?= json_encode($shared['users']) ?>' data-permission="<?= $shared['permission'] ?>">
-                            <i class="fas fa-share-alt"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger deleteButton" data-id="<?= $item['id'] ?>"
-                            data-name="<?= htmlspecialchars($item['name']) ?>" data-type="folder"
-                            data-shared="<?= $isShared ? '1' : '0' ?>">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                <?php if ($hasChildren): ?>
-                    <ul class="fm-folder-children" style="display: none;">
-                        <?php renderMyTree($item['children'], $level + 1); ?>
-                    </ul>
+                        </li>
                 <?php endif; ?>
-            </li>
-        <?php else: ?>
-            <li class="fm-file-item">
-                <div class="fm-item">
-                    <div class="d-flex align-items-center flex-grow-1">
-                        <span class="fm-folder-toggle" style="visibility: hidden;">
-                            <i class="fas fa-chevron-down"></i>
-                        </span>
-                        <div class="fm-item-icon">
-                            <i class="fas fa-file"></i>
-                        </div>
-                        <div class="fm-item-content">
-                            <div class="fm-item-name">
-                                <a href="editor?file=<?= $encodedId ?>" class="text-decoration-none">
-                                    <?= htmlspecialchars($item['name']) ?>
-                                </a>
-                                <?php if ($isShared): ?>
-                                    <span class="badge bg-success shared-badge"><?= $shared['count'] ?> shared</span>
-                                <?php endif; ?>
-                            </div>
-                            <div class="fm-item-meta">
-                                Spreadsheet File
-                            </div>
-                        </div>
-                    </div>
-                    <div class="fm-item-actions">
-                        <button class="btn btn-sm btn-outline-primary share-btn" data-id="<?= $item['id'] ?>"
-                            data-name="<?= htmlspecialchars($item['name']) ?>" data-type="file"
-                            data-shared-users='<?= json_encode($shared['users']) ?>' data-permission="<?= $shared['permission'] ?>">
-                            <i class="fas fa-share-alt"></i>
-                        </button>
-                        <a href="editor?file=<?= $encodedId ?>" class="btn btn-sm btn-outline-warning" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <a href="download-excel?file=<?= $encodedId ?>" class="btn btn-sm btn-outline-info" title="Download">
-                            <i class="fas fa-download"></i>
-                        </a>
-                        <button class="btn btn-sm btn-outline-danger deleteButton" data-id="<?= $item['id'] ?>"
-                            data-name="<?= htmlspecialchars($item['name']) ?>" data-type="file"
-                            data-shared="<?= $isShared ? '1' : '0' ?>">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </li>
-        <?php endif; ?>
-    <?php endforeach;
+        <?php endforeach;
 }
 
 function renderSharedTree($items, $level = 0)
@@ -525,77 +530,77 @@ function renderSharedTree($items, $level = 0)
         $hasChildren = !empty($item['children']);
         $encodedId = base64_encode($item['id']);
         ?>
-        <?php if ($item['type'] === 'folder'): ?>
-            <li class="fm-folder-item">
-                <div class="fm-item">
-                    <div class="d-flex align-items-center flex-grow-1">
-                        <?php if ($hasChildren): ?>
-                            <span class="fm-folder-toggle collapsed" title="Toggle folder">
-                                <i class="fas fa-chevron-down"></i>
-                            </span>
-                        <?php else: ?>
-                            <span class="fm-folder-toggle" style="visibility: hidden;">
-                                <i class="fas fa-chevron-down"></i>
-                            </span>
-                        <?php endif; ?>
-                        <div class="fm-item-icon">
-                            <i class="fas fa-folder"></i>
-                        </div>
-                        <div class="fm-item-content">
-                            <div class="fm-item-name">
-                                <?= htmlspecialchars($item['name']) ?>
+                <?php if ($item['type'] === 'folder'): ?>
+                        <li class="fm-folder-item">
+                            <div class="fm-item">
+                                <div class="d-flex align-items-center flex-grow-1">
+                                    <?php if ($hasChildren): ?>
+                                            <span class="fm-folder-toggle collapsed" title="Toggle folder">
+                                                <i class="fas fa-chevron-down"></i>
+                                            </span>
+                                    <?php else: ?>
+                                            <span class="fm-folder-toggle" style="visibility: hidden;">
+                                                <i class="fas fa-chevron-down"></i>
+                                            </span>
+                                    <?php endif; ?>
+                                    <div class="fm-item-icon">
+                                        <i class="fas fa-folder"></i>
+                                    </div>
+                                    <div class="fm-item-content">
+                                        <div class="fm-item-name">
+                                            <?= htmlspecialchars($item['name']) ?>
+                                        </div>
+                                        <div class="fm-item-meta">
+                                            Shared by <?= htmlspecialchars($item['owner_name']) ?>
+                                            <span class="badge bg-<?= $item['permission'] === 'edit' ? 'success' : 'info' ?> ms-2">
+                                                <?= $item['permission'] === 'edit' ? 'Can Edit' : 'View Only' ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="fm-item-meta">
-                                Shared by <?= htmlspecialchars($item['owner_name']) ?>
-                                <span class="badge bg-<?= $item['permission'] === 'edit' ? 'success' : 'info' ?> ms-2">
-                                    <?= $item['permission'] === 'edit' ? 'Can Edit' : 'View Only' ?>
-                                </span>
+                            <?php if ($hasChildren): ?>
+                                    <ul class="fm-folder-children" style="display: none;">
+                                        <?php renderSharedTree($item['children'], $level + 1); ?>
+                                    </ul>
+                            <?php endif; ?>
+                        </li>
+                <?php else: ?>
+                        <li class="fm-file-item">
+                            <div class="fm-item">
+                                <div class="d-flex align-items-center flex-grow-1">
+                                    <span class="fm-folder-toggle" style="visibility: hidden;">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </span>
+                                    <div class="fm-item-icon">
+                                        <i class="fas fa-file"></i>
+                                    </div>
+                                    <div class="fm-item-content">
+                                        <div class="fm-item-name">
+                                            <a href="editor?file=<?= $encodedId ?>" class="text-decoration-none">
+                                                <?= htmlspecialchars($item['name']) ?>
+                                            </a>
+                                        </div>
+                                        <div class="fm-item-meta">
+                                            Shared by <?= htmlspecialchars($item['owner_name']) ?>
+                                            <span class="badge bg-<?= $item['permission'] === 'edit' ? 'success' : 'info' ?> ms-2">
+                                                <?= $item['permission'] === 'edit' ? 'Can Edit' : 'View Only' ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="fm-item-actions">
+                                    <a href="editor?file=<?= $encodedId ?>" class="btn btn-sm btn-outline-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="download-excel?file=<?= $encodedId ?>" class="btn btn-sm btn-outline-dark" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                <?php if ($hasChildren): ?>
-                    <ul class="fm-folder-children" style="display: none;">
-                        <?php renderSharedTree($item['children'], $level + 1); ?>
-                    </ul>
+                        </li>
                 <?php endif; ?>
-            </li>
-        <?php else: ?>
-            <li class="fm-file-item">
-                <div class="fm-item">
-                    <div class="d-flex align-items-center flex-grow-1">
-                        <span class="fm-folder-toggle" style="visibility: hidden;">
-                            <i class="fas fa-chevron-down"></i>
-                        </span>
-                        <div class="fm-item-icon">
-                            <i class="fas fa-file"></i>
-                        </div>
-                        <div class="fm-item-content">
-                            <div class="fm-item-name">
-                                <a href="editor?file=<?= $encodedId ?>" class="text-decoration-none">
-                                    <?= htmlspecialchars($item['name']) ?>
-                                </a>
-                            </div>
-                            <div class="fm-item-meta">
-                                Shared by <?= htmlspecialchars($item['owner_name']) ?>
-                                <span class="badge bg-<?= $item['permission'] === 'edit' ? 'success' : 'info' ?> ms-2">
-                                    <?= $item['permission'] === 'edit' ? 'Can Edit' : 'View Only' ?>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="fm-item-actions">
-                        <a href="editor?file=<?= $encodedId ?>" class="btn btn-sm btn-outline-warning" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <a href="download-excel?file=<?= $encodedId ?>" class="btn btn-sm btn-outline-dark" title="Download">
-                            <i class="fas fa-download"></i>
-                        </a>
-                    </div>
-                </div>
-            </li>
-        <?php endif; ?>
-    <?php endforeach;
+        <?php endforeach;
 }
 ?>
 
@@ -816,49 +821,49 @@ function renderSharedTree($items, $level = 0)
 <body>
 
     <?php if (isset($_SESSION['success'])) { ?>
-        <script>
-            const notyf = new Notyf({
-                position: {
-                    x: 'center',
-                    y: 'top'
-                },
-                types: [
-                    {
-                        type: 'success',
-                        background: '#4dc76f', // Change background color
-                        textColor: '#FFFFFF',  // Change text color
-                        dismissible: false
-                    }
-                ]
-            });
-            notyf.success("<?php echo $_SESSION['success']; ?>");
-        </script>
-        <?php
-        unset($_SESSION['success']);
-        ?>
+            <script>
+                const notyf = new Notyf({
+                    position: {
+                        x: 'center',
+                        y: 'top'
+                    },
+                    types: [
+                        {
+                            type: 'success',
+                            background: '#4dc76f', // Change background color
+                            textColor: '#FFFFFF',  // Change text color
+                            dismissible: false
+                        }
+                    ]
+                });
+                notyf.success("<?php echo $_SESSION['success']; ?>");
+            </script>
+            <?php
+            unset($_SESSION['success']);
+            ?>
     <?php } ?>
 
     <?php if (isset($_SESSION['error'])) { ?>
-        <script>
-            const notyf = new Notyf({
-                position: {
-                    x: 'center',
-                    y: 'top'
-                },
-                types: [
-                    {
-                        type: 'error',
-                        background: '#ff1916',
-                        textColor: '#FFFFFF',
-                        dismissible: false
-                    }
-                ]
-            });
-            notyf.error("<?php echo $_SESSION['error']; ?>");
-        </script>
-        <?php
-        unset($_SESSION['error']);
-        ?>
+            <script>
+                const notyf = new Notyf({
+                    position: {
+                        x: 'center',
+                        y: 'top'
+                    },
+                    types: [
+                        {
+                            type: 'error',
+                            background: '#ff1916',
+                            textColor: '#FFFFFF',
+                            dismissible: false
+                        }
+                    ]
+                });
+                notyf.error("<?php echo $_SESSION['error']; ?>");
+            </script>
+            <?php
+            unset($_SESSION['error']);
+            ?>
     <?php } ?>
 
     <div class="main-wrapper">
@@ -900,69 +905,69 @@ function renderSharedTree($items, $level = 0)
 
                     <ul class="nav fm-tabs" id="folderTab">
                         <?php if ($isAdmin || hasPermission('My Folder', $privileges, $roleData['0']['role_name'])): ?>
-                            <li class="nav-item">
-                                <a class="nav-link active" data-bs-toggle="tab" href="#my-folder">My Folder</a>
-                            </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-bs-toggle="tab" href="#my-folder">My Folder</a>
+                                </li>
                         <?php endif; ?>
 
                         <?php if ($isAdmin || hasPermission('Shared With Me', $privileges, $roleData['0']['role_name'])): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" data-bs-toggle="tab" href="#shared-folder">Shared With Me</a>
-                            </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab" href="#shared-folder">Shared With Me</a>
+                                </li>
                         <?php endif; ?>
                     </ul>
 
                     <div class="tab-content">
 
                         <?php if ($isAdmin || hasPermission('My Folder', $privileges, $roleData['0']['role_name'])): ?>
-                            <!-- MY FOLDER -->
-                            <div class="tab-pane fade show active" id="my-folder">
-                                <div class="fm-actions d-flex gap-2">
-                                    <?php if ($isAdmin || hasPermission('Create Spread Sheet', $privileges, $roleData['0']['role_name'])): ?>
+                                <!-- MY FOLDER -->
+                                <div class="tab-pane fade show active" id="my-folder">
+                                    <div class="fm-actions d-flex gap-2">
+                                        <?php if ($isAdmin || hasPermission('Create Spread Sheet', $privileges, $roleData['0']['role_name'])): ?>
 
-                                        <button data-bs-toggle="modal" data-bs-target="#modalFile"
-                                            class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>
-                                            New File</button>
+                                                <button data-bs-toggle="modal" data-bs-target="#modalFile"
+                                                    class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>
+                                                    New File</button>
 
-                                    <?php endif; ?>
-                                    <?php if ($isAdmin || hasPermission('Create Spread Sheet Folder', $privileges, $roleData['0']['role_name'])): ?>
+                                        <?php endif; ?>
+                                        <?php if ($isAdmin || hasPermission('Create Spread Sheet Folder', $privileges, $roleData['0']['role_name'])): ?>
 
-                                        <button data-bs-toggle="modal" data-bs-target="#modalFolder"
-                                            class="btn btn-primary btn-sm"><i class="fas fa-folder-plus me-1"></i> New
-                                            Folder</button>
-                                    <?php endif; ?>
+                                                <button data-bs-toggle="modal" data-bs-target="#modalFolder"
+                                                    class="btn btn-primary btn-sm"><i class="fas fa-folder-plus me-1"></i> New
+                                                    Folder</button>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="fm-content">
+                                        <?php if (empty($myTree)): ?>
+                                                <div class="fm-empty-state">
+                                                    <i class="fas fa-folder-open"></i>
+                                                    <p>No items yet. Create your first file or folder!</p>
+                                                </div>
+                                        <?php else: ?>
+                                                <ul class="fm-list">
+                                                    <?php renderMyTree($myTree); ?>
+                                                </ul>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                                <div class="fm-content">
-                                    <?php if (empty($myTree)): ?>
-                                        <div class="fm-empty-state">
-                                            <i class="fas fa-folder-open"></i>
-                                            <p>No items yet. Create your first file or folder!</p>
-                                        </div>
-                                    <?php else: ?>
-                                        <ul class="fm-list">
-                                            <?php renderMyTree($myTree); ?>
-                                        </ul>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
                         <?php endif; ?>
 
                         <?php if ($isAdmin || hasPermission('Shared With Me', $privileges, $roleData['0']['role_name'])): ?>
-                            <!-- SHARED WITH ME -->
-                            <div class="tab-pane fade" id="shared-folder">
-                                <div class="fm-content">
-                                    <?php if (empty($sharedTree)): ?>
-                                        <div class="fm-empty-state">
-                                            <i class="fas fa-share-alt"></i>
-                                            <p>No shared items yet.</p>
-                                        </div>
-                                    <?php else: ?>
-                                        <ul class="fm-list">
-                                            <?php renderSharedTree($sharedTree); ?>
-                                        </ul>
-                                    <?php endif; ?>
+                                <!-- SHARED WITH ME -->
+                                <div class="tab-pane fade" id="shared-folder">
+                                    <div class="fm-content">
+                                        <?php if (empty($sharedTree)): ?>
+                                                <div class="fm-empty-state">
+                                                    <i class="fas fa-share-alt"></i>
+                                                    <p>No shared items yet.</p>
+                                                </div>
+                                        <?php else: ?>
+                                                <ul class="fm-list">
+                                                    <?php renderSharedTree($sharedTree); ?>
+                                                </ul>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1069,7 +1074,7 @@ function renderSharedTree($items, $level = 0)
                         <label class="form-label">Users</label>
                         <select name="users[]" class="form-control select2-multiple" multiple id="shareUsersSelect">
                             <?php foreach ($allAdmins as $a): ?>
-                                <option value="<?= $a['admin_id'] ?>"><?= htmlspecialchars($a['admin_username']) ?></option>
+                                    <option value="<?= $a['admin_id'] ?>"><?= htmlspecialchars($a['admin_username']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
