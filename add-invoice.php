@@ -429,10 +429,10 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                         <label>Transaction ID: </label>
                                                         <input type="text" id="transaction_id" name="transaction_id"
                                                             placeholder="Enter Transaction ID" class="form-control">
-                                                        <button type="button"
+                                                        <!-- <button type="button"
                                                             class="btn-2 btn-primaryadd transactionNumber">
                                                             Generate
-                                                        </button>
+                                                        </button> -->
                                                     </div>
                                                 </div>
 

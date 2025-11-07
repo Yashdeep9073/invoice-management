@@ -807,7 +807,7 @@ ob_end_flush();
                                                                 data-shipping-name="<?php echo $customer['ship_name'] ?>"
                                                                 data-shipping-phone="<?php echo $customer['ship_phone'] ?>"
                                                                 data-shipping-email="<?php echo $customer['ship_email'] ?>"
-                                                                data-shipping-address="<?php echo $customer['ship_email'] ?>"
+                                                                data-shipping-address="<?php echo $customer['ship_address'] ?>"
                                                                 data-customer-status="<?php echo $customer['isActive'] ?>"
                                                                 data-customer-state="<?php echo $customer['customer_state'] ?>"
                                                                 data-customer-city="<?php echo $customer['customer_city'] ?>"

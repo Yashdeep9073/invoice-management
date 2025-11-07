@@ -434,8 +434,8 @@ ob_end_flush();
                     <ul class="table-top-head">
                         <li>
                             <div class="page-btn">
-                                <a href="<?= getenv("BASE_URL") . "manage-invoice" ?>" class="btn btn-secondary"><i data-feather="arrow-left"
-                                        class="me-2"></i>Back to
+                                <a href="<?= getenv("BASE_URL") . "manage-invoice" ?>" class="btn btn-secondary"><i
+                                        data-feather="arrow-left" class="me-2"></i>Back to
                                     Invoices</a>
                             </div>
                         </li>
@@ -519,13 +519,13 @@ ob_end_flush();
                                                     <div class="input-blocks add-product list">
                                                         <label>Transaction ID:</label>
                                                         <input type="text" id="transaction_id"
-                                                            value="<?php echo $invoices['0']['transaction_id'] ?>"
+                                                            value="<?php echo $invoices['0']['transaction_id'] ?? "" ?>"
                                                             name="transaction_id" placeholder="Enter Transaction ID"
                                                             class="form-control" required>
-                                                        <button type="button"
+                                                        <!-- <button type="button"
                                                             class="btn-2 btn-primaryadd transactionNumber">
                                                             Generate
-                                                        </button>
+                                                        </button> -->
                                                     </div>
                                                 </div>
 

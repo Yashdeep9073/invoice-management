@@ -533,10 +533,17 @@ ob_end_clean();
                                                         <td><?php echo formatDateTime($allInvoice['due_date'], $localizationSettings); ?>
                                                         </td>
                                                         <td>
-                                                            <a
-                                                                href="javascript:void(0);"><?php echo htmlspecialchars($allInvoice['customer_name']); ?></a>
+
+                                                            <div class="userimgname">
+                                                                <div>
+                                                                    <a class="text-primary"
+                                                                        href="<?php echo getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($allInvoice['customer_id']) ?>"><?php echo $allInvoice['customer_name'] ?></a>
+                                                                </div>
+                                                            </div>
+
+
                                                         </td>
-                                                        <td><a href="#" class="view-note view-service"
+                                                        <td><a href="javascript:void(0);" class="view-note view-service"
                                                                 data-bs-toggle="modal"
                                                                 data-service-id="<?php echo htmlspecialchars($allInvoice['service_id']); ?>"
                                                                 data-status="<?php echo htmlspecialchars($allInvoice['paymentStatus']); ?>"
@@ -670,7 +677,15 @@ ob_end_clean();
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($paidInvoice['customer_name']); ?>
+                                                        <td>
+
+                                                            <div class="userimgname">
+                                                                <div>
+                                                                    <a class="text-primary"
+                                                                        href="<?php echo getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($paidInvoice['customer_id']) ?>"><?php echo $paidInvoice['customer_name'] ?></a>
+                                                                </div>
+                                                            </div>
+
                                                         </td>
                                                         <td><?php echo formatDateTime($paidInvoice['updated_at'], $localizationSettings); ?>
                                                         </td>
@@ -813,7 +828,13 @@ ob_end_clean();
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($pendingInvoice['customer_name']); ?>
+                                                        <td>
+                                                            <div class="userimgname">
+                                                                <div>
+                                                                    <a class="text-primary"
+                                                                        href="<?php echo getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($pendingInvoice['customer_id']) ?>"><?php echo $pendingInvoice['customer_name'] ?></a>
+                                                                </div>
+                                                            </div>
                                                         </td>
                                                         <td>
                                                             <?php
@@ -965,7 +986,15 @@ ob_end_clean();
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($cancelledInvoice['customer_name']); ?>
+                                                        <td>
+
+                                                            <div class="userimgname">
+                                                                <div>
+                                                                    <a class="text-primary"
+                                                                        href="<?php echo getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($cancelledInvoice['customer_id']) ?>"><?php echo $cancelledInvoice['customer_name'] ?></a>
+                                                                </div>
+                                                            </div>
+
                                                         </td>
                                                         <td><?php echo formatDateTime($cancelledInvoice['updated_at'], $localizationSettings); ?>
                                                         </td>
@@ -1109,7 +1138,15 @@ ob_end_clean();
                                                                 <span class="checkmarks"></span>
                                                             </label>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($refundedInvoice['customer_name']); ?>
+                                                        <td>
+
+                                                            <div class="userimgname">
+                                                                <div>
+                                                                    <a class="text-primary"
+                                                                        href="<?php echo getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($refundedInvoice['customer_id']) ?>"><?php echo $refundedInvoice['customer_name'] ?></a>
+                                                                </div>
+                                                            </div>
+
                                                         </td>
                                                         <td><?php echo formatDateTime($refundedInvoice['updated_at'], $localizationSettings); ?>
                                                         </td>

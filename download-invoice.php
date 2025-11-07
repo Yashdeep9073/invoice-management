@@ -271,14 +271,14 @@ try {
     $pdf->SetXY(20, 60);
     $pdf->MultiCell(90, 8, $invoice['customer_name'] ?? 'N/A', 0, 'L');
 
-    $address = $invoice['customer_address'] ?? 'N/A';
+    $address = $invoice['ship_address'] ?? 'N/A';
     $pdf->SetFont('FuturaMdBT-Bold', '', 12);
     $width = $pdf->GetStringWidth($address) + 4; // Add padding
     $pdf->SetXY(20, 65);
     $pdf->MultiCell(max($width, 90), 8, $address, 0, 'L'); // Cap minimum at 90
 
-    $pdf->SetXY(20, 70);
-    $pdf->Cell(90, 10, 'Phone: ' . ($invoice['customer_phone'] ?? 'N/A'), 0, 0);
+    // $pdf->SetXY(20, 70);
+    // $pdf->Cell(90, 10, 'Phone: ' . ($invoice['customer_phone'] ?? 'N/A'), 0, 0);
 
 
     $pdf->SetXY(20, 75);

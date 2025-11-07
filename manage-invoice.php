@@ -1115,13 +1115,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                 </label>
                                             </td>
                                             <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
-                                            <td><?php echo $invoice['customer_name'] ?></td>
+                                            <td>
+
+                                                <div class="userimgname">
+                                                    <div>
+                                                        <a class="text-primary"
+                                                            href="<?php echo getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($invoice['customer_id']) ?>"><?php echo $invoice['customer_name'] ?></a>
+                                                    </div>
+                                                </div>
+                                            </td>
                                             <td><?php echo formatDateTime($invoice['created_at'], $localizationSettings); ?>
                                             </td>
                                             <td><?php echo formatDateTime($invoice['due_date'], $localizationSettings); ?>
                                             </td>
 
-                                            
+
                                             <td><?php
                                             $taxRateStr = $invoice['tax_rate'];
                                             $taxRate = intval(str_replace('%', '', $taxRateStr));

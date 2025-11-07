@@ -221,11 +221,16 @@ try {
                                                     <span class="checkmarks"></span>
                                                 </label>
                                             </td>
-                                             <td><?php echo formatDateTime($invoice['due_date'], $localizationSettings); ?>
+                                            <td><?php echo formatDateTime($invoice['due_date'], $localizationSettings); ?>
                                             </td>
                                             <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
                                             <td>
-                                                <?php echo $invoice['customer_name'] ?>
+                                                <div class="userimgname">
+                                                    <div>
+                                                        <a class="text-primary"
+                                                            href="<?php echo getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($invoice['customer_id']) ?>"><?php echo $invoice['customer_name'] ?></a>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td>
                                                 <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
