@@ -111,7 +111,10 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
         $invoiceNumber = htmlspecialchars($_POST['invoice_number'] ?? '', ENT_QUOTES, 'UTF-8');
         $paymentMethod = htmlspecialchars($_POST['payment_method'] ?? '', ENT_QUOTES, 'UTF-8');
-        $transactionId = htmlspecialchars($_POST['transaction_id'] ?? '', ENT_QUOTES, 'UTF-8');
+        $transactionId = !empty(trim($_POST['transaction_id'] ?? ''))
+            ? htmlspecialchars(trim($_POST['transaction_id']), ENT_QUOTES, 'UTF-8')
+            : null;
+
         $status = htmlspecialchars($_POST['status'] ?? '', ENT_QUOTES, 'UTF-8');
         $dueDate = htmlspecialchars($_POST['due_date'] ?? '', ENT_QUOTES, 'UTF-8');
         $fromDate = htmlspecialchars($_POST['from_date'] ?? '', ENT_QUOTES, 'UTF-8');
@@ -219,6 +222,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         exit;
     } catch (Exception $e) {
         $_SESSION['error'] = $e->getMessage();
+        // echo $e->getMessage();
+        // die();
     }
 }
 ?>

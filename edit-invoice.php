@@ -132,8 +132,10 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         $paymentMethod = filter_input(INPUT_POST, 'payment_method', FILTER_UNSAFE_RAW) ?? '';
         $paymentMethod = trim(htmlspecialchars($paymentMethod, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
 
-        $transactionId = filter_input(INPUT_POST, 'transaction_id', FILTER_UNSAFE_RAW) ?? '';
-        $transactionId = trim(htmlspecialchars($transactionId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        $transactionIdInput = filter_input(INPUT_POST, 'transaction_id', FILTER_UNSAFE_RAW) ?? '';
+        $transactionIdInput = trim(htmlspecialchars($transactionIdInput, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        $transactionId = $transactionIdInput !== '' ? $transactionIdInput : null;
+
 
         $status = filter_input(INPUT_POST, 'status', FILTER_UNSAFE_RAW) ?? '';
         $status = trim(htmlspecialchars($status, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
@@ -196,7 +198,10 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
         } else {
             $repeatCycle = null; // since column allows NULL
         }
-        $createBefore = htmlspecialchars($_POST["createBefore"], ENT_QUOTES, 'UTF-8');
+        
+        $createBefore = isset($_POST["createBefore"]) && $_POST["createBefore"] !== ''
+            ? htmlspecialchars($_POST["createBefore"], ENT_QUOTES, 'UTF-8')
+            : '';
 
 
 
@@ -209,12 +214,13 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
 
         // Validate required fields
         if (
-            empty($invoiceNumber) || empty($paymentMethod) || empty($transactionId) || empty($status) ||
+            empty($invoiceNumber) || empty($paymentMethod) || empty($status) ||
             empty($dueDate) || empty($customerId) || empty($amount) || empty($quantity) ||
             empty($totalAmount) || empty($serviceIds)
         ) {
             throw new Exception('All required fields must be filled, and at least one service must be selected.');
         }
+
 
         // Validate payment_method and status enums
         $validPaymentMethods = ['CREDIT_CARD', 'DEBIT_CARD', 'CASH', 'NET_BANKING', 'PAYPAL', 'OTHER'];
