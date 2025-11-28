@@ -29304,8 +29304,8 @@ table tbody td.action-table-data a .add-checkbox {
   margin-bottom: 15px;
 }
 .employee-grid-profile .profile-info .profile-pic {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   border-radius: 8px;
   margin-bottom: 15px;
   position: relative;
@@ -35111,4 +35111,32 @@ input[name="gstNumber"]:focus~.hint{
     visibility: visible;
   }
 
-  
+
+  /* css by Gracy 28-11-25 */
+  .customer-card{
+    border-collapse:collapse; 
+    font-size:14px;
+  }
+  .customer-card .customer-header{
+    padding:10px 0;
+    font-weight:bold;
+    color: #1b2950;
+    text-align: start;
+  }
+  .customer-card .customer-title{
+    font-size:18px; 
+    text-align: start; 
+     color: #1b2950; 
+     background: #f3f6f9; 
+     padding: 10px ;
+  }
+  .cutomer-card td{
+    padding: 10px 0;
+    text-align:start ;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+  }
+  .row-btm-border{
+    border-bottom: 1px solid #e5e0e0;
+  }

@@ -123,9 +123,21 @@ try {
     $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id;");
     $stmtFetchLocalizationSettings->execute();
     $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
+
+    // for card details
+    $customerId = intval(base64_decode($_GET['id']));
+
+
+    $stmt = $db->prepare("SELECT * FROM customer WHERE customer_id = ?");
+    $stmt->bind_param("s", $customerId);
+    $stmt->execute();
+    $customerInfo = $stmt->get_result()->fetch_array(MYSQLI_ASSOC);
+
 } catch (\Throwable $th) {
     //throw $th;
+    $_SESSION["error"] = $th->getMessage();
 }
+
 
 
 ob_end_clean();
@@ -277,6 +289,99 @@ ob_end_clean();
                                     data-feather="chevron-up" class="feather-chevron-up"></i></a>
                         </li>
                     </ul>
+                </div>
+
+                <div class="customer-info employee-grid-widget">
+                    <div class="container row">
+
+                        <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6">
+                            <div class="employee-grid-profile">
+                                <div class="profile-info">
+                                    <div class="profile-pic active-profile">
+                                        <img src="assets/img/users/user-02.jpg" alt="" />
+                                    </div>
+                                    <h5><?= !empty($customerInfo['customer_name']) ? $customerInfo['customer_name'] : '' ?></h5>
+                                   
+                                </div>
+                                <ul class="department">
+
+                                    <table class="w-100 customer-card">
+
+                                        <tr>
+                                            <td class="customer-header">
+                                                Email :</td>
+                                            <td><?= !empty($customerInfo['customer_email']) ? $customerInfo['customer_email'] : '' ?>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="customer-header">Phone :</td>
+                                            <td><?= !empty($customerInfo['customer_phone']) ? $customerInfo['customer_phone'] : '' ?>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="customer-header">GST No :</td>
+                                            <td><?= !empty($customerInfo['gst_number']) ? $customerInfo['gst_number'] : '' ?></td>
+                                        </tr>
+                                    </table>
+
+                                </ul>
+
+                            </div>
+                        </div>
+                        <div class="col-xxl-8 col-xl-8 col-lg-8 col-md-6">
+                            <div class="employee-grid-profile">
+                                <table width="100%" cellpadding="0" cellspacing="0" class="customer-card">
+                                    <tr class="row-btm-border">
+                                        <th class="customer-title" colspan="3">
+                                            Customer Information
+                                        </th>
+                                    </tr>
+                                    <tr class="row-btm-border">
+                                        <td class="customer-header">
+                                            Shipping Name :
+                                        </td>
+                                        <td>
+                                            <?= !empty($customerInfo['ship_name']) ? $customerInfo['ship_name'] : '' ?>
+                                        </td>
+                                    </tr>
+                                    <tr class="row-btm-border">
+                                        <td class="customer-header">
+                                            Shipping Phone :
+                                        </td>
+                                        <td><?= !empty($customerInfo['ship_phone']) ? $customerInfo['ship_phone'] : '' ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="customer-header">
+                                            Shipping Email :
+                                        </td>
+                                        <td>
+                                            <?= !empty($customerInfo['ship_email']) ? $customerInfo['ship_email'] : '' ?>
+                                        </td>
+
+
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="employee-grid-profile">
+                                <table width="100%" cellpadding="0" cellspacing="0" class="customer-card">
+                                    <tr class="row-btm-border">
+                                        <td class="customer-header">
+                                            Shipping Address :
+                                        </td>
+
+                                        <td> <?= !empty($customerInfo['ship_address']) ? $customerInfo['ship_address'] : '' ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="customer-header">
+                                            Customer Address :
+                                        </td>
+                                        <td> <?= !empty($customerInfo['customer_address']) ? $customerInfo['customer_address'] : '' ?> </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
                 <div class="table-tab">
                     <ul class="nav nav-pills" id="pills-tab" role="tablist">
