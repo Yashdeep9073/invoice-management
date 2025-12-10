@@ -47,7 +47,7 @@ try {
 
 if (isset($_POST['invoiceNumber']) && $_SERVER['REQUEST_METHOD'] == "POST") {
     // Get current timestamp in YYYYMMDDHHMMSS format
-    $timestamp = date('YmdHis'); // e.g., '20250725152030' for July 25, 2025, 15:20:30
+    $timestamp = date('Ymd'); // e.g., '20250725152030' for July 25, 2025, 15:20:30
 
     // Use a transaction to ensure atomicity
     try {

@@ -8,7 +8,6 @@ require "./database/config.php";
 require 'vendor/autoload.php';
 require_once __DIR__ . "/utility/numberToWords.php";
 
-
 use setasign\Fpdi\Fpdi;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -19,6 +18,7 @@ if (!isset($_GET['id'])) {
 }
 
 try {
+
     // Decode Invoice ID
     $invoiceId = intval(base64_decode($_GET['id']));
     if ($invoiceId <= 0)
@@ -271,16 +271,24 @@ try {
     $pdf->SetXY(20, 60);
     $pdf->MultiCell(90, 8, $invoice['customer_name'] ?? 'N/A', 0, 'L');
 
-    $address = $invoice['ship_address'] ?? 'N/A';
-    $pdf->SetFont('FuturaMdBT-Bold', '', 12);
-    $width = $pdf->GetStringWidth($address) + 4; // Add padding
-    $pdf->SetXY(20, 65);
-    $pdf->MultiCell(max($width, 90), 8, $address, 0, 'L'); // Cap minimum at 90
+    function cleanAddress($text)
+    {
+        $text = trim($text);
+        // 35 chars per line works nicely for 90mm width
+        return wordwrap($text, 35, "\n", true);
+    }
 
-    // $pdf->SetXY(20, 70);
+
+    $address = cleanAddress($invoice['ship_address'] ?? 'N/A');
+    $pdf->SetFont('FuturaMdBT-Bold', '', 10);
+    $pdf->SetXY(20, 65);
+    $pdf->MultiCell(120, 6, $address, 0, 'L');
+
+
+    $pdf->SetXY(20, 70);
     // $pdf->Cell(90, 10, 'Phone: ' . ($invoice['customer_phone'] ?? 'N/A'), 0, 0);
 
-
+    $pdf->SetFont('FuturaMdBT-Bold', '', 12);
     $pdf->SetXY(20, 75);
     $pdf->Cell(90, 10, 'GST: ' . ($invoice['gst_number'] ?? 'N/A'), 0, 0);
     $pdf->SetLineWidth(0.2); // Set line thickness
@@ -318,7 +326,7 @@ try {
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(20, 85);
-    $pdf->Cell(90, 10, 'Kind Attention!', 0, 0);
+    $pdf->Cell(90, 10, 'Kind attention!', 0, 0);
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('FuturaBT-Medium', '', 12);
     $pdf->SetXY(20, 90);
@@ -495,10 +503,10 @@ try {
 
 
     // Output final PDF
-   $pdf->Output(
-    'D',
-    ucfirst(str_replace(" ", "-", (string)$invoice['invoice_title'])) . "-" . $invoice['invoice_number'] . '.pdf'
-);
+    $pdf->Output(
+        'D',
+        ucfirst(str_replace(" ", "-", (string) $invoice['invoice_title'])) . "-" . $invoice['invoice_number'] . '.pdf'
+    );
 
 
 
