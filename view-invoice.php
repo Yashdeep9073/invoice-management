@@ -280,8 +280,8 @@ try {
 
     $address = cleanAddress($invoice['ship_address'] ?? 'N/A');
     $pdf->SetFont('FuturaMdBT-Bold', '', 10);
-    $pdf->SetXY(20, 65);
-    $pdf->MultiCell(120, 6, $address, 0, 'L'); 
+    $pdf->SetXY(20, 66);
+    $pdf->MultiCell(120, 5, $address, 0, 'L'); 
 
 
     $pdf->SetXY(20, 70);

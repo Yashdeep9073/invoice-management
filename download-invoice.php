@@ -270,25 +270,24 @@ try {
     $pdf->SetFont('FuturaMdBT-Bold', '', 12);
     $pdf->SetXY(20, 60);
     $pdf->MultiCell(90, 8, $invoice['customer_name'] ?? 'N/A', 0, 'L');
-
-    function cleanAddress($text)
-    {
-        $text = trim($text);
-        // 35 chars per line works nicely for 90mm width
-        return wordwrap($text, 35, "\n", true);
+    
+    function cleanAddress($text) {
+    $text = trim($text);
+    // 35 chars per line works nicely for 90mm width
+    return wordwrap($text, 35, "\n", true);
     }
 
 
     $address = cleanAddress($invoice['ship_address'] ?? 'N/A');
     $pdf->SetFont('FuturaMdBT-Bold', '', 10);
-    $pdf->SetXY(20, 65);
-    $pdf->MultiCell(120, 6, $address, 0, 'L');
+    $pdf->SetXY(20, 66);
+    $pdf->MultiCell(120, 5, $address, 0, 'L'); 
 
 
     $pdf->SetXY(20, 70);
     // $pdf->Cell(90, 10, 'Phone: ' . ($invoice['customer_phone'] ?? 'N/A'), 0, 0);
 
-    $pdf->SetFont('FuturaMdBT-Bold', '', 12);
+   $pdf->SetFont('FuturaMdBT-Bold', '', 12);
     $pdf->SetXY(20, 75);
     $pdf->Cell(90, 10, 'GST: ' . ($invoice['gst_number'] ?? 'N/A'), 0, 0);
     $pdf->SetLineWidth(0.2); // Set line thickness
@@ -500,7 +499,6 @@ try {
     // $pdf->SetFont('Helvetica', 'B', 12); // Bold font for value
     // $pdf->SetTextColor(0, 101, 156); // Blue for value
     // $pdf->Write(5, $invoice['due_date'] . "\n");
-
 
     // Output final PDF
     $pdf->Output(
