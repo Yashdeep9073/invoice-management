@@ -1616,9 +1616,7 @@ ob_end_flush();
                 // }
 
                 // GST validation (only if provided)
-                if (gstNumber.length > 0
-                    //&& !gstRegex.test(gstNumber)
-                ) {
+                if (gstNumber.length > 0 && !gstRegex.test(gstNumber)) {
                     notyf.error("Please enter a valid GST number");
                     return;
                 }
