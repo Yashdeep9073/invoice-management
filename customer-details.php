@@ -222,14 +222,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editCustomerId'])) {
     try {
 
-
-
         $editCustomerId = filter_input(INPUT_POST, 'editCustomerId', FILTER_SANITIZE_NUMBER_INT);
 
         // Initialize arrays for query fields and values
         $fields = [];
         $values = [];
         $types = '';
+
+
 
         // Check each field and add to update if not empty
         $editCustomerName = filter_input(INPUT_POST, 'editCustomerName', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -316,6 +316,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editCustomerId'])) {
             $values[] = $editGstNumber;
             $types .= 's';
         }
+
+
+        function hasMoreThanWords(string $text, int $maxWords): bool
+        {
+            $words = preg_split('/\s+/', trim($text));
+            return count($words) > $maxWords;
+        }
+
+        if (hasMoreThanWords($editCustomerAddress, 20)) {
+            $_SESSION['error'] = 'Address cannot exceed 20 words.';
+            header("Location: customer-details");
+            exit();
+        }
+
+        if (hasMoreThanWords($editShippingAddress, 20)) {
+            $_SESSION['error'] = 'Address cannot exceed 20 words.';
+            header("Location: customer-details");
+            exit();
+        }
+
 
         // Add customer_id to the values and types
         $values[] = $editCustomerId;
@@ -986,7 +1006,7 @@ ob_end_flush();
                             </button>
                         </div>
                         <div class="modal-body custom-modal-body">
-                            <form action="" method="post">
+                            <form action="" method="post" class="edit-customer">
                                 <input type="hidden" name="editCustomerId" id="editCustomerId">
                                 <div class="row">
 
@@ -1536,6 +1556,11 @@ ob_end_flush();
                 const addressRegex = /^[a-zA-Z0-9\s,.\-#\/()':]{5,200}$/;
                 const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
+                function hasMoreThanWords(text, maxWords) {
+                    return text.trim().split(/\s+/).length > maxWords;
+                }
+
+
                 // Required fields check
                 if (!customerName || !customerPhone || !customerEmail || !customerState || !customerCity || !customerAddress) {
                     notyf.error("All fields are required. Please fill out the form completely.");
@@ -1560,6 +1585,18 @@ ob_end_flush();
                     return;
                 }
 
+                // 20-word limit validation
+                if (customerAddress && hasMoreThanWords(customerAddress, 20)) {
+                    notyf.error("Customer address cannot exceed 20 words.");
+                    return;
+                }
+
+                if (shippingAddress && hasMoreThanWords(shippingAddress, 20)) {
+                    notyf.error("Shipping address cannot exceed 20 words.");
+                    return;
+                }
+
+
                 // // Shipping validations
                 // if (!nameRegex.test(shippingName)) {
                 //     notyf.error("Please enter a valid shipping name (letters only, 2–50 characters)");
@@ -1579,7 +1616,9 @@ ob_end_flush();
                 // }
 
                 // GST validation (only if provided)
-                if (gstNumber.length > 0 && !gstRegex.test(gstNumber)) {
+                if (gstNumber.length > 0
+                    //&& !gstRegex.test(gstNumber)
+                ) {
                     notyf.error("Please enter a valid GST number");
                     return;
                 }
@@ -1622,10 +1661,9 @@ ob_end_flush();
                     }
                 });
 
+            });
 
 
-
-            })
 
         })
     </script>

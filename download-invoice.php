@@ -240,14 +240,14 @@ try {
     // Invoice Info (top-right, adjust based on template)
     $pdf->SetFont('FuturaBT-Medium', '', 12); // Set font to normal Times
     $pdf->SetTextColor(0, 0, 0); // Set text color to black
-    $pdf->SetXY(20, 45);
+    $pdf->SetXY(20, 40);
     $pdf->Cell(22, 10, 'Invoice No: ', 0, 0); // Render "Invoice No:" in black, normal font
     $pdf->SetFont('FuturaBT-Medium', '', 12); // Set font to bold
     $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
     $pdf->Cell(0, 10, $invoice['invoice_number'], 0, 0); // Render invoice number in bold blue
     $pdf->SetTextColor(0, 0, 0); // Reset text color to black
     $pdf->SetFont('FuturaBT-Medium', '', 12); // Reset font to normal
-    $pdf->SetXY(150, 45);
+    $pdf->SetXY(140, 40);
     $labelWidth = $pdf->GetStringWidth('Date: ') + 1; // Calculate width of "Date:" with small padding
     $pdf->Cell($labelWidth, 10, 'Date: ', 0, 0); // Render "Date:" in black, normal font with exact width
     $pdf->SetFont('FuturaBT-Medium', '', 12); // Set font to bold
@@ -258,49 +258,63 @@ try {
 
     // Add a horizontal line below the invoice info
     $pdf->SetLineWidth(0.2); // Set line thickness
-    $pdf->Line(20, 55, 190, 55); // Draw a horizontal line from (20, 50) to (190, 50)
+    $pdf->Line(20, 50, 190, 50); // Draw a horizontal line from (20, 50) to (190, 50)
 
     // Bill To and Ship To (side by side, below header)
     $pdf->SetFont('FuturaBT-Medium', '', 12);
-    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
-    $pdf->SetXY(20, 55);
+    $pdf->SetXY(20, 50);
     $pdf->Cell(90, 10, 'Bill To:', 0, 0);
     $pdf->SetTextColor(0, 0, 0); // Reset text color to black
 
     $pdf->SetFont('FuturaMdBT-Bold', '', 12);
-    $pdf->SetXY(20, 60);
+    $pdf->SetXY(20, 55);
     $pdf->MultiCell(90, 8, $invoice['customer_name'] ?? 'N/A', 0, 'L');
-    
-    function cleanAddress($text) {
-    $text = trim($text);
-    // 35 chars per line works nicely for 90mm width
-    return wordwrap($text, 35, "\n", true);
+
+    function cleanAddress($text)
+    {
+        $text = trim($text);
+        // 35 chars per line works nicely for 90mm width
+        return wordwrap($text, 35, "\n", true);
     }
 
 
+    $address = cleanAddress($invoice['customer_address'] ?? 'N/A');
+    $pdf->SetFont('FuturaMdBT-Bold', '', 10);
+    $pdf->SetXY(20, 60);
+    $pdf->MultiCell(120, 5, $address, 0, 'L');
+
+
+    // Bill To and Ship To (side by side, below header)
+    $pdf->SetFont('FuturaBT-Medium', '', 12);
+    $pdf->SetXY(140, 55);
+    $pdf->Cell(90, 10, 'Ship To:', 0, 0);
+    $pdf->SetTextColor(0, 0, 0); // Reset text color to black
+
+
+    $pdf->SetFont('FuturaMdBT-Bold', '', 12);
+    $pdf->SetXY(140, 61);
+    $pdf->MultiCell(90, 8, $invoice['ship_name'] ?? 'N/A', 0, 'L');
     $address = cleanAddress($invoice['ship_address'] ?? 'N/A');
     $pdf->SetFont('FuturaMdBT-Bold', '', 10);
-    $pdf->SetXY(20, 66);
-    $pdf->MultiCell(120, 5, $address, 0, 'L'); 
+    $pdf->SetXY(140, 66);
+    $pdf->MultiCell(120, 5, $address, 0, 'L');
 
 
-    $pdf->SetXY(20, 70);
-    // $pdf->Cell(90, 10, 'Phone: ' . ($invoice['customer_phone'] ?? 'N/A'), 0, 0);
-
-   $pdf->SetFont('FuturaMdBT-Bold', '', 12);
-    $pdf->SetXY(20, 75);
+    $pdf->SetFont('FuturaMdBT-Bold', '', 10);
+    $pdf->SetXY(20, 72);
     $pdf->Cell(90, 10, 'GST: ' . ($invoice['gst_number'] ?? 'N/A'), 0, 0);
     $pdf->SetLineWidth(0.2); // Set line thickness
     $pdf->Line(20, 85, 190, 85); // Draw a horizontal line from (20, 50) to (190, 50)
+
 
     if ($invoiceSettings['is_show_hsn'] === 1) {
         // Bill To and Ship To (side by side, below header)
         $pdf->SetFont('FuturaBT-Medium', '', 12);
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
-        $pdf->SetXY(150, 55);
+        $pdf->SetXY(140, 50);
         $pdf->Cell(90, 10, 'HSN Code:', 0, 0);
         $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
-        $pdf->SetXY(172, 55);
+        $pdf->SetXY(162, 50);
         $pdf->SetFont('FuturaBT-Medium', '', 12);
         $pdf->Cell(90, 10, $hsnCode, 0, 0);
         $pdf->SetTextColor(0, 0, 0); // Reset text color to black
