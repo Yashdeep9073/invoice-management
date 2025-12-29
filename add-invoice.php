@@ -761,19 +761,24 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                     const amount = parseFloat($('#invoiceAmount').val()) || 0;
                     const quantity = parseInt($('#quantity').val()) || 1;
                     const taxRate = parseFloat($('#tax option:selected').attr('data-value')) / 100 || 0;
-                    const discount = parseFloat($('#discount').val()) / 100 || 0;
+                    const discountRate = parseFloat($('#discount').val()) / 100 || 0;
 
-                    // Calculate subtotal (amount × quantity)
+                    // 1. Subtotal
                     const subtotal = amount * quantity;
-                    // Apply tax (subtotal × tax%)
-                    const taxAmount = subtotal * taxRate;
-                    // Apply discount (subtotal × discount%)
-                    const discountAmount = subtotal * discount;
-                    // Final total (subtotal + tax - discount)
-                    const total = subtotal + taxAmount - discountAmount;
 
-                    return total.toFixed(2); // Return with 2 decimal places
+                    // 2. Discount on subtotal only
+                    const discountAmount = subtotal * discountRate;
+                    const discountedSubtotal = subtotal - discountAmount;
+
+                    // 3. Tax on discounted amount
+                    const taxAmount = discountedSubtotal * taxRate;
+
+                    // 4. Final total
+                    const total = discountedSubtotal + taxAmount;
+
+                    return total.toFixed(2);
                 }
+
 
                 // Update total amount
                 $('#total_amount').val(calculateTotal());
@@ -785,19 +790,24 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                     const amount = parseFloat($('#invoiceAmount').val()) || 0;
                     const quantity = parseInt($('#quantity').val()) || 1;
                     const taxRate = parseFloat($('#tax option:selected').attr('data-value')) / 100 || 0;
-                    const discount = parseFloat($('#discount').val()) / 100 || 0;
+                    const discountRate = parseFloat($('#discount').val()) / 100 || 0;
 
-                    // Calculate subtotal (amount × quantity)
+                    // 1. Subtotal
                     const subtotal = amount * quantity;
-                    // Apply tax (subtotal × tax%)
-                    const taxAmount = subtotal * taxRate;
-                    // Apply discount (subtotal × discount%)
-                    const discountAmount = subtotal * discount;
-                    // Final total (subtotal + tax - discount)
-                    const total = subtotal + taxAmount - discountAmount;
 
-                    return total.toFixed(2); // Return with 2 decimal places
+                    // 2. Discount on subtotal only
+                    const discountAmount = subtotal * discountRate;
+                    const discountedSubtotal = subtotal - discountAmount;
+
+                    // 3. Tax on discounted amount
+                    const taxAmount = discountedSubtotal * taxRate;
+
+                    // 4. Final total
+                    const total = discountedSubtotal + taxAmount;
+
+                    return total.toFixed(2);
                 }
+
 
                 // Update total amount
                 $('#total_amount').val(calculateTotal());
@@ -810,19 +820,24 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                     const amount = parseFloat($('#invoiceAmount').val()) || 0;
                     const quantity = parseInt($('#quantity').val()) || 1;
                     const taxRate = parseFloat($('#tax option:selected').attr('data-value')) / 100 || 0;
-                    const discount = parseFloat($('#discount').val()) / 100 || 0;
+                    const discountRate = parseFloat($('#discount').val()) / 100 || 0;
 
-                    // Calculate subtotal (amount × quantity)
+                    // 1. Subtotal
                     const subtotal = amount * quantity;
-                    // Apply tax (subtotal × tax%)
-                    const taxAmount = subtotal * taxRate;
-                    // Apply discount (subtotal × discount%)
-                    const discountAmount = subtotal * discount;
-                    // Final total (subtotal + tax - discount)
-                    const total = subtotal + taxAmount - discountAmount;
 
-                    return total.toFixed(2); // Return with 2 decimal places
+                    // 2. Discount on subtotal only
+                    const discountAmount = subtotal * discountRate;
+                    const discountedSubtotal = subtotal - discountAmount;
+
+                    // 3. Tax on discounted amount
+                    const taxAmount = discountedSubtotal * taxRate;
+
+                    // 4. Final total
+                    const total = discountedSubtotal + taxAmount;
+
+                    return total.toFixed(2);
                 }
+
 
                 // Update total amount
                 $('#total_amount').val(calculateTotal());
@@ -835,19 +850,24 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                     const amount = parseFloat($('#invoiceAmount').val()) || 0;
                     const quantity = parseInt($('#quantity').val()) || 1;
                     const taxRate = parseFloat($('#tax option:selected').attr('data-value')) / 100 || 0;
-                    const discount = parseFloat($('#discount').val()) / 100 || 0;
+                    const discountRate = parseFloat($('#discount').val()) / 100 || 0;
 
-                    // Calculate subtotal (amount × quantity)
+                    // 1. Subtotal
                     const subtotal = amount * quantity;
-                    // Apply tax (subtotal × tax%)
-                    const taxAmount = subtotal * taxRate;
-                    // Apply discount (subtotal × discount%)
-                    const discountAmount = subtotal * discount;
-                    // Final total (subtotal + tax - discount)
-                    const total = subtotal + taxAmount - discountAmount;
 
-                    return total.toFixed(2); // Return with 2 decimal places
+                    // 2. Discount on subtotal only
+                    const discountAmount = subtotal * discountRate;
+                    const discountedSubtotal = subtotal - discountAmount;
+
+                    // 3. Tax on discounted amount
+                    const taxAmount = discountedSubtotal * taxRate;
+
+                    // 4. Final total
+                    const total = discountedSubtotal + taxAmount;
+
+                    return total.toFixed(2);
                 }
+
 
                 // Update total amount
                 $('#total_amount').val(calculateTotal());

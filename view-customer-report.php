@@ -300,8 +300,9 @@ ob_end_clean();
                                     <div class="profile-pic active-profile">
                                         <img src="assets/img/users/user-02.jpg" alt="" />
                                     </div>
-                                    <h5><?= !empty($customerInfo['customer_name']) ? $customerInfo['customer_name'] : '' ?></h5>
-                                   
+                                    <h5><?= !empty($customerInfo['customer_name']) ? $customerInfo['customer_name'] : '' ?>
+                                    </h5>
+
                                 </div>
                                 <ul class="department">
 
@@ -320,7 +321,8 @@ ob_end_clean();
                                         </tr>
                                         <tr>
                                             <td class="customer-header">GST No :</td>
-                                            <td><?= !empty($customerInfo['gst_number']) ? $customerInfo['gst_number'] : '' ?></td>
+                                            <td><?= !empty($customerInfo['gst_number']) ? $customerInfo['gst_number'] : '' ?>
+                                            </td>
                                         </tr>
                                     </table>
 
@@ -348,7 +350,8 @@ ob_end_clean();
                                         <td class="customer-header">
                                             Shipping Phone :
                                         </td>
-                                        <td><?= !empty($customerInfo['ship_phone']) ? $customerInfo['ship_phone'] : '' ?></td>
+                                        <td><?= !empty($customerInfo['ship_phone']) ? $customerInfo['ship_phone'] : '' ?>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td class="customer-header">
@@ -369,13 +372,15 @@ ob_end_clean();
                                             Shipping Address :
                                         </td>
 
-                                        <td> <?= !empty($customerInfo['ship_address']) ? $customerInfo['ship_address'] : '' ?></td>
+                                        <td> <?= !empty($customerInfo['ship_address']) ? $customerInfo['ship_address'] : '' ?>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td class="customer-header">
                                             Customer Address :
                                         </td>
-                                        <td> <?= !empty($customerInfo['customer_address']) ? $customerInfo['customer_address'] : '' ?> </td>
+                                        <td> <?= !empty($customerInfo['customer_address']) ? $customerInfo['customer_address'] : '' ?>
+                                        </td>
                                     </tr>
                                 </table>
                             </div>
@@ -451,8 +456,13 @@ ob_end_clean();
                                             <tbody>
                                                 <?php
                                                 $totalAmountSum = 0; // Initialize total
+                                                $pendingAmountSum = 0; // Initialize total
                                                 foreach ($allInvoices->fetch_all(MYSQLI_ASSOC) as $allInvoice) {
                                                     $totalAmountSum += $allInvoice['total_amount']; // Add to total
+                                                
+                                                    if ($allInvoice['paymentStatus'] == 'PENDING') {
+                                                        $pendingAmountSum += $allInvoice['total_amount'];
+                                                    }
                                                     ?>
                                                     <tr>
                                                         <td>
@@ -496,9 +506,12 @@ ob_end_clean();
                                             </tbody>
                                             <tfoot>
                                                 <tr>
-                                                    <td colspan="7"></td>
-                                                    <td><strong><span class="text-danger">Total:
+                                                    <td colspan="6"></td>
+                                                    <td><strong><span class="text-success">Total:
                                                                 <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalAmountSum, 2); ?></span></strong>
+                                                    </td>
+                                                    <td><strong><span class="text-danger">Pending:
+                                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($pendingAmountSum, 2); ?></span></strong>
                                                     </td>
                                                     <td colspan="1"></td>
                                                 </tr>
