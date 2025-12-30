@@ -298,7 +298,7 @@ ob_end_clean();
                             <div class="employee-grid-profile">
                                 <div class="profile-info">
                                     <div class="profile-pic active-profile">
-                                        <img src="assets/img/users/user-02.jpg" alt="" />
+                                        <img src="<?= !empty($customerInfo['image']) ? $customerInfo['image'] : 'assets/img/users/user-02.jpg' ?>" alt="" />
                                     </div>
                                     <h5><?= !empty($customerInfo['customer_name']) ? $customerInfo['customer_name'] : '' ?>
                                     </h5>

@@ -2,6 +2,7 @@
 ob_start();
 session_start();
 require './utility/env.php';
+require './utility/fileUploader.php';
 if (!isset($_SESSION["admin_id"])) {
     header("Location: " . getenv("BASE_URL"));
     exit();
@@ -12,7 +13,7 @@ require 'vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
 // error_reporting(E_ALL);
 // ini_set('display_errors', '1');
-
+$uploadDir = "public/upload/customer/image/";
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
 
@@ -163,6 +164,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
             exit();
         }
 
+        $result = uploadMedia($_FILES['image'], $uploadDir, [
+            // Images
+            'jpg',
+            'jpeg',
+            'png',
+            'gif',
+            'webp',
+            'bmp',
+            'svg',
+            'tiff',
+            'ico',
+        ], 2 * 1024 * 1024);
+
+
+        if (isset($result['error'])) {
+            echo json_encode([
+                "status" => 400,
+                "error" => $result['error'] ?? "Error while uploading Image",
+            ]);
+            exit();
+        }
+        $image = isset($result['filename']) ? $result['filename'] : "";
 
         $stmtInsert = $db->prepare('INSERT INTO customer 
         (
@@ -176,11 +199,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
         ship_address,
         customer_state,
         customer_city,
-        gst_number
+        gst_number,
+        image
         ) 
-        VALUES(?,?,?,?,?,?,?,?,?,?,?)');
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?)');
         $stmtInsert->bind_param(
-            'sssssssssis',
+            'sssssssssiss',
             $customerName,
             $customerPhone,
             $customerEmail,
@@ -191,7 +215,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
             $shippingAddress,
             $customerState,
             $customerCity,
-            $gstNumber
+            $gstNumber,
+            $image
         );
         if ($stmtInsert->execute()) {
             echo json_encode([
@@ -318,6 +343,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editCustomerId'])) {
         }
 
 
+        if (isset($_FILES['editImage']) && $_FILES['editImage']['error'] !== UPLOAD_ERR_NO_FILE) {
+
+            $result = uploadMedia($_FILES['editImage'], $uploadDir, [
+                'jpg',
+                'jpeg',
+                'png',
+                'gif',
+                'webp',
+                'bmp',
+                'svg',
+                'tiff',
+                'ico'
+            ], 2 * 1024 * 1024);
+
+            if (isset($result[0]['error'])) {
+                echo json_encode([
+                    "status" => 400,
+                    "error" => $result[0]['error']
+                ]);
+                exit();
+            }
+
+            $image = isset($result['filename']) ? $result['filename'] : "";
+
+
+            $fields[] = 'image = ?';
+            $values[] = $image;
+            $types .= 's';
+        }
+
+
+
         function hasMoreThanWords(string $text, int $maxWords): bool
         {
             $words = preg_split('/\s+/', trim($text));
@@ -325,15 +382,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editCustomerId'])) {
         }
 
         if (hasMoreThanWords($editCustomerAddress, 20)) {
-            $_SESSION['error'] = 'Address cannot exceed 20 words.';
-            header("Location: customer-details");
-            exit();
+            echo json_encode([
+                "status" => 400,
+                "error" => "Address cannot exceed 20 words "
+            ]);
+            exit;
         }
 
         if (hasMoreThanWords($editShippingAddress, 20)) {
-            $_SESSION['error'] = 'Address cannot exceed 20 words.';
-            header("Location: customer-details");
-            exit();
+            echo json_encode([
+                "status" => 400,
+                "error" => "Address cannot exceed 20 words "
+            ]);
+            exit;
         }
 
 
@@ -355,23 +416,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editCustomerId'])) {
             $stmtUpdate->bind_param($types, ...$values);
 
             if ($stmtUpdate->execute()) {
-                $_SESSION['success'] = 'Customer Updated Successfully';
-                header("Location: customer-details");
-                exit();
+                echo json_encode([
+                    "status" => 200,
+                    "error" => "Customer Updated Successfully "
+                ]);
+                exit;
+
             } else {
-                $_SESSION['error'] = 'Error while updating customer';
-                header("Location: customer-details");
-                exit();
+                echo json_encode([
+                    "status" => 400,
+                    "error" => "Error while updating customer "
+                ]);
+                exit;
             }
         } else {
-            $_SESSION['error'] = 'No fields to update';
-            header("Location: customer-details");
-            exit();
+            echo json_encode([
+                "status" => 400,
+                "error" => "No fields to update "
+            ]);
+            exit;
+
         }
     } catch (Exception $e) {
-        $_SESSION['error'] = 'Exception: ' . $e->getMessage();
-        header("Location: customer-details");
-        exit();
+        echo json_encode([
+            "status" => 500,
+            "error" => 'Exception: ' . $e->getMessage()
+        ]);
+        exit;
     }
 }
 
@@ -788,11 +859,13 @@ ob_end_flush();
                                                 </label>
                                             </td>
                                             <td>
-                                                <div class="userimgname">
-                                                    <div>
-                                                        <a
-                                                            href="javascript:void(0);"><?php echo $customer['customer_name'] ?></a>
-                                                    </div>
+                                                <div class="userimgname cust-imgname">
+                                                    <a href="javascript:void(0);" class="product-img">
+                                                        <img src="<?php echo $customer['image'] ?? "assets/img/users/user-23.jpg" ?>"
+                                                            alt="product">
+                                                    </a>
+                                                    <a
+                                                        href="javascript:void(0);"><?php echo $customer['customer_name'] ?></a>
                                                 </div>
                                             </td>
                                             <td><?php echo $customer['customer_phone'] ?></td>
@@ -881,8 +954,15 @@ ob_end_flush();
                             </button>
                         </div>
                         <div class="modal-body custom-modal-body">
-                            <form class="customer-create">
+                            <form class="customer-create" enctype="multipart/form-data">
                                 <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="input-blocks">
+                                            <label>Image <span> *</span></label>
+                                            <input type="file" accept=".png,.jpeg,.jpg,.webp,.svg" class="form-control"
+                                                name="image">
+                                        </div>
+                                    </div>
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
                                             <label>Customer Name <span> *</span></label>
@@ -1006,9 +1086,17 @@ ob_end_flush();
                             </button>
                         </div>
                         <div class="modal-body custom-modal-body">
-                            <form action="" method="post" class="edit-customer">
+                            <form action="" method="post" class="edit-customer" enctype="multipart/form-data">
                                 <input type="hidden" name="editCustomerId" id="editCustomerId">
                                 <div class="row">
+
+                                    <div class="col-lg-6">
+                                        <div class="input-blocks">
+                                            <label>Image <span> *</span></label>
+                                            <input type="file" accept=".png,.jpeg,.jpg,.webp,.svg" class="form-control"
+                                                name="editImage">
+                                        </div>
+                                    </div>
 
                                     <div class="col-lg-6">
                                         <div class="input-blocks">
@@ -1548,6 +1636,9 @@ ob_end_flush();
                 let shippingEmail = $('input[name="shippingEmail"]').val().trim();
                 let shippingAddress = $('input[name="shippingAddress"]').val().trim();
                 let gstNumber = $('input[name="gstNumber"]').val().trim();
+                let imageInput = $('input[name="image"]')[0];
+                let imageFile = imageInput.files[0];
+
 
                 // Regex patterns
                 const nameRegex = /^[a-zA-Z\s]{2,50}$/;
@@ -1621,26 +1712,43 @@ ob_end_flush();
                     return;
                 }
 
-                let formData = {
-                    customerName: customerName,
-                    customerPhone: customerPhone,
-                    customerEmail: customerEmail,
-                    customerAddress: customerAddress,
-                    shippingName: shippingName,
-                    shippingPhone: shippingPhone,
-                    shippingEmail: shippingEmail,
-                    shippingAddress: shippingAddress,
-                    customerState: customerState,
-                    customerCity: customerCity,
-                    gstNumber: gstNumber,
-                };
+                if (!imageFile) {
+                    notyf.error("Please select an image.");
+                    return;
+                }
+
+                let formDataObject = new FormData();
+
+                formDataObject.append('customerName', customerName);
+                formDataObject.append('customerPhone', customerPhone);
+                formDataObject.append('customerEmail', customerEmail);
+                formDataObject.append('customerAddress', customerAddress);
+                formDataObject.append('shippingName', shippingName);
+                formDataObject.append('shippingPhone', shippingPhone);
+                formDataObject.append('shippingEmail', shippingEmail);
+                formDataObject.append('shippingAddress', shippingAddress);
+                formDataObject.append('customerState', customerState);
+                formDataObject.append('customerCity', customerCity);
+                formDataObject.append('gstNumber', gstNumber);
+                formDataObject.append('image', imageFile);
+
+
+
+                // Optional: Log the FormData contents (for debugging)
+                // for (let [key, value] of formDataObject.entries()) {
+                //     console.log(key, value);
+                // };
+                // return;
+
 
 
                 await $.ajax({
                     url: window.location.href,
                     type: 'POST',
-                    data: formData,
+                    data: formDataObject,
                     dataType: 'json',
+                    processData: false,
+                    contentType: false,
                     success: function (response) {
                         if (response.status == 201) {
                             // Success - reset form
@@ -1661,6 +1769,121 @@ ob_end_flush();
 
             });
 
+
+            $(document).on("submit", ".edit-customer", async function (e) {
+                e.preventDefault();
+
+                const editCustomerId = $('#editCustomerId').val();
+
+                const customerName = $('input[name="editCustomerName"]').val().trim();
+                const customerPhone = $('input[name="editCustomerPhone"]').val().trim();
+                const customerEmail = $('input[name="editCustomerEmail"]').val().trim();
+                const customerState = $('select[name="editCustomerState"]').val();
+                const customerCity = $('select[name="editCustomerCity"]').val();
+                const customerAddress = $('input[name="editCustomerAddress"]').val().trim();
+
+                const shippingName = $('input[name="editShippingName"]').val().trim();
+                const shippingPhone = $('input[name="editShippingPhone"]').val().trim();
+                const shippingEmail = $('input[name="editShippingEmail"]').val().trim();
+                const shippingAddress = $('input[name="editShippingAddress"]').val().trim();
+
+                const status = $('select[name="editCustomerStatus"]').val();
+                const gstNumber = $('input[name="editGstNumber"]').val().trim();
+
+                const imageInput = $('input[name="editImage"]')[0];
+                const imageFile = imageInput.files[0] || null;
+
+                // Regex
+                const nameRegex = /^[a-zA-Z\s]{2,50}$/;
+                const mobileRegex = /^[0-9]{10}$/;
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+                if (!editCustomerId) {
+                    notyf.error("Invalid customer ID.");
+                    return;
+                }
+
+                if (customerName && !nameRegex.test(customerName)) {
+                    notyf.error("Invalid customer name.");
+                    return;
+                }
+
+                if (customerPhone && !mobileRegex.test(customerPhone)) {
+                    notyf.error("Invalid phone number.");
+                    return;
+                }
+
+                if (customerEmail && !emailRegex.test(customerEmail)) {
+                    notyf.error("Invalid email address.");
+                    return;
+                }
+
+                if (gstNumber && !gstRegex.test(gstNumber)) {
+                    notyf.error("Invalid GST number.");
+                    return;
+                }
+
+                // Image validation (ONLY if selected)
+                if (imageFile) {
+                    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml'];
+
+                    if (!allowedTypes.includes(imageFile.type)) {
+                        notyf.error("Invalid image format.");
+                        return;
+                    }
+
+                    if (imageFile.size > 2 * 1024 * 1024) {
+                        notyf.error("Image must be under 2MB.");
+                        return;
+                    }
+                }
+
+                const formData = new FormData();
+
+                formData.append('editCustomerId', editCustomerId);
+                formData.append('editCustomerName', customerName);
+                formData.append('editCustomerPhone', customerPhone);
+                formData.append('editCustomerEmail', customerEmail);
+                formData.append('editCustomerState', customerState);
+                formData.append('editCustomerCity', customerCity);
+                formData.append('editCustomerAddress', customerAddress);
+
+                formData.append('editShippingName', shippingName);
+                formData.append('editShippingPhone', shippingPhone);
+                formData.append('editShippingEmail', shippingEmail);
+                formData.append('editShippingAddress', shippingAddress);
+
+                formData.append('editCustomerStatus', status);
+                formData.append('editGstNumber', gstNumber);
+
+                // Append image only if selected
+                if (imageFile) {
+                    formData.append('editImage', imageFile);
+                }
+
+                await $.ajax({
+                    url: window.location.href,
+                    type: "POST",
+                    data: formData,
+                    dataType: "json",
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        if (response.status === 200) {
+                            notyf.success("Customer updated successfully");
+                            $('#editCustomerModal').modal('hide');
+                            window.location.reload();
+                        } else {
+                            notyf.error(response.error || "Update failed");
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error(xhr.responseText);
+                        notyf.error("Server error. Please try again.");
+                    }
+                });
+            });
 
 
         })
