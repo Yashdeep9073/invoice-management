@@ -298,7 +298,8 @@ ob_end_clean();
                             <div class="employee-grid-profile">
                                 <div class="profile-info">
                                     <div class="profile-pic active-profile">
-                                        <img src="<?= !empty($customerInfo['image']) ? $customerInfo['image'] : 'assets/img/users/user-02.jpg' ?>" alt="" />
+                                        <img src="<?= !empty($customerInfo['image']) ? $customerInfo['image'] : 'assets/img/users/user-02.jpg' ?>"
+                                            alt="" />
                                     </div>
                                     <h5><?= !empty($customerInfo['customer_name']) ? $customerInfo['customer_name'] : '' ?>
                                     </h5>
@@ -451,6 +452,7 @@ ob_end_clean();
                                                     <th>Tax</th>
                                                     <th>Total Amount</th>
                                                     <th>Status</th>
+                                                    <th class="no-sort text-center">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -500,6 +502,25 @@ ob_end_clean();
                                                             <?php } elseif ($allInvoice['paymentStatus'] == 'REFUNDED') { ?>
                                                                 <span class="badge badge-lg bg-primary">Refunded</span>
                                                             <?php } ?>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <a class="action-set" href="javascript:void(0);"
+                                                                data-bs-toggle="dropdown" aria-expanded="true">
+                                                                <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+                                                            </a>
+                                                            <ul class="dropdown-menu">
+                                                               
+                                                                <?php if ($isAdmin || hasPermission('Ledger', $privileges, $roleData['0']['role_name'])): ?>
+
+                                                                    <li>
+                                                                        <a target="_blank"
+                                                                            href="<?php echo getenv("BASE_URL") . "ledger-transaction?id=" . base64_encode($allInvoice['invoice_id']) . "&uid=" . base64_encode($allInvoice['customer_id']); ?>"
+                                                                            class="dropdown-item mb-0"><i
+                                                                                data-feather="clipboard"
+                                                                                class="info-img"></i>Ledger</a>
+                                                                    </li>
+                                                                <?php endif; ?>
+                                                            </ul>
                                                         </td>
                                                     </tr>
                                                 <?php } ?>

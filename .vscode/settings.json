@@ -3,5 +3,8 @@
     "cSpell.words": [
         "authencaitatie",
         "inoicvestatus"
-    ]
+    ],
+    "cSpell.enabledFileTypes": {
+        "php": true
+    }
 }

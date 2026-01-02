@@ -1049,7 +1049,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                 <?php } ?>
                                             </select>
                                         </div>
-                                    </div>
+                                    </div>{hasPermission("LEADS") || isAdmin()hasPermission("
 
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
@@ -1230,6 +1230,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                                 data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
                                                                 class="dropdown-item sendInvoice mb-0"><i data-feather="send"
                                                                     class="info-img"></i>Send Invoice </a>
+                                                        </li>
+                                                    <?php endif; ?>
+                                                    <?php if ($isAdmin || hasPermission('Ledger', $privileges, $roleData['0']['role_name'])): ?>
+
+                                                        <li>
+                                                            <a target="_blank"
+                                                                href="<?php echo getenv("BASE_URL") . "ledger-transaction?id=" . base64_encode($invoice['invoice_id']) . "&uid=" . base64_encode($invoice['customer_id']);  ?>"
+                                                                class="dropdown-item mb-0"><i data-feather="clipboard"
+                                                                    class="info-img"></i>Ledger</a>
                                                         </li>
                                                     <?php endif; ?>
                                                 </ul>

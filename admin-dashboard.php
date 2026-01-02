@@ -98,7 +98,7 @@ try {
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();
     // header("Location: admin-dashboard.php");
-      header("Location: " . getenv("BASE_URL")."dashboard");
+    header("Location: " . getenv("BASE_URL") . "dashboard");
 
     exit;
 }
@@ -421,7 +421,7 @@ ob_end_flush();
                                                 </label>
                                             </td>
                                             <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
-                                            <td><a
+                                            <td><a class="text-primary"
                                                     href="view-customer-report.php?id=<?= base64_encode($invoice['customer_id']) ?>"><?php echo $invoice['customer_name'] ?></a>
                                             </td>
                                             <td><?php echo formatDateTime($invoice['due_date'], $localizationSettings); ?>

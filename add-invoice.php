@@ -109,6 +109,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         // print_r($_POST);
         // exit();
 
+        $db->begin_transaction();
+
+
         $invoiceNumber = htmlspecialchars($_POST['invoice_number'] ?? '', ENT_QUOTES, 'UTF-8');
         $paymentMethod = htmlspecialchars($_POST['payment_method'] ?? '', ENT_QUOTES, 'UTF-8');
         $transactionId = !empty(trim($_POST['transaction_id'] ?? ''))
@@ -215,12 +218,49 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
             throw new Exception('Execute failed: ' . $stmt->error);
         }
 
+        $invoiceId = $stmt->insert_id;
         $stmt->close();
+
+
+        // Insert Ledger Entry (INVOICE)
+        $ledgerSql = "INSERT INTO ledger_transactions (
+                        customer_id,
+                        invoice_id,
+                        transaction_type,
+                        debit_amount,
+                        credit_amount,
+                        remarks,
+                        created_by
+                    ) VALUES (?, ?, 'INVOICE', ?, 0, 'Invoice issued', ?)";
+
+        $ledgerStmt = $db->prepare($ledgerSql);
+        if (!$ledgerStmt) {
+            throw new Exception($db->error);
+        }
+
+        $ledgerStmt->bind_param(
+            'iidi',
+            $customerId,
+            $invoiceId,
+            $totalAmount,
+            $createdBy
+        );
+
+        if (!$ledgerStmt->execute()) {
+            throw new Exception($ledgerStmt->error);
+        }
+
+        $ledgerStmt->close();
+
+
+
+        $db->commit();
 
         $_SESSION['success'] = 'Invoice created successfully!';
         header("Location: " . getenv("BASE_URL") . "manage-invoice");
         exit;
     } catch (Exception $e) {
+        $db->rollback();
         $_SESSION['error'] = $e->getMessage();
         // echo $e->getMessage();
         // die();
