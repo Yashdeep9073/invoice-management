@@ -180,9 +180,9 @@ try {
 </head>
 
 <body>
-    <div id="global-loader">
+    <!-- <div id="global-loader">
         <div class="whirly-loader"> </div>
-    </div>
+    </div> -->
 
     <?php if (isset($_SESSION['success'])) { ?>
         <script>

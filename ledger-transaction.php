@@ -50,6 +50,13 @@ try {
     $facebook = $emailSettingData['fb_url'] ?? 'https://www.facebook.com/vibranticksolutions/ ';
     $currentYear = date("Y");
 
+    // Also fetch customers for the filter UI
+    $stmtFetchSingleCustomers = $db->prepare("SELECT * FROM customer WHERE isActive = 1 AND customer_id = ? ");
+    $stmtFetchSingleCustomers->bind_param('i', $customerId);
+    $stmtFetchSingleCustomers->execute();
+    $singleCustomer = $stmtFetchSingleCustomers->get_result()->fetch_array(MYSQLI_ASSOC);
+    $stmtFetchSingleCustomers->close();
+
 
     if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         // Define the expected query parameters
@@ -348,9 +355,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-    <div id="global-loader">
+    <!-- <div id="global-loader">
         <div class="whirly-loader"> </div>
-    </div>
+    </div> -->
 
     <?php if (isset($_SESSION['success'])) { ?>
         <script>
@@ -425,7 +432,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="page-header">
                     <div class="add-item d-flex">
                         <div class="page-title">
-                            <h4>Ledger Report </h4>
+                            <h4>Ledger Report <?= $singleCustomer['customer_name'] ?? "" ?></h4>
                             <h6>Manage Customer's Ledger Transaction</h6>
                         </div>
                     </div>

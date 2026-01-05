@@ -298,9 +298,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
 </head>
 
 <body>
-    <div id="global-loader">
+    <!-- <div id="global-loader">
         <div class="whirly-loader"> </div>
-    </div>
+    </div> -->
 
     <div class="main-wrapper">
         <?php if (isset($_SESSION['success'])) { ?>

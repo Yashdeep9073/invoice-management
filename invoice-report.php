@@ -54,9 +54,9 @@ $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_A
 </head>
 
 <body>
-    <div id="global-loader">
+    <!-- <div id="global-loader">
         <div class="whirly-loader"> </div>
-    </div>
+    </div> -->
 
     <div class="main-wrapper">
 
