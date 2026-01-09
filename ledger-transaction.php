@@ -438,6 +438,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <ul class="table-top-head">
                         <li>
+                            <div class="page-btn">
+                                <a href="<?= getenv("BASE_URL") . "customer-reports" ?>" class="btn btn-secondary"><i
+                                        data-feather="arrow-left" class="me-2"></i>Back to
+                                    Customer Reports</a>
+                            </div>
+                        </li>
+                        <li>
                             <a data-bs-toggle="tooltip" onclick="exportToPDF()" data-bs-placement="top" title="Pdf"><img
                                     src="assets/img/icons/pdf.svg" alt="img" /></a>
                         </li>
