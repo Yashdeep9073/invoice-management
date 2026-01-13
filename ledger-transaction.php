@@ -104,7 +104,7 @@ try {
             $conditions = [];
             $paramsToBind = [];
 
-            if ($customerId) {
+            if ($invoiceId) {
                 $conditions[] = "invoice.customer_id = ?";
                 $paramsToBind[] = $customerId;
             }
@@ -167,8 +167,10 @@ try {
                 ON admin.admin_id = invoice.created_by
                 INNER JOIN tax 
                 ON tax.tax_id = invoice.tax
+                WHERE ledger_transactions.invoice_id = ?
                 ORDER BY invoice.invoice_id ASC
                 ");
+            $stmtFetchLedgerTransaction->bind_param('i', $invoiceId);
             if ($stmtFetchLedgerTransaction->execute()) {
                 $ledgerTransactions = $stmtFetchLedgerTransaction->get_result();
             } else {
@@ -184,9 +186,7 @@ try {
     }
 
 
-    //     echo "<pre>";
-    //     print_r($invoices->fetch_all(MYSQLI_ASSOC));
-    // exit;
+
 
 } catch (Exception $e) {
     $_SESSION['error'] = $e->getMessage();

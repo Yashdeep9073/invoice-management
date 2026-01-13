@@ -133,6 +133,22 @@ try {
     $stmt->execute();
     $customerInfo = $stmt->get_result()->fetch_array(MYSQLI_ASSOC);
 
+    $stmtBalance = $db->prepare("SELECT 
+    customer_id,
+    SUM(debit_amount) - SUM(credit_amount) AS balance
+    FROM ledger_transactions
+    WHERE customer_id = ?
+    GROUP BY customer_id
+    ");
+
+    $stmtBalance->bind_param("i", $customerId);
+    $stmtBalance->execute();
+    $balanceResult = $stmtBalance->get_result();
+    $balance = $balanceResult->fetch_array(MYSQLI_ASSOC);
+
+    
+
+
 } catch (\Throwable $th) {
     //throw $th;
     $_SESSION["error"] = $th->getMessage();
@@ -316,8 +332,8 @@ ob_end_clean();
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="customer-header">Phone :</td>
-                                            <td><?= !empty($customerInfo['customer_phone']) ? $customerInfo['customer_phone'] : '' ?>
+                                            <td class="customer-header">Balance :</td>
+                                            <td><?= !empty($balance['balance']) ? $balance['balance'] : '' ?>
                                             </td>
                                         </tr>
                                         <tr>
@@ -509,7 +525,7 @@ ob_end_clean();
                                                                 <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
                                                             </a>
                                                             <ul class="dropdown-menu">
-                                                               
+
                                                                 <?php if ($isAdmin || hasPermission('Ledger', $privileges, $roleData['0']['role_name'])): ?>
 
                                                                     <li>
