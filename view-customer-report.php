@@ -561,14 +561,14 @@ ob_end_clean();
                                             </tbody>
                                             <tfoot>
                                                 <tr>
-                                                    <td colspan="6"></td>
+                                                    <td colspan="7"></td>
                                                     <td><strong><span class="text-success">Total:
                                                                 <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalAmountSum, 2); ?></span></strong>
                                                     </td>
                                                     <td><strong><span class="text-danger">Pending:
                                                                 <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($pendingAmountSum, 2); ?></span></strong>
                                                     </td>
-                                                    <td colspan="1"></td>
+                                                    <td colspan="2"></td>
                                                 </tr>
                                             </tfoot>
                                         </table>
