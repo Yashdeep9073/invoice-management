@@ -17,18 +17,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['id'])) {
 
 
         // all invoices 
-        $stmtFetchAll = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
-        INNER JOIN customer
+        $stmtFetchAll = $db->prepare("
+    SELECT 
+        invoice.*,
+        invoice.status AS paymentStatus,
+        customer.*,
+        tax.*,
+        (
+            COALESCE(SUM(l.debit_amount), 0) -
+            COALESCE(SUM(l.credit_amount), 0)
+        ) AS outstanding_amount
+    FROM invoice
+    INNER JOIN customer
         ON customer.customer_id = invoice.customer_id
-        INNER JOIN tax
+    INNER JOIN tax
         ON tax.tax_id = invoice.tax
-        WHERE invoice.is_active = 1 AND customer.customer_id = ? ");
+    LEFT JOIN ledger_transactions l
+        ON l.invoice_id = invoice.invoice_id
+    WHERE invoice.is_active = 1
+      AND customer.customer_id = ?
+    GROUP BY invoice.invoice_id
+");
 
         $stmtFetchAll->bind_param('i', $customerId);
 
         if ($stmtFetchAll->execute()) {
             $allInvoices = $stmtFetchAll->get_result();
         }
+
 
         // paid 
         $stmtFetchPaid = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
@@ -146,7 +162,7 @@ try {
     $balanceResult = $stmtBalance->get_result();
     $balance = $balanceResult->fetch_array(MYSQLI_ASSOC);
 
-    
+
 
 
 } catch (\Throwable $th) {
@@ -467,6 +483,7 @@ ob_end_clean();
                                                     <th>Discount</th>
                                                     <th>Tax</th>
                                                     <th>Total Amount</th>
+                                                    <th>Outstanding Amount</th>
                                                     <th>Status</th>
                                                     <th class="no-sort text-center">Action</th>
                                                 </tr>
@@ -479,7 +496,7 @@ ob_end_clean();
                                                     $totalAmountSum += $allInvoice['total_amount']; // Add to total
                                                 
                                                     if ($allInvoice['paymentStatus'] == 'PENDING') {
-                                                        $pendingAmountSum += $allInvoice['total_amount'];
+                                                        $pendingAmountSum += $allInvoice['outstanding_amount'];
                                                     }
                                                     ?>
                                                     <tr>
@@ -507,6 +524,7 @@ ob_end_clean();
                                                         <td><?php echo htmlspecialchars($allInvoice['tax_name'] . "-" . $allInvoice['tax_rate']); ?>
                                                         </td>
                                                         <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($allInvoice['total_amount']); ?>
+                                                        <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($allInvoice['outstanding_amount']); ?>
                                                         </td>
                                                         <td>
                                                             <?php if ($allInvoice['paymentStatus'] == 'PAID') { ?>
