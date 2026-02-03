@@ -864,7 +864,7 @@ ob_end_flush();
                                                         <img src="<?php echo $customer['image'] ?? "assets/img/users/user-23.jpg" ?>"
                                                             alt="product">
                                                     </a>
-                                                    <a
+                                                    <a class="text-primary"
                                                         href="<?= getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($customer['customer_id']) ?>"><?php echo $customer['customer_name'] ?></a>
                                                 </div>
                                             </td>
