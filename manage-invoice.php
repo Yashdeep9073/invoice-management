@@ -1079,7 +1079,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
 
 
                         <div class="table-responsive">
-                            <table id="myTable" class="table  datanew">
+                            <table id="myTable" class="table datanew">
                                 <thead>
                                     <tr>
                                         <th class="no-sort">
@@ -1100,170 +1100,168 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         <th class="no-sort text-center">Action</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
                                     <?php
-                                    $totalTaxAmount = 0;
                                     $totalBaseAmount = 0;
+                                    $totalTaxAmount = 0;
 
-                                    foreach ($invoices->fetch_all(MYSQLI_ASSOC) as $invoice) { ?>
+                                    foreach ($invoices->fetch_all(MYSQLI_ASSOC) as $invoice):
+
+                                        // ===== Calculate ONCE per invoice =====
+                                        $taxRate = (int) str_replace('%', '', $invoice['tax_rate']);
+
+                                        $priceWithoutTax = $taxRate > 0
+                                            ? $invoice['total_amount'] / (1 + $taxRate / 100)
+                                            : $invoice['total_amount'];
+
+                                        $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
+
+                                        // ===== Add totals ONCE =====
+                                        if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
+                                            $totalBaseAmount += $priceWithoutTax;
+                                            $totalTaxAmount += $taxAmount;
+                                        }
+                                        ?>
                                         <tr>
                                             <td>
                                                 <label class="checkboxs">
                                                     <input type="checkbox" name="invoiceIds"
-                                                        value="<?php echo $invoice['invoice_id'] ?>">
+                                                        value="<?= $invoice['invoice_id'] ?>">
                                                     <span class="checkmarks"></span>
                                                 </label>
                                             </td>
-                                            <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
+
+                                            <td class="ref-number"><?= $invoice['invoice_number'] ?></td>
+
                                             <td>
-
-                                                <div class="userimgname">
-                                                    <div>
-                                                        <a class="text-primary"
-                                                            href="<?php echo getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($invoice['customer_id']) ?>"><?php echo $invoice['customer_name'] ?></a>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td><?php echo formatDateTime($invoice['created_at'], $localizationSettings); ?>
-                                            </td>
-                                            <td><?php echo formatDateTime($invoice['due_date'], $localizationSettings); ?>
+                                                <a class="text-primary"
+                                                    href="<?= getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($invoice['customer_id']) ?>">
+                                                    <?= $invoice['customer_name'] ?>
+                                                </a>
                                             </td>
 
+                                            <td><?= formatDateTime($invoice['created_at'], $localizationSettings); ?></td>
+                                            <td><?= formatDateTime($invoice['due_date'], $localizationSettings); ?></td>
 
-                                            <td><?php
-                                            $taxRateStr = $invoice['tax_rate'];
-                                            $taxRate = intval(str_replace('%', '', $taxRateStr));
-                                            $priceWithoutTax = $taxRate > 0 ? $invoice['total_amount'] / (1 + $taxRate / 100) : $invoice['total_amount'];
-
-                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
-                                                $totalBaseAmount += $invoice['total_amount'];
-                                            }
-
-                                            $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
-                                            echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $priceWithoutTax;
-                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
-                                                $totalTaxAmount += $taxAmount;
-                                            }
-                                            ?>
-                                            </td>
-                                            <td><?php
-                                            $taxRateStr = $invoice['tax_rate'];
-                                            $taxRate = intval(str_replace('%', '', $taxRateStr));
-                                            $priceWithoutTax = $taxRate > 0 ? $invoice['total_amount'] / (1 + $taxRate / 100) : $invoice['total_amount'];
-
-                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
-                                                $totalBaseAmount += $invoice['total_amount'];
-                                            }
-
-                                            $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
-                                            echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $taxAmount;
-                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
-                                                $totalTaxAmount += $taxAmount;
-                                            }
-                                            ?>
-                                            </td>
-                                            <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
-                                            </td>
-                                            <td><?php echo $invoice['admin_username'] ?></td>
+                                            <!-- Base Amount -->
                                             <td>
-                                                <?php if ($invoice['invoiceStatus'] == 'PAID') { ?>
+                                                <?= $localizationSettings["currency_symbol"] ?? "₹" ?>
+                                                <?= number_format($priceWithoutTax, 2) ?>
+                                            </td>
+
+                                            <!-- GST Amount -->
+                                            <td>
+                                                <?= $localizationSettings["currency_symbol"] ?? "₹" ?>
+                                                <?= number_format($taxAmount, 2) ?>
+                                            </td>
+
+                                            <!-- Total Amount -->
+                                            <td>
+                                                <?= $localizationSettings["currency_symbol"] ?? "₹" ?>
+                                                <?= number_format($invoice['total_amount'], 2) ?>
+                                            </td>
+
+                                            <td><?= $invoice['admin_username'] ?></td>
+
+                                            <td>
+                                                <?php if ($invoice['invoiceStatus'] === 'PAID'): ?>
                                                     <span class="badge badge-lg bg-success">Paid</span>
-                                                <?php } elseif ($invoice['invoiceStatus'] == 'CANCELLED') { ?>
+                                                <?php elseif ($invoice['invoiceStatus'] === 'CANCELLED'): ?>
                                                     <span class="badge badge-lg bg-danger">Cancelled</span>
-                                                <?php } elseif ($invoice['invoiceStatus'] == 'PENDING') { ?>
+                                                <?php elseif ($invoice['invoiceStatus'] === 'PENDING'): ?>
                                                     <span class="badge badge-lg bg-warning">Pending</span>
-                                                <?php } elseif ($invoice['invoiceStatus'] == 'REFUNDED') { ?>
+                                                <?php elseif ($invoice['invoiceStatus'] === 'REFUNDED'): ?>
                                                     <span class="badge badge-lg bg-primary">Refunded</span>
-                                                <?php } ?>
+                                                <?php endif; ?>
                                             </td>
+
                                             <td class="text-center">
-                                                <a class="action-set" href="javascript:void(0);" data-bs-toggle="dropdown"
-                                                    aria-expanded="true">
-                                                    <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+                                                <a class="action-set" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                                    <i class="fa fa-ellipsis-v"></i>
                                                 </a>
                                                 <ul class="dropdown-menu">
-                                                    <li>
-                                                        <a target="_blank"
-                                                            href="<?php echo getenv("BASE_URL") . "view-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
-                                                            class="editStatus dropdown-item" data-admin-id=""><i
-                                                                data-feather="eye" class="info-img"></i>Show
-                                                            Detail</a>
-                                                    </li>
-                                                    <?php if ($isAdmin || hasPermission('Edit Invoice', $privileges, $roleData['0']['role_name'])): ?>
 
-                                                        <li>
-                                                            <a href="<?php echo getenv("BASE_URL") . "edit-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
-                                                                class="editButton dropdown-item"><i data-feather="edit"
-                                                                    class="info-img"></i>Edit
-                                                            </a>
-                                                        </li>
-                                                    <?php endif; ?>
                                                     <li>
                                                         <a target="_blank"
-                                                            href="<?php echo getenv("BASE_URL") . "download-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
-                                                            class="qrCode dropdown-item"><i data-feather="download"
-                                                                class="info-img"></i>Download
+                                                            href="<?= getenv("BASE_URL") . "view-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
+                                                            class="dropdown-item">
+                                                            Show Detail
                                                         </a>
                                                     </li>
-                                                    <?php if ($isAdmin || hasPermission('Delete Invoice', $privileges, $roleData['0']['role_name'])): ?>
-                                                        <li>
-                                                            <a href="javascript:void(0);"
-                                                                data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
-                                                                class="dropdown-item deleteButton mb-0"><i
-                                                                    data-feather="trash-2" class="info-img"></i>Delete </a>
-                                                        </li>
-                                                    <?php endif; ?>
-                                                    <?php if ($isAdmin || hasPermission('Send Reminder', $privileges, $roleData['0']['role_name'])): ?>
 
+                                                    <?php if ($isAdmin || hasPermission('Edit Invoice', $privileges, $roleData[0]['role_name'])): ?>
                                                         <li>
-                                                            <a href="javascript:void(0);"
-                                                                data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
-                                                                class="dropdown-item sendReminder mb-0"><i data-feather="bell"
-                                                                    class="info-img"></i>Send Reminder </a>
+                                                            <a href="<?= getenv("BASE_URL") . "edit-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
+                                                                class="dropdown-item">Edit</a>
                                                         </li>
                                                     <?php endif; ?>
 
-                                                    <?php if ($isAdmin || hasPermission('Send Invoice', $privileges, $roleData['0']['role_name'])): ?>
+                                                    <li>
+                                                        <a target="_blank"
+                                                            href="<?= getenv("BASE_URL") . "download-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
+                                                            class="dropdown-item">Download</a>
+                                                    </li>
 
+                                                    <?php if ($isAdmin || hasPermission('Delete Invoice', $privileges, $roleData[0]['role_name'])): ?>
                                                         <li>
                                                             <a href="javascript:void(0);"
-                                                                data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
-                                                                class="dropdown-item sendInvoice mb-0"><i data-feather="send"
-                                                                    class="info-img"></i>Send Invoice </a>
+                                                                data-invoice-id="<?= $invoice['invoice_id'] ?>"
+                                                                class="dropdown-item deleteButton">Delete</a>
                                                         </li>
                                                     <?php endif; ?>
-                                                    <?php if ($isAdmin || hasPermission('Ledger', $privileges, $roleData['0']['role_name'])): ?>
 
+                                                    <?php if ($isAdmin || hasPermission('Send Reminder', $privileges, $roleData[0]['role_name'])): ?>
+                                                        <li>
+                                                            <a href="javascript:void(0);"
+                                                                data-invoice-id="<?= $invoice['invoice_id'] ?>"
+                                                                class="dropdown-item sendReminder">Send Reminder</a>
+                                                        </li>
+                                                    <?php endif; ?>
+
+                                                    <?php if ($isAdmin || hasPermission('Send Invoice', $privileges, $roleData[0]['role_name'])): ?>
+                                                        <li>
+                                                            <a href="javascript:void(0);"
+                                                                data-invoice-id="<?= $invoice['invoice_id'] ?>"
+                                                                class="dropdown-item sendInvoice">Send Invoice</a>
+                                                        </li>
+                                                    <?php endif; ?>
+
+                                                    <?php if ($isAdmin || hasPermission('Ledger', $privileges, $roleData[0]['role_name'])): ?>
                                                         <li>
                                                             <a target="_blank"
-                                                                href="<?php echo getenv("BASE_URL") . "ledger-transaction?id=" . base64_encode($invoice['invoice_id']) . "&uid=" . base64_encode($invoice['customer_id']);  ?>"
-                                                                class="dropdown-item mb-0"><i data-feather="clipboard"
-                                                                    class="info-img"></i>Ledger</a>
+                                                                href="<?= getenv("BASE_URL") . "ledger-transaction?id=" . base64_encode($invoice['invoice_id']) . "&uid=" . base64_encode($invoice['customer_id']) ?>"
+                                                                class="dropdown-item">Ledger</a>
                                                         </li>
                                                     <?php endif; ?>
                                                 </ul>
                                             </td>
                                         </tr>
-                                    <?php } ?>
+                                    <?php endforeach; ?>
                                 </tbody>
+
                                 <tfoot>
                                     <tr>
                                         <td colspan="5"></td>
-                                        <td><strong>
-                                                <span class="text-primary">Total:
-                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalBaseAmount, 2); ?>
-                                                </span>
-                                            </strong></td>
-                                        <td><strong>
-                                                <span class="text-danger">GST:
-                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalTaxAmount, 2); ?>
-                                                </span>
-                                            </strong></td>
-                                        <td colspan="3"></td>
+                                        <td>
+                                            <strong class="text-primary">
+                                                Total:
+                                                <?= $localizationSettings["currency_symbol"] ?? "₹" ?>
+                                                <?= number_format($totalBaseAmount, 2) ?>
+                                            </strong>
+                                        </td>
+                                        <td>
+                                            <strong class="text-danger">
+                                                GST:
+                                                <?= $localizationSettings["currency_symbol"] ?? "₹" ?>
+                                                <?= number_format($totalTaxAmount, 2) ?>
+                                            </strong>
+                                        </td>
+                                        <td colspan="4"></td>
                                     </tr>
                                 </tfoot>
-
                             </table>
+
                         </div>
                     </div>
                 </div>

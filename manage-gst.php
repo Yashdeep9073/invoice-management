@@ -692,7 +692,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
 
 
                         <div class="table-responsive">
-                            <table id="myTable" class="table  datanew">
+                            <table id="myTable" class="table datanew">
                                 <thead>
                                     <tr>
                                         <th class="no-sort">
@@ -713,120 +713,134 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                         <th class="no-sort text-center">Action</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
                                     <?php
-                                    $totalTaxAmount = 0;
                                     $totalBaseAmount = 0;
-                                    foreach ($invoices->fetch_all(MYSQLI_ASSOC) as $invoice) { ?>
+                                    $totalTaxAmount = 0;
+
+                                    foreach ($invoices->fetch_all(MYSQLI_ASSOC) as $invoice):
+
+                                        // ===== Calculate once per invoice =====
+                                        $taxRateStr = $invoice['tax_rate'];
+                                        $taxRate = (int) str_replace('%', '', $taxRateStr);
+
+                                        $priceWithoutTax = $taxRate > 0
+                                            ? $invoice['total_amount'] / (1 + $taxRate / 100)
+                                            : $invoice['total_amount'];
+
+                                        $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
+
+                                        // ===== Add totals ONCE =====
+                                        if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
+                                            $totalBaseAmount += $priceWithoutTax;
+                                            $totalTaxAmount += $taxAmount;
+                                        }
+                                        ?>
                                         <tr>
                                             <td>
                                                 <label class="checkboxs">
                                                     <input type="checkbox" name="invoiceIds"
-                                                        value="<?php echo $invoice['invoice_id'] ?>">
+                                                        value="<?= $invoice['invoice_id'] ?>">
                                                     <span class="checkmarks"></span>
                                                 </label>
                                             </td>
-                                            <td class="ref-number"><?php echo $invoice['invoice_number'] ?></td>
+
+                                            <td class="ref-number">
+                                                <?= $invoice['invoice_number'] ?>
+                                            </td>
+
                                             <td>
-                                                <div class="userimgname">
-                                                    <div>
-                                                        <a class="text-primary"
-                                                            href="<?php echo getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($invoice['customer_id']) ?>"><?php echo $invoice['customer_name'] ?></a>
-                                                    </div>
-                                                </div>
-
-
+                                                <a class="text-primary" href="<?= getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($invoice['customer_id']) ?>">
+                                                    <?= $invoice['customer_name'] ?>
+                                                </a>
                                             </td>
-                                            <td><?php echo formatDateTime($invoice['created_at'], $localizationSettings); ?>
-                                            </td>
-                                            <td><?php echo formatDateTime($invoice['due_date'], $localizationSettings); ?>
-                                            </td>
-                                            <td><?php
-                                            $taxRateStr = $invoice['tax_rate'];
-                                            $taxRate = intval(str_replace('%', '', $taxRateStr));
-                                            $priceWithoutTax = $taxRate > 0 ? $invoice['total_amount'] / (1 + $taxRate / 100) : $invoice['total_amount'];
 
-                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
-                                                $totalBaseAmount += $invoice['total_amount'];
-                                            }
-
-                                            $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
-                                            echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $priceWithoutTax;
-                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
-                                                $totalTaxAmount += $taxAmount;
-                                            }
-                                            ?>
-                                            </td>
-                                            <td><?php
-                                            $taxRateStr = $invoice['tax_rate'];
-                                            $taxRate = intval(str_replace('%', '', $taxRateStr));
-                                            $priceWithoutTax = $taxRate > 0 ? $invoice['total_amount'] / (1 + $taxRate / 100) : $invoice['total_amount'];
-
-                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
-                                                $totalBaseAmount += $invoice['total_amount'];
-                                            }
-
-                                            $taxAmount = $invoice['total_amount'] - $priceWithoutTax;
-                                            echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $taxAmount;
-                                            if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
-                                                $totalTaxAmount += $taxAmount;
-                                            }
-                                            ?>
-                                            </td>
-                                            <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['total_amount'] ?>
-                                            </td>
-                                            <td><?php echo $invoice['admin_username'] ?></td>
                                             <td>
-                                                <?php if ($invoice['gst_status'] == 'PAID') { ?>
+                                                <?= formatDateTime($invoice['created_at'], $localizationSettings); ?>
+                                            </td>
+                                            <td>
+                                                <?= formatDateTime($invoice['due_date'], $localizationSettings); ?>
+                                            </td>
+
+                                            <!-- Base Amount -->
+                                            <td>
+                                                <?= $localizationSettings["currency_symbol"] ?? "₹" ?>
+                                                <?= number_format($priceWithoutTax, 2) ?>
+                                            </td>
+
+                                            <!-- GST Amount -->
+                                            <td>
+                                                <?= $localizationSettings["currency_symbol"] ?? "₹" ?>
+                                                <?= number_format($taxAmount, 2) ?>
+                                            </td>
+
+                                            <!-- Total Amount -->
+                                            <td>
+                                                <?= $localizationSettings["currency_symbol"] ?? "₹" ?>
+                                                <?= number_format($invoice['total_amount'], 2) ?>
+                                            </td>
+
+                                            <td>
+                                                <?= $invoice['admin_username'] ?>
+                                            </td>
+
+                                            <td>
+                                                <?php if ($invoice['gst_status'] === 'PAID'): ?>
                                                     <span class="badge badge-lg bg-success">Paid</span>
-                                                <?php } elseif ($invoice['gst_status'] == 'HOLD') { ?>
+                                                <?php elseif ($invoice['gst_status'] === 'HOLD'): ?>
                                                     <span class="badge badge-lg bg-warning">Hold</span>
-                                                <?php } elseif ($invoice['gst_status'] == 'CANCELLED') { ?>
+                                                <?php elseif ($invoice['gst_status'] === 'CANCELLED'): ?>
                                                     <span class="badge badge-lg bg-danger">Cancelled</span>
-                                                <?php } ?>
-
+                                                <?php endif; ?>
                                             </td>
+
                                             <td class="text-center">
-                                                <a class="action-set" href="javascript:void(0);" data-bs-toggle="dropdown"
-                                                    aria-expanded="true">
-                                                    <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+                                                <a class="action-set" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                                    <i class="fa fa-ellipsis-v"></i>
                                                 </a>
                                                 <ul class="dropdown-menu">
-
-                                                    <?php if ($isAdmin || hasPermission('Edit GST', $privileges, $roleData['0']['role_name'])): ?>
-
+                                                    <?php if ($isAdmin || hasPermission('Edit GST', $privileges, $roleData[0]['role_name'])): ?>
                                                         <li>
                                                             <a href="javascript:void(0);" data-bs-toggle="modal"
                                                                 data-bs-target="#edit-units" class="editButton dropdown-item"
                                                                 data-invoice-id="<?= $invoice['invoice_id'] ?>"
-                                                                data-gst-status="<?= $invoice['gst_status'] ?>"><i
-                                                                    data-feather="edit" class="info-img"></i>Edit
+                                                                data-gst-status="<?= $invoice['gst_status'] ?>">
+                                                                Edit
                                                             </a>
                                                         </li>
                                                     <?php endif; ?>
-
                                                 </ul>
                                             </td>
                                         </tr>
-                                    <?php } ?>
+                                    <?php endforeach; ?>
                                 </tbody>
+
                                 <tfoot>
                                     <tr>
                                         <td colspan="5"></td>
-                                        <td><strong>
-                                                <span class="text-primary">Total:
-                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalBaseAmount, 2); ?>
-                                                </span>
-                                            </strong></td>
-                                        <td><strong>
-                                                <span class="text-danger">GST:
-                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalTaxAmount, 2); ?>
-                                                </span>
-                                            </strong></td>
-                                        <td colspan="3"></td>
+
+                                        <td>
+                                            <strong class="text-primary">
+                                                Total:
+                                                <?= $localizationSettings["currency_symbol"] ?? "₹" ?>
+                                                <?= number_format($totalBaseAmount, 2) ?>
+                                            </strong>
+                                        </td>
+
+                                        <td>
+                                            <strong class="text-danger">
+                                                GST:
+                                                <?= $localizationSettings["currency_symbol"] ?? "₹" ?>
+                                                <?= number_format($totalTaxAmount, 2) ?>
+                                            </strong>
+                                        </td>
+
+                                        <td colspan="4"></td>
                                     </tr>
                                 </tfoot>
                             </table>
+
                         </div>
                     </div>
                 </div>

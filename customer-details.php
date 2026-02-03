@@ -865,7 +865,7 @@ ob_end_flush();
                                                             alt="product">
                                                     </a>
                                                     <a
-                                                        href="javascript:void(0);"><?php echo $customer['customer_name'] ?></a>
+                                                        href="<?= getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($customer['customer_id']) ?>"><?php echo $customer['customer_name'] ?></a>
                                                 </div>
                                             </td>
                                             <td><?php echo $customer['customer_phone'] ?></td>

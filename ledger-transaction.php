@@ -18,6 +18,9 @@ if (!isset($_SESSION["admin_id"])) {
 // for card details
 $invoiceId = intval(base64_decode($_GET['id'])) ?? null;
 $customerId = intval(base64_decode($_GET['uid'])) ?? null;
+
+
+
 $createdBy = base64_decode($_SESSION['admin_id']);
 
 try {
@@ -61,7 +64,8 @@ try {
     if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         // Define the expected query parameters
         $params = [
-            'customer' => isset($_GET['customer']) ? $_GET['customer'] : '',
+            'id' => isset($_GET['id']) ? $_GET['id'] : '',
+            'uid' => isset($_GET['uid']) ? $_GET['uid'] : '',
             'from' => isset($_GET['from']) ? $_GET['from'] : '',
             'to' => isset($_GET['to']) ? $_GET['to'] : '',
         ];
@@ -77,77 +81,107 @@ try {
 
         if ($hasParams) {
 
-            $customerId = $params['customer'] ?? null;
-            $startDate = $params['from'] ?? null;
-            $endDate = $params['to'] ?? null;
+            // ----------------------------
+            // Decode & validate inputs
+            // ----------------------------
+            $invoiceId = !empty($params['id'])
+                ? base64_decode($params['id'])
+                : null;
 
-            // Clean and format dates
-            $startDate = $startDate ? date('Y-m-d', strtotime($startDate)) : null;
-            $endDate = $endDate ? date('Y-m-d', strtotime($endDate)) : null;
+            $customerId = !empty($params['uid'])
+                ? base64_decode($params['uid'])
+                : null;
 
-            // Prepare SQL with conditions
-            $query = "SELECT 
+            $invoiceId = ctype_digit($invoiceId) ? (int) $invoiceId : null;
+            $customerId = ctype_digit($customerId) ? (int) $customerId : null;
+
+            $startDate = !empty($params['from'])
+                ? date('Y-m-d', strtotime($params['from']))
+                : null;
+
+            $endDate = !empty($params['to'])
+                ? date('Y-m-d', strtotime($params['to']))
+                : null;
+
+            // ----------------------------
+            // Base query
+            // ----------------------------
+            $query = "
+        SELECT
             invoice.invoice_id,
-            invoice.status as invoiceStatus,
+            invoice.invoice_number,
+            ledger_transactions.*,
+            invoice.status AS invoiceStatus,
             customer.customer_id,
             customer.customer_name,
             admin.admin_username,
             tax.tax_rate
-            FROM invoice 
-            INNER JOIN customer ON customer.customer_id = invoice.customer_id
-            LEFT JOIN admin ON admin.admin_id = invoice.created_by 
-             INNER JOIN tax ON tax.tax_id = invoice.tax
-            WHERE invoice.is_active = 1
-             
-            ";
+        FROM ledger_transactions
+        INNER JOIN customer ON customer.customer_id = ledger_transactions.customer_id
+        INNER JOIN invoice  ON invoice.invoice_id = ledger_transactions.invoice_id
+        LEFT JOIN admin     ON admin.admin_id = invoice.created_by
+        INNER JOIN tax      ON tax.tax_id = invoice.tax
+        WHERE 1 = 1
+    ";
 
+            // ----------------------------
+            // Dynamic filters
+            // ----------------------------
             $conditions = [];
             $paramsToBind = [];
+            $types = "";
 
             if ($invoiceId) {
-                $conditions[] = "invoice.customer_id = ?";
+                $conditions[] = "ledger_transactions.invoice_id = ?";
+                $paramsToBind[] = $invoiceId;
+                $types .= "i";
+            }
+
+            if ($customerId) {
+                $conditions[] = "ledger_transactions.customer_id = ?";
                 $paramsToBind[] = $customerId;
+                $types .= "i";
             }
 
             if ($startDate) {
-                $conditions[] = "DATE(invoice.created_at) >= ?";
-                $paramsToBind[] = $startDate;
+                $conditions[] = "ledger_transactions.created_at >= ?";
+                $paramsToBind[] = $startDate . " 00:00:00";
+                $types .= "s";
             }
 
             if ($endDate) {
-                $conditions[] = "DATE(invoice.created_at) <= ?";
-                $paramsToBind[] = $endDate;
+                $conditions[] = "ledger_transactions.created_at <= ?";
+                $paramsToBind[] = $endDate . " 23:59:59";
+                $types .= "s";
             }
 
             if (!empty($conditions)) {
                 $query .= " AND " . implode(" AND ", $conditions);
             }
 
-            $stmtFetchInvoices = $db->prepare($query);
+            $query .= " ORDER BY ledger_transactions.created_at ASC";
 
-            if ($stmtFetchInvoices === false) {
+            // ----------------------------
+            // Prepare & execute
+            // ----------------------------
+            $stmtFetchLedgerTransaction = $db->prepare($query);
+
+            if ($stmtFetchLedgerTransaction === false) {
                 $_SESSION['error'] = 'Query preparation failed';
             } else {
-                // Bind parameters dynamically
+
                 if (!empty($paramsToBind)) {
-                    $types = str_repeat("s", count($paramsToBind)); // all are strings
-                    $stmtFetchInvoices->bind_param($types, ...$paramsToBind);
+                    $stmtFetchLedgerTransaction->bind_param($types, ...$paramsToBind);
                 }
 
-                if ($stmtFetchInvoices->execute()) {
-                    $invoices = $stmtFetchInvoices->get_result();
+                if ($stmtFetchLedgerTransaction->execute()) {
+                    $ledgerTransactions = $stmtFetchLedgerTransaction->get_result();
                 } else {
-                    $_SESSION['error'] = 'Error fetching filtered invoices';
+                    $_SESSION['error'] = 'Error fetching filtered ledger transactions';
                 }
 
-                $stmtFetchInvoices->close();
+                $stmtFetchLedgerTransaction->close();
             }
-
-            // Also fetch customers for the filter UI
-            $stmtFetchCustomers = $db->prepare("SELECT * FROM customer WHERE isActive = 1");
-            $stmtFetchCustomers->execute();
-            $customers = $stmtFetchCustomers->get_result()->fetch_all(MYSQLI_ASSOC);
-            $stmtFetchCustomers->close();
         } else {
             $stmtFetchLedgerTransaction = $db->prepare("SELECT
                 invoice.invoice_id,
@@ -176,12 +210,6 @@ try {
             } else {
                 $_SESSION['error'] = 'Error for fetching customers';
             }
-
-            // Fetch customers
-            $stmtFetchCustomers = $db->prepare("SELECT * FROM customer WHERE isActive = 1");
-            $stmtFetchCustomers->execute();
-            $customers = $stmtFetchCustomers->get_result()->fetch_all(MYSQLI_ASSOC);
-            $stmtFetchCustomers->close();
         }
     }
 
@@ -196,7 +224,10 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
+
+        // ----------------------------
         // Required fields
+        // ----------------------------
         $requiredFields = ['transaction_type', 'payment_method', 'amount'];
 
         foreach ($requiredFields as $field) {
@@ -209,7 +240,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Sanitize
+        // ----------------------------
+        // Sanitize inputs
+        // ----------------------------
         $transactionType = filter_input(INPUT_POST, 'transaction_type', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $paymentMethod = filter_input(INPUT_POST, 'payment_method', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $amountRaw = filter_input(
@@ -220,14 +253,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         $remarks = $_POST['remark'] ?? null;
 
-
-        // Regex patterns (STRICT, ENUM-safe)
-        $transactionTypeRegex = '/^(|PAYMENT|REFUND|ADJUSTMENT)$/';
+        // ----------------------------
+        // Regex validation (ENUM-safe)
+        // ----------------------------
+        $transactionTypeRegex = '/^(PAYMENT|REFUND|ADJUSTMENT|INVOICE)$/';
         $paymentMethodRegex = '/^(CREDIT_CARD|DEBIT_CARD|CASH|NET_BANKING|PAYPAL|OTHER)$/';
-        $amountRegex = '/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/'; // decimal OPTIONAL
+        $amountRegex = '/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/';
 
-
-        // Validate
         if (!preg_match($transactionTypeRegex, $transactionType)) {
             echo json_encode(['status' => 400, 'error' => 'Invalid transaction type']);
             exit;
@@ -245,7 +277,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $amount = (float) $amountRaw;
 
+        if ($amount <= 0) {
+            echo json_encode([
+                'status' => 400,
+                'error' => 'Amount must be greater than zero'
+            ]);
+            exit;
+        }
+
+        // ----------------------------
+        // PAYMENT validation (NO over-payment)
+        // ----------------------------
+        if ($transactionType === 'PAYMENT') {
+
+            // Fetch invoice total
+            $stmtInvoice = $db->prepare("
+                SELECT total_amount
+                FROM invoice
+                WHERE invoice_id = ?
+                LIMIT 1
+            ");
+            $stmtInvoice->bind_param("i", $invoiceId);
+            $stmtInvoice->execute();
+            $invoiceData = $stmtInvoice->get_result()->fetch_assoc();
+            $stmtInvoice->close();
+
+            if (!$invoiceData) {
+                echo json_encode([
+                    'status' => 404,
+                    'error' => 'Invoice not found'
+                ]);
+                exit;
+            }
+
+            $invoiceTotal = (float) $invoiceData['total_amount'];
+
+            // Fetch total payments already made
+            $stmtPaid = $db->prepare("
+                SELECT COALESCE(SUM(credit_amount), 0) AS total_paid
+                FROM ledger_transactions
+                WHERE invoice_id = ?
+                AND transaction_type = 'PAYMENT'
+            ");
+            $stmtPaid->bind_param("i", $invoiceId);
+            $stmtPaid->execute();
+            $paidData = $stmtPaid->get_result()->fetch_assoc();
+            $stmtPaid->close();
+
+            $totalPaid = (float) $paidData['total_paid'];
+            $pendingAmount = $invoiceTotal - $totalPaid;
+
+            if ($amount > $pendingAmount) {
+                echo json_encode([
+                    'status' => 400,
+                    'error' => 'Payment amount exceeds pending balance',
+                    'pending_amount' => number_format($pendingAmount, 2)
+                ]);
+                exit;
+            }
+        }
+
+        // ----------------------------
         // Debit / Credit logic
+        // ----------------------------
         $debitAmount = 0.00;
         $creditAmount = 0.00;
 
@@ -256,15 +350,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'REFUND':
             case 'ADJUSTMENT':
-                $debitAmount = $amount;
-                break;
-
             case 'INVOICE':
                 $debitAmount = $amount;
                 break;
         }
 
-        // Insert Ledger Transaction
+        // ----------------------------
+        // Insert ledger transaction
+        // ----------------------------
         $stmt = $db->prepare("
             INSERT INTO ledger_transactions
             (customer_id, invoice_id, transaction_type, payment_method, debit_amount, credit_amount, remarks, created_by)
@@ -289,19 +382,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'message' => 'Ledger transaction created successfully'
             ]);
             exit;
-        } else {
-            throw new Exception('Database insert failed');
         }
 
+        throw new Exception('Database insert failed');
+
     } catch (Exception $e) {
+
         echo json_encode([
             'status' => 500,
             'error' => $e->getMessage()
         ]);
-
         exit;
     }
 }
+
 
 
 
@@ -454,7 +548,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </li>
 
                         <li>
-                            <a href="" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
+                            <a href="<?= getenv("BASE_URL") . "ledger-transaction?id=" . $_GET['id'] . "&uid=" . $_GET['uid'] ?>"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
                                     data-feather="rotate-ccw" class="feather-rotate-ccw"></i></a>
                         </li>
                         <li>
@@ -495,19 +590,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="card" id="filter_inputs">
                             <div class="card-body pb-0">
                                 <div class="row">
-                                    <div class="col-lg-3 col-sm-6 col-12">
-                                        <div class="input-blocks">
-                                            <i data-feather="user" class="info-img"></i>
-                                            <select class="select" name="customerId">
-                                                <option value="">Choose Name</option>
-                                                <?php foreach ($customers as $customer) { ?>
-                                                    <option value="<?php echo $customer['customer_id'] ?>">
-                                                        <?php echo $customer['customer_name'] ?>
-                                                    </option>
-                                                <?php } ?>
-                                            </select>
-                                        </div>
-                                    </div>
 
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
@@ -627,7 +709,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="4"></td>
+                                        <td colspan="5"></td>
                                         <td>
                                             <strong>
                                                 <span class="text-success">Total Paid:
@@ -642,7 +724,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                 </span>
                                             </strong>
                                         </td> -->
-                                        <td colspan="2"></td>
+                                        <td colspan="1"></td>
                                     </tr>
                                 </tfoot>
 
@@ -867,15 +949,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $(document).on("click", ".row .col-lg-3 .input-blocks .btn-filters", function (e) {
                 e.preventDefault();
-                let customerId = $(".input-blocks select[name='customerId']").val();
+
+                // Get query parameters
+                const params = new URLSearchParams(window.location.search);
+
+                // Fetch values
+                const id = params.get("id");
+                const uid = params.get("uid");
                 let fromDate = $(".row .col-lg-3 .input-blocks .daterange-wraper input[name='from']").val();
                 let toDate = $(".row .col-lg-3 .input-blocks .daterange-wraper input[name='to']").val();
 
-                // Check if customerId is missing or not a number
-                // if (!customerId || isNaN(customerId) || !Number.isInteger(Number(customerId))) {
-                //     notyf.error("Please select a valid customer");
-                //     return;
-                // }
+
+
                 if (!fromDate) {
                     notyf.error("Please select from date");
                     return;
@@ -885,11 +970,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     return;
                 }
 
-                // Output
-                // console.log("Customer ID -", customerId);
-                // console.log("From Date -", fromDate);
-                // console.log("To Date -", toDate);
-                window.location.href = `manage-invoice.php?customer=${customerId}&from=${fromDate}&to=${toDate}`;
+
+                window.location.href = `ledger-transaction?from=${fromDate}&to=${toDate}&id=${id}&uid=${uid}`;
             });
 
 
