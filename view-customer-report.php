@@ -1825,11 +1825,10 @@ ob_end_clean();
                                                 <tr>
                                                     <th class="no-sort">
                                                         <label class="checkboxs">
-                                                            <input type="checkbox" id="select-all4">
+                                                            <input type="checkbox" id="select-all">
                                                             <span class="checkmarks"></span>
                                                         </label>
                                                     </th>
-                                                    <th>Due Date</th>
                                                     <th>Ledger Id</th>
                                                     <th>Customer Name</th>
                                                     <th>Transaction Date</th>
@@ -1839,6 +1838,8 @@ ob_end_clean();
                                                     <th>Debit Amount</th>
                                                     <th>Credit Amount</th>
                                                     <th>Type</th>
+
+                                                    <th class="no-sort text-center">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -1863,7 +1864,10 @@ ob_end_clean();
                                                             <?php echo $count ?>
                                                         </td>
                                                         <td>
-                                                            <?= $transaction['customer_name'] ?>
+                                                            <a class="text-primary" target="_blank" href="<?= getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($transaction['customer_id']) ?>">
+                                                                <?= $transaction['customer_name'] ?>
+                                                            </a>
+
                                                         </td>
                                                         <td>
                                                             <?php echo formatDateTime($transaction['transaction_date'], $localizationSettings); ?>
@@ -1928,24 +1932,25 @@ ob_end_clean();
                                                     <?php $count++;
                                                 } ?>
                                             </tbody>
-                                            <tr>
-                                                <td colspan="6"></td>
-                                                <td>
-                                                    <strong>
-                                                        <span class="text-success">Total Paid:
-                                                            <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalPaidAmount, 2); ?>
-                                                        </span>
-                                                    </strong>
-                                                </td>
-                                                <!-- <td>
+                                            <tfoot>
+                                                <tr>
+                                                    <td colspan="6"></td>
+                                                    <td>
+                                                        <strong>
+                                                            <span class="text-success">Total Paid:
+                                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalPaidAmount, 2); ?>
+                                                            </span>
+                                                        </strong>
+                                                    </td>
+                                                    <!-- <td>
                                             <strong>
                                                 <span class="text-danger">Pending:
                                                     <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalPendingAmount, 2); ?>
                                                 </span>
                                             </strong>
                                         </td> -->
-                                                <td colspan="2"></td>
-                                            </tr>
+                                                    <td colspan="2"></td>
+                                                </tr>
                                             </tfoot>
                                         </table>
                                     </div>
