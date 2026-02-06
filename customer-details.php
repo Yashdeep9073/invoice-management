@@ -789,11 +789,11 @@ ob_end_flush();
                             </li>
                         <?php endif; ?>
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportToPDF()" data-bs-placement="top" title="Pdf"><img
+                            <a data-bs-toggle="tooltip" onclick="exportToPDF(`customers`)" data-bs-placement="top" title="Pdf"><img
                                     src="assets/img/icons/pdf.svg" alt="img"></a>
                         </li>
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportToExcel()" data-bs-placement="top"
+                            <a data-bs-toggle="tooltip" onclick="exportToExcel(`customers`)" data-bs-placement="top"
                                 title="Excel"><img src="assets/img/icons/excel.svg" alt="img"></a>
                         </li>
                         <li>

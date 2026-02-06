@@ -252,6 +252,31 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
         $ledgerStmt->close();
 
+        // Update customer wallet 
+        $walletSql = "
+        INSERT INTO customer_wallet (customer_id, balance)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE balance = balance + VALUES(balance)
+        ";
+
+        $walletStmt = $db->prepare($walletSql);
+        if (!$walletStmt) {
+            throw new Exception($db->error);
+        }
+
+        $walletStmt->bind_param(
+            "id",
+            $customerId,
+            $totalAmount
+        );
+
+        if (!$walletStmt->execute()) {
+            throw new Exception($walletStmt->error);
+        }
+
+        $walletStmt->close();
+
+
 
 
         $db->commit();

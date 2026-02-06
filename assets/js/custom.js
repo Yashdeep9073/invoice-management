@@ -19,6 +19,7 @@ function getActiveTableId() {
     "pending-report": "pendingTable",
     "cancelled-report": "cancelledTable",
     "refunded-report": "refundedTable",
+    "transaction-report": "transactionTable",
   };
 
   const result = tabToTableMap[activeTabId] || null;
@@ -315,7 +316,7 @@ function exportActiveTabToPDF() {
 }
 
 // Function to export to Excel
-function exportToExcel() {
+function exportToExcel(name = "test") {
   // Initialize Notyf for success and error notifications
   const notyf = new Notyf({
     position: {
@@ -412,7 +413,7 @@ function exportToExcel() {
   // Export to Excel
   try {
     let workbook = XLSX.utils.table_to_book(tempTable, { sheet: "Sheet1" });
-    XLSX.writeFile(workbook, "invoices.xlsx");
+    XLSX.writeFile(workbook, `${name}.xlsx`);
     notyf.success("Excel file exported successfully!");
   } catch (error) {
     notyf.error("Error exporting to Excel: " + error.message);
@@ -420,7 +421,7 @@ function exportToExcel() {
 }
 
 // Function to export to PDF
-function exportToPDF() {
+function exportToPDF(name = "test") {
   // Initialize Notyf for success and error notifications
   const notyf = new Notyf({
     position: {
@@ -522,7 +523,7 @@ function exportToPDF() {
       styles: { fontSize: 10 },
       margin: { top: 20 },
     });
-    doc.save("invoices.pdf");
+    doc.save(`${name}.pdf`);
     notyf.success("PDF file exported successfully!");
   } catch (error) {
     notyf.error("Error exporting to PDF: " + error.message);

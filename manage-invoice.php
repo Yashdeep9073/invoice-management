@@ -856,11 +856,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-    <meta name="description" content="POS - Bootstrap Admin Template">
-    <meta name="keywords"
-        content="admin, estimates, bootstrap, business, corporate, creative, invoice, html5, responsive, Projects">
-    <meta name="author" content="Dreamguys - Bootstrap Admin Template">
-    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="">
+    <meta name="robots" content="">
     <title>Manage Invoice</title>
 
     <link rel="shortcut icon" type="image/x-icon"
@@ -987,11 +986,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                             </li>
                         <?php endif; ?>
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportToPDF()" data-bs-placement="top" title="Pdf"><img
-                                    src="assets/img/icons/pdf.svg" alt="img" /></a>
+                            <a data-bs-toggle="tooltip" onclick="exportToPDF(`invoices`)" data-bs-placement="top"
+                                title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img" /></a>
                         </li>
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportToExcel()" data-bs-placement="top"
+                            <a data-bs-toggle="tooltip" onclick="exportToExcel(`invoices`)" data-bs-placement="top"
                                 title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a>
                         </li>
 
@@ -1181,57 +1180,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                     <i class="fa fa-ellipsis-v"></i>
                                                 </a>
                                                 <ul class="dropdown-menu">
-
                                                     <li>
-                                                        <a target="_blank"
-                                                            href="<?= getenv("BASE_URL") . "view-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
-                                                            class="dropdown-item">
-                                                            Show Detail
+                                                        <a target="_blank" href="<?php echo getenv("BASE_URL") . "view-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
+                                                            class="editStatus dropdown-item" data-admin-id=""><i
+                                                                data-feather="eye" class="info-img"></i>Show
+                                                            Detail</a>
+                                                    </li>
+                                                    <?php if ($isAdmin || hasPermission('Edit Invoice', $privileges, $roleData['0']['role_name'])): ?>
+
+                                                        <li>
+                                                            <a href="<?php echo getenv("BASE_URL") . "edit-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
+                                                                class="editButton dropdown-item"><i data-feather="edit"
+                                                                    class="info-img"></i>Edit
+                                                            </a>
+                                                        </li>
+                                                    <?php endif; ?>
+                                                    <li>
+                                                        <a target="_blank" href="<?php echo getenv("BASE_URL") . "download-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
+                                                            class="qrCode dropdown-item"><i data-feather="download"
+                                                                class="info-img"></i>Download
                                                         </a>
                                                     </li>
-
-                                                    <?php if ($isAdmin || hasPermission('Edit Invoice', $privileges, $roleData[0]['role_name'])): ?>
-                                                        <li>
-                                                            <a href="<?= getenv("BASE_URL") . "edit-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
-                                                                class="dropdown-item">Edit</a>
-                                                        </li>
-                                                    <?php endif; ?>
-
-                                                    <li>
-                                                        <a target="_blank"
-                                                            href="<?= getenv("BASE_URL") . "download-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
-                                                            class="dropdown-item">Download</a>
-                                                    </li>
-
-                                                    <?php if ($isAdmin || hasPermission('Delete Invoice', $privileges, $roleData[0]['role_name'])): ?>
+                                                    <?php if ($isAdmin || hasPermission('Delete Invoice', $privileges, $roleData['0']['role_name'])): ?>
                                                         <li>
                                                             <a href="javascript:void(0);"
-                                                                data-invoice-id="<?= $invoice['invoice_id'] ?>"
-                                                                class="dropdown-item deleteButton">Delete</a>
+                                                                data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
+                                                                class="dropdown-item deleteButton mb-0"><i
+                                                                    data-feather="trash-2" class="info-img"></i>Delete </a>
                                                         </li>
                                                     <?php endif; ?>
+                                                    <?php if ($isAdmin || hasPermission('Send Reminder', $privileges, $roleData['0']['role_name'])): ?>
 
-                                                    <?php if ($isAdmin || hasPermission('Send Reminder', $privileges, $roleData[0]['role_name'])): ?>
                                                         <li>
                                                             <a href="javascript:void(0);"
-                                                                data-invoice-id="<?= $invoice['invoice_id'] ?>"
-                                                                class="dropdown-item sendReminder">Send Reminder</a>
+                                                                data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
+                                                                class="dropdown-item sendReminder mb-0"><i data-feather="bell"
+                                                                    class="info-img"></i>Send Reminder </a>
                                                         </li>
                                                     <?php endif; ?>
 
-                                                    <?php if ($isAdmin || hasPermission('Send Invoice', $privileges, $roleData[0]['role_name'])): ?>
+                                                    <?php if ($isAdmin || hasPermission('Send Invoice', $privileges, $roleData['0']['role_name'])): ?>
+
                                                         <li>
                                                             <a href="javascript:void(0);"
-                                                                data-invoice-id="<?= $invoice['invoice_id'] ?>"
-                                                                class="dropdown-item sendInvoice">Send Invoice</a>
-                                                        </li>
-                                                    <?php endif; ?>
-
-                                                    <?php if ($isAdmin || hasPermission('Ledger', $privileges, $roleData[0]['role_name'])): ?>
-                                                        <li>
-                                                            <a target="_blank"
-                                                                href="<?= getenv("BASE_URL") . "ledger-transaction?id=" . base64_encode($invoice['invoice_id']) . "&uid=" . base64_encode($invoice['customer_id']) ?>"
-                                                                class="dropdown-item">Ledger</a>
+                                                                data-invoice-id="<?php echo $invoice['invoice_id'] ?>"
+                                                                class="dropdown-item sendInvoice mb-0"><i data-feather="send"
+                                                                    class="info-img"></i>Send Invoice </a>
                                                         </li>
                                                     <?php endif; ?>
                                                 </ul>

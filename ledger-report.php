@@ -15,10 +15,6 @@ if (!isset($_SESSION["admin_id"])) {
     exit();
 }
 
-// for card details
-$invoiceId = intval(base64_decode($_GET['id'])) ?? null;
-$customerId = intval(base64_decode($_GET['uid'])) ?? null;
-
 
 
 $createdBy = base64_decode($_SESSION['admin_id']);
@@ -54,18 +50,15 @@ try {
     $currentYear = date("Y");
 
     // Also fetch customers for the filter UI
-    $stmtFetchSingleCustomers = $db->prepare("SELECT * FROM customer WHERE isActive = 1 AND customer_id = ? ");
-    $stmtFetchSingleCustomers->bind_param('i', $customerId);
-    $stmtFetchSingleCustomers->execute();
-    $singleCustomer = $stmtFetchSingleCustomers->get_result()->fetch_array(MYSQLI_ASSOC);
-    $stmtFetchSingleCustomers->close();
+    $stmtFetchCustomers = $db->prepare("SELECT * FROM customer WHERE isActive = 1");
+    $stmtFetchCustomers->execute();
+    $customers = $stmtFetchCustomers->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmtFetchCustomers->close();
 
 
     if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         // Define the expected query parameters
         $params = [
-            'id' => isset($_GET['id']) ? $_GET['id'] : '',
-            'uid' => isset($_GET['uid']) ? $_GET['uid'] : '',
             'from' => isset($_GET['from']) ? $_GET['from'] : '',
             'to' => isset($_GET['to']) ? $_GET['to'] : '',
         ];
@@ -84,16 +77,6 @@ try {
             // ----------------------------
             // Decode & validate inputs
             // ----------------------------
-            $invoiceId = !empty($params['id'])
-                ? base64_decode($params['id'])
-                : null;
-
-            $customerId = !empty($params['uid'])
-                ? base64_decode($params['uid'])
-                : null;
-
-            $invoiceId = ctype_digit($invoiceId) ? (int) $invoiceId : null;
-            $customerId = ctype_digit($customerId) ? (int) $customerId : null;
 
             $startDate = !empty($params['from'])
                 ? date('Y-m-d', strtotime($params['from']))
@@ -118,9 +101,9 @@ try {
             tax.tax_rate
         FROM ledger_transactions
         INNER JOIN customer ON customer.customer_id = ledger_transactions.customer_id
-        INNER JOIN invoice  ON invoice.invoice_id = ledger_transactions.invoice_id
+        LEFT JOIN invoice  ON invoice.invoice_id = ledger_transactions.invoice_id
         LEFT JOIN admin     ON admin.admin_id = invoice.created_by
-        INNER JOIN tax      ON tax.tax_id = invoice.tax
+        LEFT JOIN tax      ON tax.tax_id = invoice.tax
         WHERE 1 = 1
     ";
 
@@ -130,18 +113,6 @@ try {
             $conditions = [];
             $paramsToBind = [];
             $types = "";
-
-            if ($invoiceId) {
-                $conditions[] = "ledger_transactions.invoice_id = ?";
-                $paramsToBind[] = $invoiceId;
-                $types .= "i";
-            }
-
-            if ($customerId) {
-                $conditions[] = "ledger_transactions.customer_id = ?";
-                $paramsToBind[] = $customerId;
-                $types .= "i";
-            }
 
             if ($startDate) {
                 $conditions[] = "ledger_transactions.created_at >= ?";
@@ -187,24 +158,24 @@ try {
                 invoice.invoice_id,
                 invoice.invoice_number,
                 ledger_transactions.*,
-                invoice.status as invoiceStatus,
+                invoice.status AS invoiceStatus,
                 customer.customer_id,
                 customer.customer_name,
                 admin.admin_username,
                 tax.tax_rate
-                FROM ledger_transactions
-                INNER JOIN customer
-                ON customer.customer_id =  ledger_transactions.customer_id
-                INNER JOIN invoice
-                ON invoice.invoice_id =  ledger_transactions.invoice_id
-                LEFT JOIN admin 
+            FROM ledger_transactions
+            INNER JOIN customer
+                ON customer.customer_id = ledger_transactions.customer_id
+            LEFT JOIN invoice
+                ON invoice.invoice_id = ledger_transactions.invoice_id
+            LEFT JOIN admin 
                 ON admin.admin_id = invoice.created_by
-                INNER JOIN tax 
+            LEFT JOIN tax 
                 ON tax.tax_id = invoice.tax
-                WHERE ledger_transactions.invoice_id = ?
-                ORDER BY invoice.invoice_id ASC
+            ORDER BY ledger_transactions.ledger_id ASC;
+
                 ");
-            $stmtFetchLedgerTransaction->bind_param('i', $invoiceId);
+            // $stmtFetchLedgerTransaction->bind_param('i', $invoiceId);
             if ($stmtFetchLedgerTransaction->execute()) {
                 $ledgerTransactions = $stmtFetchLedgerTransaction->get_result();
             } else {
@@ -221,172 +192,203 @@ try {
 }
 
 
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
 
-        // ----------------------------
+
+        $db->begin_transaction();
+
         // Required fields
-        // ----------------------------
-        $requiredFields = ['transaction_type', 'payment_method', 'amount'];
+        $requiredFields = ['transaction_type', 'payment_method', 'amount', 'customer_id'];
 
         foreach ($requiredFields as $field) {
             if (empty($_POST[$field])) {
-                echo json_encode([
-                    'status' => 400,
-                    'error' => "Missing required field: {$field}"
-                ]);
-                exit;
+                throw new Exception("Missing required field: {$field}");
             }
         }
 
-        // ----------------------------
+
+
         // Sanitize inputs
-        // ----------------------------
-        $transactionType = filter_input(INPUT_POST, 'transaction_type', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $paymentMethod = filter_input(INPUT_POST, 'payment_method', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $amountRaw = filter_input(
-            INPUT_POST,
-            'amount',
-            FILTER_SANITIZE_NUMBER_FLOAT,
-            FILTER_FLAG_ALLOW_FRACTION
-        );
+        $transactionType = strtoupper(trim($_POST['transaction_type']));
+        $paymentMethod = strtoupper(trim($_POST['payment_method']));
+        $amount = (float) $_POST['amount'];
+        $customerId = (int) $_POST['customer_id'];
         $remarks = $_POST['remark'] ?? null;
 
-        // ----------------------------
-        // Regex validation (ENUM-safe)
-        // ----------------------------
-        $transactionTypeRegex = '/^(PAYMENT|REFUND|ADJUSTMENT|INVOICE)$/';
-        $paymentMethodRegex = '/^(CREDIT_CARD|DEBIT_CARD|CASH|NET_BANKING|PAYPAL|OTHER)$/';
-        $amountRegex = '/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/';
+        // Optional flags
+        $doSettlement = isset($_POST['settle_invoice']) && $_POST['settle_invoice'] == 1;
 
-        if (!preg_match($transactionTypeRegex, $transactionType)) {
-            echo json_encode(['status' => 400, 'error' => 'Invalid transaction type']);
-            exit;
+        // Validation
+        if ($transactionType !== 'PAYMENT') {
+            throw new Exception('Only PAYMENT is allowed in this endpoint');
         }
 
-        if (!preg_match($paymentMethodRegex, $paymentMethod)) {
-            echo json_encode(['status' => 400, 'error' => 'Invalid payment method']);
-            exit;
-        }
+        $validPaymentMethods = ['CREDIT_CARD', 'DEBIT_CARD', 'CASH', 'NET_BANKING', 'PAYPAL', 'OTHER'];
 
-        if (!is_string($amountRaw) || !preg_match($amountRegex, $amountRaw)) {
-            echo json_encode(['status' => 400, 'error' => 'Invalid amount']);
-            exit;
+        if (!in_array($paymentMethod, $validPaymentMethods)) {
+            throw new Exception('Invalid payment method');
         }
-
-        $amount = (float) $amountRaw;
 
         if ($amount <= 0) {
-            echo json_encode([
-                'status' => 400,
-                'error' => 'Amount must be greater than zero'
-            ]);
-            exit;
+            throw new Exception('Amount must be greater than zero');
         }
 
-        // ----------------------------
-        // PAYMENT validation (NO over-payment)
-        // ----------------------------
-        if ($transactionType === 'PAYMENT') {
-
-            // Fetch invoice total
-            $stmtInvoice = $db->prepare("
-                SELECT total_amount
-                FROM invoice
-                WHERE invoice_id = ?
-                LIMIT 1
-            ");
-            $stmtInvoice->bind_param("i", $invoiceId);
-            $stmtInvoice->execute();
-            $invoiceData = $stmtInvoice->get_result()->fetch_assoc();
-            $stmtInvoice->close();
-
-            if (!$invoiceData) {
-                echo json_encode([
-                    'status' => 404,
-                    'error' => 'Invoice not found'
-                ]);
-                exit;
-            }
-
-            $invoiceTotal = (float) $invoiceData['total_amount'];
-
-            // Fetch total payments already made
-            $stmtPaid = $db->prepare("
-                SELECT COALESCE(SUM(credit_amount), 0) AS total_paid
-                FROM ledger_transactions
-                WHERE invoice_id = ?
-                AND transaction_type = 'PAYMENT'
-            ");
-            $stmtPaid->bind_param("i", $invoiceId);
-            $stmtPaid->execute();
-            $paidData = $stmtPaid->get_result()->fetch_assoc();
-            $stmtPaid->close();
-
-            $totalPaid = (float) $paidData['total_paid'];
-            $pendingAmount = $invoiceTotal - $totalPaid;
-
-            if ($amount > $pendingAmount) {
-                echo json_encode([
-                    'status' => 400,
-                    'error' => 'Payment amount exceeds pending balance',
-                    'pending_amount' => number_format($pendingAmount, 2)
-                ]);
-                exit;
-            }
-        }
-
-        // ----------------------------
-        // Debit / Credit logic
-        // ----------------------------
-        $debitAmount = 0.00;
-        $creditAmount = 0.00;
-
-        switch ($transactionType) {
-            case 'PAYMENT':
-                $creditAmount = $amount;
-                break;
-
-            case 'REFUND':
-            case 'ADJUSTMENT':
-            case 'INVOICE':
-                $debitAmount = $amount;
-                break;
-        }
-
-        // ----------------------------
-        // Insert ledger transaction
-        // ----------------------------
-        $stmt = $db->prepare("
-            INSERT INTO ledger_transactions
-            (customer_id, invoice_id, transaction_type, payment_method, debit_amount, credit_amount, remarks, created_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        // Check customer wallet balance
+        $stmtBalance = $db->prepare("
+            SELECT balance
+            FROM customer_wallet
+            WHERE customer_id = ?
         ");
 
-        $stmt->bind_param(
-            'iissddsi',
+        if (!$stmtBalance) {
+            throw new Exception($db->error);
+        }
+
+        $stmtBalance->bind_param("i", $customerId);
+        $stmtBalance->execute();
+        $result = $stmtBalance->get_result();
+        $row = $result->fetch_assoc();
+        $stmtBalance->close();
+
+        $currentBalance = (float) ($row['balance'] ?? 0.00);
+
+        // Prevent over-payment
+        if ($amount > $currentBalance) {
+            throw new Exception(
+                'Payment amount exceeds outstanding balance. Current balance: ' .
+                number_format($currentBalance, 2)
+            );
+        }
+
+
+        // Insert ledger transaction (PAYMENT)
+        $ledgerSql = "
+            INSERT INTO ledger_transactions
+            (customer_id, invoice_id, transaction_type, payment_method, debit_amount, credit_amount, remarks, created_by)
+            VALUES (?, NULL, 'PAYMENT', ?, 0, ?, ?, ?)
+        ";
+
+        $ledgerStmt = $db->prepare($ledgerSql);
+        if (!$ledgerStmt) {
+            throw new Exception($db->error);
+        }
+
+        $ledgerStmt->bind_param(
+            "isdsi",
             $customerId,
-            $invoiceId,
-            $transactionType,
             $paymentMethod,
-            $debitAmount,
-            $creditAmount,
+            $amount,
             $remarks,
             $createdBy
         );
 
-        if ($stmt->execute()) {
-            echo json_encode([
-                'status' => 201,
-                'message' => 'Ledger transaction created successfully'
-            ]);
-            exit;
+        if (!$ledgerStmt->execute()) {
+            throw new Exception($ledgerStmt->error);
         }
 
-        throw new Exception('Database insert failed');
+        $ledgerId = $ledgerStmt->insert_id;
+        $ledgerStmt->close();
+
+        // Update customer wallet (PRIMARY)
+        $walletSql = "
+            UPDATE customer_wallet
+            SET balance = balance - ?
+            WHERE customer_id = ?
+        ";
+
+        $walletStmt = $db->prepare($walletSql);
+        if (!$walletStmt) {
+            throw new Exception($db->error);
+        }
+
+        $walletStmt->bind_param("di", $amount, $customerId);
+        $walletStmt->execute();
+        $walletStmt->close();
+
+        // OPTIONAL: Invoice settlement (FIFO)
+        if ($doSettlement) {
+
+            $invoiceSql = "
+                SELECT
+                    i.invoice_id,
+                    i.total_amount -
+                    COALESCE(SUM(s.settled_amount), 0) AS due_amount
+                FROM invoice i
+                LEFT JOIN invoice_settlements s
+                    ON s.invoice_id = i.invoice_id
+                WHERE i.customer_id = ?
+                GROUP BY i.invoice_id
+                HAVING due_amount > 0
+                ORDER BY i.created_at ASC
+            ";
+
+            $stmtInv = $db->prepare($invoiceSql);
+            $stmtInv->bind_param("i", $customerId);
+            $stmtInv->execute();
+            $invoices = $stmtInv->get_result()->fetch_all(MYSQLI_ASSOC);
+            $stmtInv->close();
+
+            $remaining = $amount;
+
+            foreach ($invoices as $inv) {
+
+                if ($remaining <= 0) {
+                    break;
+                }
+
+                $apply = min($remaining, $inv['due_amount']);
+
+                // Insert settlement record
+                $settleSql = "
+                    INSERT INTO invoice_settlements
+                    (invoice_id, ledger_id, settled_amount)
+                    VALUES (?, ?, ?)
+                ";
+
+                $settleStmt = $db->prepare($settleSql);
+                $settleStmt->bind_param(
+                    "iid",
+                    $inv['invoice_id'],
+                    $ledgerId,
+                    $apply
+                );
+                $settleStmt->execute();
+                $settleStmt->close();
+
+                // Update invoice status
+                $newStatus = ($apply == $inv['due_amount'])
+                    ? 'PAID'
+                    : 'PARTIALLY_PAID';
+
+                $upd = $db->prepare("
+                    UPDATE invoice
+                    SET status = ?
+                    WHERE invoice_id = ?
+                ");
+                $upd->bind_param("si", $newStatus, $inv['invoice_id']);
+                $upd->execute();
+                $upd->close();
+
+                $remaining -= $apply;
+            }
+        }
+
+        // Commit
+        $db->commit();
+
+        echo json_encode([
+            'status' => 201,
+            'message' => 'Payment recorded successfully',
+            'ledger_id' => $ledgerId
+        ]);
+        exit;
 
     } catch (Exception $e) {
+
+        $db->rollback();
 
         echo json_encode([
             'status' => 500,
@@ -395,6 +397,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 }
+
 
 
 
@@ -412,7 +415,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         content="admin, estimates, bootstrap, business, corporate, creative, invoice, html5, responsive, Projects">
     <meta name="author" content="Dreamguys - Bootstrap Admin Template">
     <meta name="robots" content="noindex, nofollow">
-    <title>Ledger</title>
+    <title>Ledger Report</title>
 
     <link rel="shortcut icon" type="image/x-icon"
         href="<?= isset($companySettings['favicon']) ? $companySettings['favicon'] : "assets/img/fav/vis-favicon.png" ?>">
@@ -532,25 +535,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <ul class="table-top-head">
                         <li>
-                            <div class="page-btn">
-                                <a href="<?= getenv("BASE_URL") . "customer-reports" ?>" class="btn btn-secondary"><i
-                                        data-feather="arrow-left" class="me-2"></i>Back to
-                                    Customer Reports</a>
-                            </div>
+                            <a data-bs-toggle="tooltip" onclick="exportToPDF(`ledger_transaction`)"
+                                data-bs-placement="top" title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img" /></a>
                         </li>
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportToPDF()" data-bs-placement="top" title="Pdf"><img
-                                    src="assets/img/icons/pdf.svg" alt="img" /></a>
-                        </li>
-                        <li>
-                            <a data-bs-toggle="tooltip" onclick="exportToExcel()" data-bs-placement="top"
-                                title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a>
+                            <a data-bs-toggle="tooltip" onclick="exportToExcel(`ledger_transaction`)"
+                                data-bs-placement="top" title="Excel"><img src="assets/img/icons/excel.svg"
+                                    alt="img" /></a>
                         </li>
 
                         <li>
-                            <a href="<?= getenv("BASE_URL") . "ledger-transaction?id=" . $_GET['id'] . "&uid=" . $_GET['uid'] ?>"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i
-                                    data-feather="rotate-ccw" class="feather-rotate-ccw"></i></a>
+                            <a href="<?= getenv("BASE_URL") . "ledger-report" ?>" data-bs-toggle="tooltip"
+                                data-bs-placement="top" title="Refresh"><i data-feather="rotate-ccw"
+                                    class="feather-rotate-ccw"></i></a>
                         </li>
                         <li>
                             <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i
@@ -629,6 +626,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             </label>
                                         </th>
                                         <th>Ledger Id</th>
+                                        <th>Customer Name</th>
                                         <th>Transaction Date</th>
                                         <th>Created Date</th>
                                         <th>Debit Amount</th>
@@ -644,35 +642,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     $totalPendingAmount = 0;
                                     $count = 1;
 
-                                    foreach ($ledgerTransactions->fetch_all(MYSQLI_ASSOC) as $invoice) {
-                                        $totalPaidAmount += $invoice['credit_amount'];
-                                        $totalPendingAmount += $invoice['debit_amount'];
+                                    foreach ($ledgerTransactions->fetch_all(MYSQLI_ASSOC) as $transaction) {
+                                        $totalPaidAmount += $transaction['credit_amount'];
+                                        $totalPendingAmount += $transaction['debit_amount'];
                                         ?>
                                         <tr>
                                             <td>
                                                 <label class="checkboxs">
                                                     <input type="checkbox" name="invoiceIds"
-                                                        value="<?php echo $invoice['ledger_id'] ?>">
+                                                        value="<?php echo $transaction['ledger_id'] ?>">
                                                     <span class="checkmarks"></span>
                                                 </label>
                                             </td>
                                             <td><?php echo $count ?></td>
                                             <td>
-                                                <?php echo formatDateTime($invoice['transaction_date'], $localizationSettings); ?>
+                                                <?= $transaction['customer_name'] ?>
+                                            </td>
+                                            <td>
+                                                <?php echo formatDateTime($transaction['transaction_date'], $localizationSettings); ?>
                                             </td>
 
-                                            <td><?php echo formatDateTime($invoice['created_at'], $localizationSettings); ?>
+                                            <td><?php echo formatDateTime($transaction['created_at'], $localizationSettings); ?>
                                             </td>
-                                            <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['debit_amount']; ?>
-                                            <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $invoice['credit_amount']; ?>
+                                            <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $transaction['debit_amount']; ?>
+                                            <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . $transaction['credit_amount']; ?>
                                             </td>
-                                            <td> <?php if ($invoice['transaction_type'] == 'PAYMENT') { ?> <span
+                                            <td> <?php if ($transaction['transaction_type'] == 'PAYMENT') { ?> <span
                                                         class="badge badge-lg bg-success">Paid</span>
-                                                <?php } elseif ($invoice['transaction_type'] == 'REFUND') { ?> <span
+                                                <?php } elseif ($transaction['transaction_type'] == 'REFUND') { ?> <span
                                                         class="badge badge-lg bg-danger">Cancelled</span>
-                                                <?php } elseif ($invoice['transaction_type'] == 'ADJUSTMENT') { ?> <span
+                                                <?php } elseif ($transaction['transaction_type'] == 'ADJUSTMENT') { ?> <span
                                                         class="badge badge-lg bg-warning">Pending</span>
-                                                <?php } elseif ($invoice['transaction_type'] == 'INVOICE') { ?> <span
+                                                <?php } elseif ($transaction['transaction_type'] == 'INVOICE') { ?> <span
                                                         class="badge badge-lg bg-primary">Invoice</span> <?php } ?>
                                             </td>
 
@@ -689,13 +690,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                             <a href="javascript:void(0);" data-bs-toggle="modal"
                                                                 class="btn btn-added show-payment-btn"
                                                                 data-bs-target="#show-payment"
-                                                                data-ledger-id="<?= $invoice['ledger_id'] ?>"
-                                                                data-invoice-id="<?= $invoice['invoice_id'] ?>"
-                                                                data-payment-method="<?= $invoice['payment_method'] ?>"
-                                                                data-debit-amount="<?= $invoice['debit_amount'] ?>"
-                                                                data-credit-amount="<?= $invoice['credit_amount'] ?>"
-                                                                data-remarks="<?= $invoice['remarks'] ?>"
-                                                                data-created_at="<?= $invoice['created_at'] ?>"><i
+                                                                data-ledger-id="<?= $transaction['ledger_id'] ?>"
+                                                                data-invoice-id="<?= $transaction['invoice_id'] ?>"
+                                                                data-customer-id="<?= $transaction['customer_id'] ?>"
+                                                                data-payment-method="<?= $transaction['payment_method'] ?>"
+                                                                data-transaction-type="<?= $transaction['transaction_type'] ?>"
+                                                                data-debit-amount="<?= $transaction['debit_amount'] ?>"
+                                                                data-credit-amount="<?= $transaction['credit_amount'] ?>"
+                                                                data-remarks="<?= $transaction['remarks'] ?>"
+                                                                data-created_at="<?= $transaction['created_at'] ?>"><i
                                                                     data-feather="eye" class="info-img"></i>Show
                                                                 Detail</a>
                                                         </li>
@@ -709,7 +712,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="5"></td>
+                                        <td colspan="6"></td>
                                         <td>
                                             <strong>
                                                 <span class="text-success">Total Paid:
@@ -724,7 +727,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                 </span>
                                             </strong>
                                         </td> -->
-                                        <td colspan="1"></td>
+                                        <td colspan="2"></td>
                                     </tr>
                                 </tfoot>
 
@@ -752,6 +755,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         <div class="modal-body custom-modal-body">
                             <form class="create-payment-form">
+                                <div class="mb-3 add-product">
+                                    <label class="form-label">Customer</label>
+                                    <select class="select2 form-select" name="customer_id">
+                                        <option value="">Select Customer</option>
+                                        <?php foreach ($customers as $customer) { ?>
+                                            <option value="<?php echo $customer['customer_id']; ?>">
+                                                <?php echo $customer['customer_name']; ?>
+                                            </option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
                                 <div class="mb-3">
                                     <label class="form-label">Transaction Type</label>
                                     <select class="form-select" name="transaction_type" id="transaction_type">
@@ -762,7 +776,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Transaction Type</label>
+                                    <label class="form-label">Payment Method</label>
                                     <select id="payment_method" name="payment_method" class="form-control" required>
                                         <option>Select Method</option>
                                         <option value="CASH">Cash</option>
@@ -812,10 +826,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="modal-body custom-modal-body">
                             <form class="show-payment-form">
                                 <input type="hidden" name="editLedgerId" id="editLedgerId">
+                                <div class="mb-3 add-product">
+                                    <label class="form-label">Customer</label>
+                                    <select class="select2 form-select" name="edit_customer_id" >
+                                        <option value="">Select Customer</option>
+                                        <?php foreach ($customers as $customer) { ?>
+                                            <option value="<?php echo $customer['customer_id']; ?>">
+                                                <?php echo $customer['customer_name']; ?>
+                                            </option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
                                 <div class="mb-3">
                                     <label class="form-label">Transaction Type</label>
                                     <select class="form-select" name="edit_transaction_type" id="edit_transaction_type">
                                         <option>Select</option>
+                                        <option value="INVOICE">Invoice</option>
                                         <option value="PAYMENT">Payment</option>
                                         <option value='REFUND'>Refund</option>
                                         <option value='ADJUSTMENT'>Adjustment</option>
@@ -866,8 +892,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script src="assets/js/jquery.slimscroll.min.js" type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
 
+    <script src="assets/plugins/select2/js/select2.min.js" type="85b95337cd86ef30623c36b5-text/javascript"></script>
+
     <script src="assets/js/jquery.dataTables.min.js" type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
     <script src="assets/js/dataTables.bootstrap5.min.js" type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
+    <script src="assets/js/bootstrap.bundle.min.js" type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
 
     <script src="assets/js/moment.min.js" type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
     <script src="assets/js/bootstrap-datetimepicker.min.js" type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
@@ -876,19 +905,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="assets/plugins/daterangepicker/daterangepicker.js"
         type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
 
-    <script src="assets/js/bootstrap.bundle.min.js" type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
 
     <script src="assets/plugins/summernote/summernote-bs4.min.js"
         type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
 
-    <script src="assets/plugins/select2/js/select2.min.js" type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
 
     <script src="assets/plugins/sweetalert/sweetalert2.all.min.js"
         type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
     <script src="assets/plugins/sweetalert/sweetalerts.min.js" type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
     <script src="assets/js/script.js" type="36113e2a9ce2b6f627c18ab9-text/javascript"></script>
+    <script src="assets/js/custom-select2.js" type="85b95337cd86ef30623c36b5-text/javascript"></script>
     <script src="assets/js/rocket-loader-min.js" data-cf-settings="36113e2a9ce2b6f627c18ab9-|49" defer=""></script>
-
     <script src="assets/js/custom.js"></script>
 
 
@@ -919,15 +946,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $(document).on('click', '.show-payment-btn', function () {
 
+                let customerId = $(this).data('customer-id');
                 let ledgerId = $(this).data('ledger-id');
                 let invoiceId = $(this).data('invoice-id');
                 let paymentMethod = $(this).data('payment-method');
+                let transactionType = $(this).data('transaction-type');
                 let debitAmount = $(this).data('debit-amount');
                 let creditAmount = $(this).data('credit-amount');
                 let remarks = $(this).data('remarks');
 
                 // Hidden fields
                 $('#editLedgerId').val(ledgerId);
+
+                $('select[name="edit_customer_id"]').val(customerId);
+
+                $('select[name="edit_transaction_type"]').val(transactionType);
 
                 // Amount logic (credit OR debit)
                 let amount = creditAmount > 0 ? creditAmount : debitAmount;
@@ -971,7 +1004,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
 
-                window.location.href = `ledger-transaction?from=${fromDate}&to=${toDate}&id=${id}&uid=${uid}`;
+                window.location.href = `ledger-report?from=${fromDate}&to=${toDate}`;
             });
 
 
@@ -981,15 +1014,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 let transactionType = $('select[name="transaction_type"]').val();
                 let paymentMethod = $('select[name="payment_method"]').val();
                 let amount = $('input[name="amount"]').val().trim();
+                let customerId = $('select[name="customer_id"]').val();
                 let remark = $('textarea[name="remark"]').val().trim();
 
                 const transactionTypeRegex = /^(PAYMENT|REFUND|ADJUSTMENT)$/;
                 const paymentMethodRegex = /^(CASH|CREDIT_CARD|DEBIT_CARD|NET_BANKING|PAYPAL|OTHER)$/;
                 const amountRegex = /^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/;
 
+
+
                 // Required check
-                if (!transactionType || !paymentMethod || !amount) {
+                if (!transactionType || !paymentMethod || !amount || !customerId) {
                     notyf.error("All fields are required.");
+                    return;
+                }
+
+                // Required check
+                if (!customerId) {
+                    notyf.error("Please Select Customer.");
                     return;
                 }
 
@@ -1015,6 +1057,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     transaction_type: transactionType,
                     payment_method: paymentMethod,
                     amount: amount,
+                    customer_id: customerId,
                     remark: remark,
                 }
 

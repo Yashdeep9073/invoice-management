@@ -690,7 +690,7 @@ ob_end_clean();
                                                         <td><?php echo formatDateTime($paidInvoice['updated_at'], $localizationSettings); ?>
                                                         </td>
                                                         <td class="ref-number">
-                                                            <?php echo htmlspecialchars($paidInvoice['transaction_id']); ?>
+                                                            <?php echo htmlspecialchars(isset($paidInvoice['transaction_id']) ? $paidInvoice['transaction_id'] : ""); ?>
                                                         </td>
                                                         <td class="ref-number">
                                                             <?php echo htmlspecialchars($paidInvoice['invoice_number']); ?>
@@ -847,7 +847,7 @@ ob_end_clean();
                                                         </td>
 
                                                         <td class="ref-number">
-                                                            <?php echo htmlspecialchars($pendingInvoice['transaction_id']); ?>
+                                                            <?php echo htmlspecialchars(isset($pendingInvoice['transaction_id']) ? $pendingInvoice['transaction_id'] : ""); ?>
                                                         </td>
                                                         <td class="ref-number">
                                                             <?php echo htmlspecialchars($pendingInvoice['invoice_number']); ?>
@@ -999,7 +999,8 @@ ob_end_clean();
                                                         <td><?php echo formatDateTime($cancelledInvoice['updated_at'], $localizationSettings); ?>
                                                         </td>
                                                         <td class="ref-number">
-                                                            <?php echo htmlspecialchars($cancelledInvoice['transaction_id']); ?>
+                                                            <?php echo htmlspecialchars(isset($cancelledInvoice['transaction_id']) ? $cancelledInvoice['transaction_id'] : ""); ?>
+                                                            
                                                         </td>
                                                         <td class="ref-number">
                                                             <?php echo htmlspecialchars($cancelledInvoice['invoice_number']); ?>
@@ -1151,7 +1152,7 @@ ob_end_clean();
                                                         <td><?php echo formatDateTime($refundedInvoice['updated_at'], $localizationSettings); ?>
                                                         </td>
                                                         <td class="ref-number">
-                                                            <?php echo htmlspecialchars($refundedInvoice['transaction_id']); ?>
+                                                            <?php echo htmlspecialchars(isset($refundedInvoice['transaction_id']) ? $refundedInvoice['transaction_id'] : ""); ?>
                                                         </td>
                                                         <td class="ref-number">
                                                             <?php echo htmlspecialchars($refundedInvoice['invoice_number']); ?>

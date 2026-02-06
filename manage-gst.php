@@ -608,11 +608,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                     <ul class="table-top-head">
 
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportToPDF()" data-bs-placement="top" title="Pdf"><img
+                            <a data-bs-toggle="tooltip" onclick="exportToPDF(`gst`)" data-bs-placement="top" title="Pdf"><img
                                     src="assets/img/icons/pdf.svg" alt="img" /></a>
                         </li>
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportToExcel()" data-bs-placement="top"
+                            <a data-bs-toggle="tooltip" onclick="exportToExcel(`gst`)" data-bs-placement="top"
                                 title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a>
                         </li>
 
