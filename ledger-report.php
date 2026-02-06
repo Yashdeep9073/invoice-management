@@ -628,6 +628,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <th>Ledger Id</th>
                                         <th>Customer Name</th>
                                         <th>Transaction Date</th>
+                                        <th>Transaction Type</th>
+                                        <th>Payment Method</th>
                                         <th>Created Date</th>
                                         <th>Debit Amount</th>
                                         <th>Credit Amount</th>
@@ -656,10 +658,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             </td>
                                             <td><?php echo $count ?></td>
                                             <td>
-                                                <?= $transaction['customer_name'] ?>
+                                                <a class="text-primary" target="_blank"
+                                                    href="<?= getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($transaction['customer_id']) ?>">
+                                                    <?= $transaction['customer_name'] ?>
+                                                </a>
+
                                             </td>
                                             <td>
                                                 <?php echo formatDateTime($transaction['transaction_date'], $localizationSettings); ?>
+                                            </td>
+                                            <td>
+                                                <?= $transaction['transaction_type'] ?>
+                                            </td>
+                                            <td>
+                                                <?= $transaction['payment_method'] ?>
                                             </td>
 
                                             <td><?php echo formatDateTime($transaction['created_at'], $localizationSettings); ?>
@@ -828,7 +840,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <input type="hidden" name="editLedgerId" id="editLedgerId">
                                 <div class="mb-3 add-product">
                                     <label class="form-label">Customer</label>
-                                    <select class="select2 form-select" name="edit_customer_id" >
+                                    <select class="select2 form-select" name="edit_customer_id">
                                         <option value="">Select Customer</option>
                                         <?php foreach ($customers as $customer) { ?>
                                             <option value="<?php echo $customer['customer_id']; ?>">

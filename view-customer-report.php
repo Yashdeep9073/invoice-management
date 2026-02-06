@@ -1833,6 +1833,8 @@ ob_end_clean();
                                                     <th>Ledger Id</th>
                                                     <th>Customer Name</th>
                                                     <th>Transaction Date</th>
+                                                    <th>Transaction Type</th>
+                                                    <th>Payment Method</th>
                                                     <th>Created Date</th>
                                                     <th>Debit Amount</th>
                                                     <th>Credit Amount</th>
@@ -1865,6 +1867,12 @@ ob_end_clean();
                                                         </td>
                                                         <td>
                                                             <?php echo formatDateTime($transaction['transaction_date'], $localizationSettings); ?>
+                                                        </td>
+                                                        <td>
+                                                            <?= $transaction['transaction_type'] ?>
+                                                        </td>
+                                                        <td>
+                                                            <?= $transaction['payment_method'] ?>
                                                         </td>
 
                                                         <td>
