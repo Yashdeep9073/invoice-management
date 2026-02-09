@@ -1935,7 +1935,7 @@ ob_end_clean();
                                             </tbody>
                                             <tfoot>
                                                 <tr>
-                                                    <td colspan="8"></td>
+                                                    <td colspan="7"></td>
                                                     <td>
                                                         <strong>
                                                             <span class="text-success">Total Paid:
