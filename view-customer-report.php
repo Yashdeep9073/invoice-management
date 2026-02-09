@@ -1486,7 +1486,7 @@ ob_end_clean();
                                                                 <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalAmountSum, 2); ?></span></strong>
                                                     </td>
                                                     <td><strong><span class="text-danger">Pending:
-                                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($pendingAmountSum, 2); ?></span></strong>
+                                                                <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($balance, 2); ?></span></strong>
                                                     </td>
                                                     <td colspan="2"></td>
                                                 </tr>
@@ -1830,7 +1830,7 @@ ob_end_clean();
                                                         </label>
                                                     </th>
                                                     <th>Ledger Id</th>
-                                                    <th>Customer Name</th>
+                                                    <!-- <th>Customer Name</th> -->
                                                     <th>Transaction Date</th>
                                                     <th>Transaction Type</th>
                                                     <th>Payment Method</th>
@@ -1863,12 +1863,13 @@ ob_end_clean();
                                                         <td>
                                                             <?php echo $count ?>
                                                         </td>
-                                                        <td>
-                                                            <a class="text-primary" target="_blank" href="<?= getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($transaction['customer_id']) ?>">
+                                                        <!-- <td>
+                                                            <a class="text-primary" target="_blank"
+                                                                href="<?= getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($transaction['customer_id']) ?>">
                                                                 <?= $transaction['customer_name'] ?>
                                                             </a>
 
-                                                        </td>
+                                                        </td> -->
                                                         <td>
                                                             <?php echo formatDateTime($transaction['transaction_date'], $localizationSettings); ?>
                                                         </td>
@@ -1934,7 +1935,7 @@ ob_end_clean();
                                             </tbody>
                                             <tfoot>
                                                 <tr>
-                                                    <td colspan="6"></td>
+                                                    <td colspan="8"></td>
                                                     <td>
                                                         <strong>
                                                             <span class="text-success">Total Paid:
@@ -1949,7 +1950,7 @@ ob_end_clean();
                                                 </span>
                                             </strong>
                                         </td> -->
-                                                    <td colspan="2"></td>
+                                                    <td colspan="1"></td>
                                                 </tr>
                                             </tfoot>
                                         </table>
