@@ -24,20 +24,44 @@ try {
 
     $stmtNumber = $db->prepare("SELECT COUNT(*) AS total_invoices FROM invoice WHERE is_active = 1 AND status IN ('PAID', 'PENDING');");
     $stmtNumber->execute();
-    $totalNumberInvoice = $stmtNumber->get_result()->fetch_all(MYSQLI_ASSOC);
+    $totalNumberInvoice = $stmtNumber->get_result()->fetch_array(MYSQLI_ASSOC);
 
 
-    $stmtTotalAmount = $db->prepare("SELECT SUM(total_amount) AS total_payment FROM invoice WHERE is_active = 1 AND status IN ('PAID', 'PENDING'); ");
-    $stmtTotalAmount->execute();
-    $totalAmount = $stmtTotalAmount->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmtTotalInvoice = $db->prepare("
+    SELECT COALESCE(SUM(total_amount), 0) AS total_payment
+    FROM invoice
+    WHERE is_active = 1
+    AND status IN ('PAID', 'PENDING')
+    ");
+    $stmtTotalInvoice->execute();
+    $totalAmount = $stmtTotalInvoice->get_result()->fetch_array(MYSQLI_ASSOC);
 
-    $stmtTotalPaidAmount = $db->prepare('SELECT SUM(total_amount) AS total_paid_payment FROM invoice WHERE status = "PAID" AND is_active = 1');
+
+    $stmtTotalPaidAmount = $db->prepare('SELECT 
+    SUM(credit_amount) AS total_received
+        FROM ledger_transactions
+        WHERE transaction_type = "PAYMENT";
+    ');
     $stmtTotalPaidAmount->execute();
-    $totalPaidAmount = $stmtTotalPaidAmount->get_result()->fetch_all(MYSQLI_ASSOC);
+    $totalPaidAmount = $stmtTotalPaidAmount->get_result()->fetch_array(MYSQLI_ASSOC);
 
-    $stmtTotalDueAmount = $db->prepare('SELECT SUM(total_amount) AS total_due_payment FROM invoice WHERE status = "PENDING" AND is_active = 1');
+
+    $stmtTotalDueAmount = $db->prepare('SELECT 
+        (
+            SELECT COALESCE(SUM(total_amount),0)
+            FROM invoice
+            WHERE is_active = 1
+        ) 
+        -
+        (
+            SELECT COALESCE(SUM(credit_amount),0)
+            FROM ledger_transactions
+            WHERE transaction_type = "PAYMENT"
+        ) 
+    AS total_due;
+    ');
     $stmtTotalDueAmount->execute();
-    $totalDueAmount = $stmtTotalDueAmount->get_result()->fetch_all(MYSQLI_ASSOC);
+    $totalDueAmount = $stmtTotalDueAmount->get_result()->fetch_array(MYSQLI_ASSOC);
 
     $stmtInvoiceCount = $db->prepare('  SELECT 
             status, 
@@ -295,7 +319,7 @@ ob_end_flush();
                     <div class="col-xl-3 col-sm-6 col-12 d-flex">
                         <div class="dash-count">
                             <div class="dash-counts">
-                                <h4><?php echo $totalNumberInvoice['0']['total_invoices'] ?></h4>
+                                <h4><?php echo $totalNumberInvoice['total_invoices'] ?></h4>
                                 <h5><a class="text-white" href="manage-invoice.php">Invoices</a></h5>
                             </div>
                             <div class="dash-imgs">
@@ -309,7 +333,7 @@ ob_end_flush();
                                 <h4>
                                     <?php
                                     $currency = isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$";
-                                    $totalAmount = !empty($totalAmount[0]['total_payment']) ? $totalAmount[0]['total_payment'] : 0;
+                                    $totalAmount = !empty($totalAmount['total_payment']) ? $totalAmount['total_payment'] : 0;
                                     echo $currency . " " . $totalAmount;
                                     ?>
                                 </h4>
@@ -327,7 +351,7 @@ ob_end_flush();
                                 <h4>
                                     <?php
                                     $currency = isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$";
-                                    $totalPaidAmount = !empty($totalPaidAmount[0]['total_paid_payment']) ? $totalPaidAmount[0]['total_paid_payment'] : 0;
+                                    $totalPaidAmount = !empty($totalPaidAmount['total_received']) ? $totalPaidAmount['total_received'] : 0;
                                     echo $currency . " " . $totalPaidAmount;
                                     ?>
                                 </h4>
@@ -345,7 +369,7 @@ ob_end_flush();
                                 <h4>
                                     <?php
                                     $currency = isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$";
-                                    $dueAmount = !empty($totalDueAmount[0]['total_due_payment']) ? $totalDueAmount[0]['total_due_payment'] : 0;
+                                    $dueAmount = !empty($totalDueAmount['total_due']) ? $totalDueAmount['total_due'] : 0;
                                     echo $currency . " " . $dueAmount;
                                     ?>
                                 </h4>
