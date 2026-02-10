@@ -1167,11 +1167,11 @@ ob_end_clean();
                     </div>
                     <ul class="table-top-head">
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportActiveTabToPDF()" data-bs-placement="top"
+                            <a data-bs-toggle="tooltip" onclick="exportActiveTabLedgerToPDF()" data-bs-placement="top"
                                 title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img" /></a>
                         </li>
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportActiveTabToExcel()" data-bs-placement="top"
+                            <a data-bs-toggle="tooltip" onclick="exportActiveTabLedgerToExcel()" data-bs-placement="top"
                                 title="Excel"><img src="assets/img/icons/excel.svg" alt="img" /></a>
                         </li>
 

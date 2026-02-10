@@ -315,6 +315,204 @@ function exportActiveTabToPDF() {
   }
 }
 
+
+function getTableHeaderRow(tableId) {
+  const tableEl = document.getElementById(tableId);
+  if (!tableEl) return null;
+
+  const thead = tableEl.querySelector("thead");
+  if (!thead) return null;
+
+  const headerRow = document.createElement("tr");
+  thead.querySelectorAll("th").forEach(th => {
+    const newTh = document.createElement("th");
+    newTh.innerText = th.innerText.trim();
+    headerRow.appendChild(newTh);
+  });
+
+  return headerRow;
+}
+
+function getCustomerNameFromPage() {
+  const el = document.querySelector(".profile-info h5");
+  return el ? el.innerText.trim() : "Customer Report";
+}
+
+
+
+function exportActiveTabLedgerToExcel() {
+  const notyf = new Notyf({ position: { x: "center", y: "top" } });
+
+  const activeTableId = getActiveTableId();
+  if (!activeTableId) {
+    notyf.error("No active table found!");
+    return;
+  }
+
+  const table = $(`#${activeTableId}`).DataTable();
+  const headerRow = getTableHeaderRow(activeTableId);
+
+  if (!headerRow) {
+    notyf.error("Table header not found!");
+    return;
+  }
+
+  let selectedRows = [];
+  let checkboxes = table.rows().nodes().to$().find('input[type="checkbox"]')
+    .filter((i, cb) => !cb.id || !cb.id.startsWith("select-all"));
+
+  let checked = checkboxes.filter(":checked");
+
+  if (checked.length === 0) {
+    selectedRows = table.rows().nodes().toArray();
+  } else {
+    table.rows().every(function () {
+      let rowNode = this.node();
+      let cb = $(rowNode).find('input[type="checkbox"]');
+      if (cb.length && cb.is(":checked")) selectedRows.push(rowNode);
+    });
+  }
+
+  if (selectedRows.length === 0) {
+    notyf.error("No data rows to export!");
+    return;
+  }
+
+
+  // ---------- BUILD TEMP TABLE ----------
+
+  const customerName = getCustomerNameFromPage();
+
+  let tempTable = document.createElement("table");
+
+  // ---- CUSTOMER NAME ROW ----
+  let titleRow = document.createElement("tr");
+  let titleCell = document.createElement("th");
+  titleCell.colSpan = headerRow.cells.length;
+  titleCell.innerText = `Customer: ${customerName}`;
+  titleCell.style.fontWeight = "bold";
+  titleCell.style.textAlign = "center";
+  titleRow.appendChild(titleCell);
+  tempTable.appendChild(titleRow);
+
+  // ---- EMPTY ROW ----
+  tempTable.appendChild(document.createElement("tr"));
+
+  tempTable.appendChild(headerRow.cloneNode(true));
+
+  selectedRows.forEach(row => {
+    tempTable.appendChild(row.cloneNode(true));
+  });
+
+  // ---------- CLEANUP ----------
+  let actionIndex = -1;
+  [...tempTable.rows[0].cells].forEach((cell, i) => {
+    if (cell.innerText.toLowerCase() === "action") actionIndex = i;
+  });
+
+  for (let row of tempTable.rows) {
+
+    // 🔐 Skip rows that are title / empty rows
+    if (!row.cells || row.cells.length === 0) continue;
+
+    // 🔐 Skip customer title row (colSpan row)
+    if (row.cells.length === 1 && row.cells[0].colSpan > 1) continue;
+
+    // Remove checkbox column ONLY if it exists
+    if (row.cells.length > 0) {
+      row.deleteCell(0);
+    }
+
+    // Clean currency symbols
+    for (let cell of row.cells) {
+      if (cell.innerText) {
+        cell.innerText = cell.innerText.replace(/[₹$€£¥]/g, "").trim();
+      }
+    }
+  }
+
+
+  // ---------- EXPORT ----------
+  try {
+    const wb = XLSX.utils.table_to_book(tempTable, { sheet: "Sheet1" });
+    XLSX.writeFile(wb, `${activeTableId}.xlsx`);
+    notyf.success("Excel exported successfully!");
+  } catch (err) {
+    console.error(err);
+    notyf.error("Excel export failed!");
+  }
+}
+
+
+function exportActiveTabLedgerToPDF() {
+  const notyf = new Notyf({ position: { x: "center", y: "top" } });
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("l");
+
+  const activeTableId = getActiveTableId();
+  if (!activeTableId) {
+    notyf.error("No active table found!");
+    return;
+  }
+
+  const table = $(`#${activeTableId}`).DataTable();
+  const headerRow = getTableHeaderRow(activeTableId);
+
+  if (!headerRow) {
+    notyf.error("Table header not found!");
+    return;
+  }
+
+  // ---------- HEADERS ----------
+  let headers = [];
+  [...headerRow.cells].forEach(th => {
+    const txt = th.innerText.trim().toLowerCase();
+    if (txt && txt !== "action") headers.push(th.innerText);
+  });
+
+  // ---------- ROWS ----------
+  let rows = [];
+  table.rows().every(function () {
+    let rowNode = this.node();
+    let cb = $(rowNode).find('input[type="checkbox"]');
+
+    if (cb.length && cb.is(":checked") || !$('input[type="checkbox"]:checked').length) {
+      let rowData = [];
+      [...rowNode.cells].forEach((cell, idx) => {
+        if (idx === 0) return; // checkbox
+        if (cell.innerText.toLowerCase() === "action") return;
+
+        rowData.push(
+          cell.innerText.replace(/[₹$€£¥]/g, "").trim()
+        );
+      });
+      if (rowData.length) rows.push(rowData);
+    }
+  });
+
+  if (!rows.length) {
+    notyf.error("No data rows to export!");
+    return;
+  }
+
+  // ---------- PDF ----------
+  try {
+    doc.autoTable({
+      head: [headers],
+      body: rows,
+      theme: "striped",
+      styles: { fontSize: 8 },
+      margin: { top: 20 }
+    });
+    doc.save(`${activeTableId}.pdf`);
+    notyf.success("PDF exported successfully!");
+  } catch (err) {
+    console.error(err);
+    notyf.error("PDF export failed!");
+  }
+}
+
+
 // Function to export to Excel
 function exportToExcel(name = "test") {
   // Initialize Notyf for success and error notifications
