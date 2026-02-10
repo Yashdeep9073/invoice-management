@@ -608,8 +608,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                     <ul class="table-top-head">
 
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportToPDF(`gst`)" data-bs-placement="top" title="Pdf"><img
-                                    src="assets/img/icons/pdf.svg" alt="img" /></a>
+                            <a data-bs-toggle="tooltip" onclick="exportToPDF(`gst`)" data-bs-placement="top"
+                                title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img" /></a>
                         </li>
                         <li>
                             <a data-bs-toggle="tooltip" onclick="exportToExcel(`gst`)" data-bs-placement="top"
@@ -718,6 +718,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                     <?php
                                     $totalBaseAmount = 0;
                                     $totalTaxAmount = 0;
+                                    $totalGrandAmount = 0;
 
                                     foreach ($invoices->fetch_all(MYSQLI_ASSOC) as $invoice):
 
@@ -735,6 +736,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                         if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
                                             $totalBaseAmount += $priceWithoutTax;
                                             $totalTaxAmount += $taxAmount;
+                                            $totalGrandAmount += $invoice['total_amount'];
+
                                         }
                                         ?>
                                         <tr>
@@ -751,7 +754,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                             </td>
 
                                             <td>
-                                                <a class="text-primary" href="<?= getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($invoice['customer_id']) ?>">
+                                                <a class="text-primary"
+                                                    href="<?= getenv("BASE_URL") . "view-customer-report?id=" . base64_encode($invoice['customer_id']) ?>">
                                                     <?= $invoice['customer_name'] ?>
                                                 </a>
                                             </td>
@@ -820,6 +824,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                     <tr>
                                         <td colspan="5"></td>
 
+                                        <!-- Base Total -->
                                         <td>
                                             <strong class="text-primary">
                                                 Total:
@@ -828,6 +833,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                             </strong>
                                         </td>
 
+                                        <!-- GST Total -->
                                         <td>
                                             <strong class="text-danger">
                                                 GST:
@@ -836,9 +842,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                             </strong>
                                         </td>
 
-                                        <td colspan="4"></td>
+                                        <!-- Grand Total -->
+                                        <td>
+                                            <strong class="text-success">
+                                                Grand Total:
+                                                <?= $localizationSettings["currency_symbol"] ?? "₹" ?>
+                                                <?= number_format($totalGrandAmount, 2) ?>
+                                            </strong>
+                                        </td>
+
+                                        <td colspan="3"></td>
                                     </tr>
                                 </tfoot>
+
                             </table>
 
                         </div>

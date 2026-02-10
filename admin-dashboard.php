@@ -127,82 +127,84 @@ try {
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceCount'])) {
 
-    // Query to get invoice count by month and status
-    $stmtInvoiceMonthCount = $db->prepare("
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['invoiceCount'])) {
+
+    $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    $invoiceAmounts = array_fill(0, 12, 0);
+    $paidAmounts = array_fill(0, 12, 0);
+    $pendingAmounts = array_fill(0, 12, 0);
+    $cancelledAmounts = array_fill(0, 12, 0);
+
+    // INVOICE AMOUNT (LEDGER: INVOICE) 
+    $stmtInvoice = $db->prepare("
         SELECT 
-            MONTH(created_at) AS month_number,
-            MONTHNAME(created_at) AS month_name,
-            status,
-            COUNT(*) AS invoice_count,
-            SUM(total_amount) AS total_sum
-        FROM invoice
-        WHERE status IN ('PAID', 'PENDING', 'CANCELLED') AND is_active = 1
-        GROUP BY month_number, month_name, status
-        ORDER BY month_number, FIELD(status, 'PAID', 'PENDING', 'CANCELLED');
+            MONTH(transaction_date) AS month_number,
+            SUM(debit_amount) AS invoice_amount
+        FROM ledger_transactions
+        WHERE transaction_type = 'INVOICE'
+          AND YEAR(transaction_date) = YEAR(CURDATE())
+        GROUP BY MONTH(transaction_date)
     ");
+    $stmtInvoice->execute();
+    $resInvoice = $stmtInvoice->get_result();
 
-    $stmtInvoiceMonthCount->execute();
-    $result = $stmtInvoiceMonthCount->get_result();
-
-    $totalInvoiceMonthCount = $result->fetch_all(MYSQLI_ASSOC);
-
-    // Initialize arrays
-    $invoiceCounts = [
-        'PAID' => array_fill(1, 12, 0),
-        'PENDING' => array_fill(1, 12, 0),
-        'CANCELLED' => array_fill(1, 12, 0)
-    ];
-
-    $invoiceAmounts = [
-        'PAID' => array_fill(1, 12, 0),
-        'PENDING' => array_fill(1, 12, 0),
-        'CANCELLED' => array_fill(1, 12, 0)
-    ];
-
-    foreach ($totalInvoiceMonthCount as $value) {
-        $monthNumber = $value['month_number'];
-        $status = $value['status'];
-
-        $invoiceCounts[$status][$monthNumber] = $value['invoice_count'];
-        $invoiceAmounts[$status][$monthNumber] = round((float) $value['total_sum'], 2);
+    while ($row = $resInvoice->fetch_assoc()) {
+        $idx = (int) $row['month_number'] - 1;
+        $invoiceAmounts[$idx] = (float) $row['invoice_amount'];
     }
 
-    // Prepare response
-    $responseData = [
-        'status' => true,
-        'data' => [
-            'months' => [
-                'January',
-                'February',
-                'March',
-                'April',
-                'May',
-                'June',
-                'July',
-                'August',
-                'September',
-                'October',
-                'November',
-                'December'
-            ],
-            'invoiceCounts' => [
-                'Paid' => array_values($invoiceCounts['PAID']),
-                'Pending' => array_values($invoiceCounts['PENDING']),
-                'Cancelled' => array_values($invoiceCounts['CANCELLED'])
-            ],
-            'invoiceAmounts' => [
-                'Paid' => array_values($invoiceAmounts['PAID']),
-                'Pending' => array_values($invoiceAmounts['PENDING']),
-                'Cancelled' => array_values($invoiceAmounts['CANCELLED'])
-            ]
-        ]
-    ];
+    // PAID AMOUNT (LEDGER: PAYMENT)
+    $stmtPaid = $db->prepare("
+        SELECT 
+            MONTH(transaction_date) AS month_number,
+            SUM(credit_amount) AS paid_amount
+        FROM ledger_transactions
+        WHERE transaction_type = 'PAYMENT'
+          AND YEAR(transaction_date) = YEAR(CURDATE())
+        GROUP BY MONTH(transaction_date)
+    ");
+    $stmtPaid->execute();
+    $resPaid = $stmtPaid->get_result();
 
+    while ($row = $resPaid->fetch_assoc()) {
+        $idx = (int) $row['month_number'] - 1;
+        $paidAmounts[$idx] = (float) $row['paid_amount'];
+    }
+
+    // CANCELLED AMOUNT (INVOICE TABLE)
+    $stmtCancelled = $db->prepare("
+        SELECT 
+            MONTH(created_at) AS month_number,
+            SUM(total_amount) AS cancelled_amount
+        FROM invoice
+        WHERE status = 'CANCELLED'
+          AND is_active = 1
+          AND YEAR(created_at) = YEAR(CURDATE())
+        GROUP BY MONTH(created_at)
+    ");
+    $stmtCancelled->execute();
+    $resCancelled = $stmtCancelled->get_result();
+
+    while ($row = $resCancelled->fetch_assoc()) {
+        $idx = (int) $row['month_number'] - 1;
+        $cancelledAmounts[$idx] = (float) $row['cancelled_amount'];
+    }
+
+    // ---------- 4. CALCULATE PENDING ----------
+    for ($i = 0; $i < 12; $i++) {
+        $pendingAmounts[$i] = max(0, $invoiceAmounts[$i] - $paidAmounts[$i]);
+    }
+
+    // ---------- RESPONSE ----------
     echo json_encode([
-        'status' => true,
-        'data' => $responseData['data']
+        'months' => $months,
+        'invoiceAmounts' => [
+            'Paid' => $paidAmounts,
+            'Pending' => $pendingAmounts,
+            'Cancelled' => $cancelledAmounts
+        ]
     ]);
     exit;
 }
@@ -542,73 +544,56 @@ ob_end_flush();
                 type: 'POST',
                 data: { invoiceCount: 1 },
                 success: function (response) {
-                    let result = JSON.parse(response).data;
 
-                    // Extract data
-                    let months = result.months;
-                    let invoiceCounts = result.invoiceCounts;
-                    let invoiceAmounts = result.invoiceAmounts;
+                    let result = JSON.parse(response);
 
-                    let optionBar = {
+                    let options = {
                         series: [
-                            {
-                                name: 'Paid',
-                                data: invoiceAmounts.Paid
-                            },
-                            {
-                                name: 'Pending',
-                                data: invoiceAmounts.Pending
-                            },
-                            {
-                                name: 'Cancelled',
-                                data: invoiceAmounts.Cancelled
-                            }
+                            { name: 'Paid', data: result.invoiceAmounts.Paid },
+                            { name: 'Pending', data: result.invoiceAmounts.Pending },
+                            { name: 'Cancelled', data: result.invoiceAmounts.Cancelled }
                         ],
                         chart: {
                             type: 'bar',
-                            height: 350,
-                            toolbar: { show: true }
+                            height: 360,
+                            toolbar: { show: false }
                         },
-                        colors: ['#00E396', '#FFB020', '#FF4560'], // Paid, Pending, Cancelled
+                        colors: ['#00E396', '#FFB020', '#FF4560'],
                         plotOptions: {
                             bar: {
                                 horizontal: false,
                                 columnWidth: '55%',
-                                borderRadius: 5,
-                                borderRadiusApplication: 'end'
+                                borderRadius: 6
                             }
                         },
                         dataLabels: {
                             enabled: false
                         },
-                        stroke: {
-                            show: true,
-                            width: 2,
-                            colors: ['transparent']
-                        },
                         xaxis: {
-                            categories: months.map(month => month.substring(0, 3)), // Jan, Feb, etc.
+                            categories: result.months
                         },
                         yaxis: {
                             title: {
-                                text: 'Total Amount (<?= (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") ?>)'
+                                text: 'Amount (<?= $localizationSettings["currency_symbol"] ?? "₹" ?>)'
                             }
                         },
                         tooltip: {
                             y: {
                                 formatter: function (val) {
-                                    return '<?= (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") ?>' + val.toFixed(2);
+                                    return '<?= $localizationSettings["currency_symbol"] ?? "₹" ?>' + val.toFixed(2);
                                 }
                             }
                         }
                     };
 
-
-                    var chartBar = new ApexCharts(document.querySelector("#s-line-area"), optionBar);
-                    chartBar.render();
+                    let chart = new ApexCharts(
+                        document.querySelector("#s-line-area"),
+                        options
+                    );
+                    chart.render();
                 },
-                error: function (xhr, status, error) {
-                    console.error('AJAX Error:', error);
+                error: function (err) {
+                    console.error('Chart AJAX Error:', err);
                 }
             });
         });

@@ -1104,6 +1104,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                     <?php
                                     $totalBaseAmount = 0;
                                     $totalTaxAmount = 0;
+                                    $totalGrandAmount = 0;
+
 
                                     foreach ($invoices->fetch_all(MYSQLI_ASSOC) as $invoice):
 
@@ -1120,6 +1122,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         if (in_array($invoice['invoiceStatus'], ['PAID', 'PENDING'])) {
                                             $totalBaseAmount += $priceWithoutTax;
                                             $totalTaxAmount += $taxAmount;
+                                            $totalGrandAmount += $invoice['total_amount'];
                                         }
                                         ?>
                                         <tr>
@@ -1181,7 +1184,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                 </a>
                                                 <ul class="dropdown-menu">
                                                     <li>
-                                                        <a target="_blank" href="<?php echo getenv("BASE_URL") . "view-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
+                                                        <a target="_blank"
+                                                            href="<?php echo getenv("BASE_URL") . "view-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
                                                             class="editStatus dropdown-item" data-admin-id=""><i
                                                                 data-feather="eye" class="info-img"></i>Show
                                                             Detail</a>
@@ -1196,7 +1200,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                         </li>
                                                     <?php endif; ?>
                                                     <li>
-                                                        <a target="_blank" href="<?php echo getenv("BASE_URL") . "download-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
+                                                        <a target="_blank"
+                                                            href="<?php echo getenv("BASE_URL") . "download-invoice?id=" . base64_encode($invoice['invoice_id']) ?>"
                                                             class="qrCode dropdown-item"><i data-feather="download"
                                                                 class="info-img"></i>Download
                                                         </a>
@@ -1237,6 +1242,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                 <tfoot>
                                     <tr>
                                         <td colspan="5"></td>
+
+                                        <!-- Base Total -->
                                         <td>
                                             <strong class="text-primary">
                                                 Total:
@@ -1244,6 +1251,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                 <?= number_format($totalBaseAmount, 2) ?>
                                             </strong>
                                         </td>
+
+                                        <!-- GST Total -->
                                         <td>
                                             <strong class="text-danger">
                                                 GST:
@@ -1251,9 +1260,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                 <?= number_format($totalTaxAmount, 2) ?>
                                             </strong>
                                         </td>
-                                        <td colspan="4"></td>
+
+                                        <!-- Grand Total -->
+                                        <td>
+                                            <strong class="text-success">
+                                                Grand Total:
+                                                <?= $localizationSettings["currency_symbol"] ?? "₹" ?>
+                                                <?= number_format($totalGrandAmount, 2) ?>
+                                            </strong>
+                                        </td>
+
+                                        <td colspan="3"></td>
                                     </tr>
                                 </tfoot>
+
                             </table>
 
                         </div>
