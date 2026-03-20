@@ -216,6 +216,9 @@ $isAdmin = strtolower($roleData['0']['role_name']) === 'admin';
                                 <li>
                                     <a href="<?= getenv("BASE_URL") . "ledger-report" ?>">Ledger Report</a>
                                 </li>
+                                <li>
+                                    <a href="<?= getenv("BASE_URL") . "collection-report" ?>">Collection Report</a>
+                                </li>
                             </ul>
                         </li>
                     </ul>

@@ -1215,18 +1215,29 @@ ob_end_clean();
 
                                         <tr>
                                             <td class="customer-header">
+                                                Name :</td>
+                                            <td><?= !empty($customerInfo['customer_name']) ? $customerInfo['customer_name'] : '' ?>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="customer-header">
                                                 Email :</td>
                                             <td><?= !empty($customerInfo['customer_email']) ? $customerInfo['customer_email'] : '' ?>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td class="customer-header">Balance :</td>
-                                            <td><?= !empty($balance) ? $balance : '' ?>
+                                            <td><?= number_format((float) $balance, 2) ?>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td class="customer-header">GST No :</td>
                                             <td><?= !empty($customerInfo['gst_number']) ? $customerInfo['gst_number'] : '' ?>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="customer-header">Address :</td>
+                                            <td><?= !empty($customerInfo['customer_address']) ? $customerInfo['customer_address'] : '' ?>
                                             </td>
                                         </tr>
                                     </table>
@@ -1242,6 +1253,38 @@ ob_end_clean();
                                         <th class="customer-title" colspan="3">
                                             Customer Information
                                         </th>
+                                    </tr>
+                                    <tr class="row-btm-border">
+                                        <td class="customer-header">
+                                            Customer Name :
+                                        </td>
+                                        <td>
+                                            <?= !empty($customerInfo['customer_name']) ? $customerInfo['customer_name'] : '' ?>
+                                        </td>
+                                    </tr>
+                                    <tr class="row-btm-border">
+                                        <td class="customer-header">
+                                            Customer Email :
+                                        </td>
+                                        <td>
+                                            <?= !empty($customerInfo['customer_email']) ? $customerInfo['customer_email'] : '' ?>
+                                        </td>
+                                    </tr>
+                                    <tr class="row-btm-border">
+                                        <td class="customer-header">
+                                            GST No :
+                                        </td>
+                                        <td>
+                                            <?= !empty($customerInfo['gst_number']) ? $customerInfo['gst_number'] : '' ?>
+                                        </td>
+                                    </tr>
+                                    <tr class="row-btm-border">
+                                        <td class="customer-header">
+                                            Customer Address :
+                                        </td>
+                                        <td>
+                                            <?= !empty($customerInfo['customer_address']) ? $customerInfo['customer_address'] : '' ?>
+                                        </td>
                                     </tr>
                                     <tr class="row-btm-border">
                                         <td class="customer-header">
@@ -1830,7 +1873,7 @@ ob_end_clean();
                                                         </label>
                                                     </th>
                                                     <th>Ledger Id</th>
-                                                    <!-- <th>Customer Name</th> -->
+                                                    <th>Invoice No</th>
                                                     <th>Transaction Date</th>
                                                     <th>Transaction Type</th>
                                                     <th>Payment Method</th>
@@ -1862,6 +1905,12 @@ ob_end_clean();
                                                         </td>
                                                         <td>
                                                             <?php echo $count ?>
+                                                        </td>
+                                                        <td>
+                                                            <a class="text-primary" target="_blank"
+                                                                href="<?= getenv("BASE_URL") . "view-invoice?id=" . base64_encode($transaction['invoice_id']) ?>">
+                                                                <?= $transaction['invoice_number'] ?>
+                                                            </a>
                                                         </td>
                                                         <!-- <td>
                                                             <a class="text-primary" target="_blank"
@@ -2003,8 +2052,8 @@ ob_end_clean();
                         <div class="modal-body custom-modal-body">
                             <form class="create-payment-form">
                                 <div class="mb-3">
-                                    <label class="form-label">Transaction Type</label>
-                                    <select class="form-select" name="transaction_type" id="transaction_type">
+                                    <label class="form-label">Transaction Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="transaction_type" id="transaction_type" required>
                                         <option>Select</option>
                                         <option value="PAYMENT">Payment</option>
                                         <option value='REFUND'>Refund</option>
@@ -2012,7 +2061,7 @@ ob_end_clean();
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Transaction Type</label>
+                                    <label class="form-label">Payment Method <span class="text-danger">*</span></label>
                                     <select id="payment_method" name="payment_method" class="form-control" required>
                                         <option>Select Method</option>
                                         <option value="CASH">Cash</option>
@@ -2023,12 +2072,13 @@ ob_end_clean();
                                         <option value="OTHER">Other</option>
                                     </select>
                                 </div>
+                                
                                 <div class="mb-3">
-                                    <label class="form-label">Amount</label>
+                                    <label class="form-label">Amount <span class="text-danger">*</span></label>
                                     <input type="number" name="amount" step="0.01" class="form-control">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Remark</label>
+                                    <label class="form-label">Remark </label>
                                     <textarea class="form-control h-100" name="remark" rows="5">Remark...</textarea>
                                     <p class="mt-1">Maximum 60 Characters</p>
                                 </div>

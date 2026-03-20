@@ -587,16 +587,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="card" id="filter_inputs">
                             <div class="card-body pb-0">
                                 <div class="row">
+                                    <!-- add labels -->
 
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
+                                            <label for="from">From</label>
                                             <div class="position-relative daterange-wraper">
-                                                <input type="date" class="form-control" name="from">
+                                                <input type="date" class="form-control" name="from" id="from">
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
+                                            <label class="text" for="to">To</label>
                                             <div class="position-relative daterange-wraper">
                                                 <input type="date" class="form-control" name="to">
                                             </div>

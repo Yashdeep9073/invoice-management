@@ -1038,7 +1038,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                 <div class="row">
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
-                                            <i data-feather="user" class="info-img"></i>
+                                            <label class="form-label">Customer Name</label>
+                                            <!-- <i data-feather="user" class="info-img"></i> -->
                                             <select class="select" name="customerId">
                                                 <option value="">Choose Name</option>
                                                 <?php foreach ($customers as $customer) { ?>
@@ -1048,24 +1049,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                                 <?php } ?>
                                             </select>
                                         </div>
-                                    </div>{hasPermission("LEADS") || isAdmin()hasPermission("
+                                    </div>
 
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
+                                            <label class="form-label">From Date</label>
                                             <div class="position-relative daterange-wraper">
                                                 <input type="date" class="form-control" name="from">
                                             </div>
                                         </div>
                                     </div>
+
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
+                                            <label class="form-label">To Date</label>
                                             <div class="position-relative daterange-wraper">
                                                 <input type="date" class="form-control" name="to">
                                             </div>
                                         </div>
                                     </div>
+
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
+                                            <label class="form-label">&nbsp;</label>
                                             <a class="btn btn-filters ms-auto">
                                                 <i data-feather="search" class="feather-search"></i>
                                                 Search

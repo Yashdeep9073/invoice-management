@@ -339,6 +339,45 @@ function getCustomerNameFromPage() {
 }
 
 
+function getCustomerInfoFromPage() {
+  const normalizeLabel = (text = "") =>
+    text
+      .replace(/\s+/g, " ")
+      .replace(/:$/, "")
+      .trim()
+      .toLowerCase();
+
+  const getValueByLabels = (labels = []) => {
+    const wanted = labels.map((label) => normalizeLabel(label));
+    const rows = document.querySelectorAll(".customer-card tr");
+
+    for (const row of rows) {
+      const headerCell = row.querySelector(".customer-header");
+      if (!headerCell) continue;
+
+      const label = normalizeLabel(headerCell.innerText || "");
+      if (!wanted.includes(label)) continue;
+
+      const dataCells = row.querySelectorAll("td");
+      if (dataCells.length < 2) continue;
+
+      const value = (dataCells[1].innerText || "").trim();
+      if (value) return value;
+    }
+
+    return "-";
+  };
+
+  const nameEl = document.querySelector(".profile-info h5");
+
+  return {
+    name: nameEl ? nameEl.innerText.trim() : "Customer Report",
+    email: getValueByLabels(["Email", "Customer Email"]),
+    gstNo: getValueByLabels(["GST No"]),
+    address: getValueByLabels(["Address", "Customer Address"]),
+  };
+}
+
 
 function exportActiveTabLedgerToExcel() {
   const notyf = new Notyf({ position: { x: "center", y: "top" } });
@@ -382,6 +421,10 @@ function exportActiveTabLedgerToExcel() {
   // ---------- BUILD TEMP TABLE ----------
 
   const customerName = getCustomerNameFromPage();
+  console.log("Customer Name for Excel Title:", customerName); // Debug log to verify customer name extraction
+  const customerInfo = getCustomerInfoFromPage();
+  console.log("Customer Info for Excel Title:", customerInfo); // Debug log to verify customer info extraction
+
 
   let tempTable = document.createElement("table");
 
@@ -389,7 +432,7 @@ function exportActiveTabLedgerToExcel() {
   let titleRow = document.createElement("tr");
   let titleCell = document.createElement("th");
   titleCell.colSpan = headerRow.cells.length;
-  titleCell.innerText = `Customer: ${customerName}`;
+  titleCell.innerText = `Customer: ${customerName} | Email: ${customerInfo.email} | GST No: ${customerInfo.gstNo} | Address: ${customerInfo.address}`;
   titleCell.style.fontWeight = "bold";
   titleCell.style.textAlign = "center";
   titleRow.appendChild(titleCell);

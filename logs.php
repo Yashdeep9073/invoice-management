@@ -328,6 +328,7 @@ try {
                                     </div>
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
+                                           <label class="text" for="to">To</label>
                                             <div class="position-relative daterange-wraper">
                                                 <input type="date" class="form-control" name="to">
                                             </div>

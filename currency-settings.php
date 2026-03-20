@@ -283,7 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
                             </div>
                             <div class="settings-page-wrap w-50">
                                 <div class="setting-title">
-                                    <h4>Currency</h4>
+                                    <h4>Currencies List</h4>
                                 </div>
                                 <div class="page-header bank-settings justify-content-end">
                                     <div class="page-btn">
@@ -614,7 +614,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['edit'])) {
                                 // Show success message and reload the page
                                 Swal.fire(
                                     'Deleted!',
-                                    'The tax has been deleted.',
+                                    'The currency has been deleted.',
                                 ).then(() => {
                                     // Reload the page or remove the deleted row from the UI
                                     location.reload();

@@ -26,7 +26,7 @@ try {
 
     // Fetch invoice data
     $stmtFetch = $db->prepare('
-        SELECT invoice.*, tax.tax_rate, invoice.status AS paymentStatus,
+        SELECT invoice.*, tax.tax_name, tax.tax_rate, invoice.status AS paymentStatus,
                customer.customer_name, customer.customer_address, customer.customer_phone, customer.customer_email,customer.gst_number,
                COALESCE(customer.ship_name, customer.customer_name) AS ship_name,
                COALESCE(customer.ship_address, customer.customer_address) AS ship_address,
@@ -347,7 +347,8 @@ try {
 
     // Summary (center-aligned, below table)
     $discount = isset($invoice['discount']) ? $invoice['discount'] : 0;
-    $tax = isset($invoice['tax_rate']) ? $invoice['tax_rate'] : 0;
+    $tax = isset($invoice['tax_rate']) ? $invoice['tax_name'] . " " . $invoice['tax_rate'] : 0;
+
     $finalTotal = $invoice['total_amount'];
 
 

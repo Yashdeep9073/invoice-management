@@ -62,6 +62,7 @@ try {
             customer.customer_id,
             customer.customer_name,
             admin.admin_username,
+            tax.tax_name,
             tax.tax_rate
             FROM invoice 
             INNER JOIN customer ON customer.customer_id = invoice.customer_id
@@ -107,6 +108,7 @@ try {
 
                 if ($stmtFetchInvoices->execute()) {
                     $invoices = $stmtFetchInvoices->get_result();
+
                 } else {
                     $_SESSION['error'] = 'Error fetching filtered invoices';
                 }
@@ -126,6 +128,7 @@ try {
                 customer.customer_id,
                 customer.customer_name,
                 admin.admin_username,
+                tax.tax_name,
                 tax.tax_rate
                 FROM invoice 
                 INNER JOIN customer
@@ -601,7 +604,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                 <div class="page-header">
                     <div class="add-item d-flex">
                         <div class="page-title">
-                            <h4>Invoice Report </h4>
+                            <h4>GST Report </h4>
                             <h6>Manage Your GST Report</h6>
                         </div>
                     </div>
@@ -652,7 +655,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                 <div class="row">
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
-                                            <i data-feather="user" class="info-img"></i>
+                                            <label class="form-label">Customer Name</label>
+                                            <!-- <i data-feather="user" class="info-img"></i> -->
                                             <select class="select" name="customerId">
                                                 <option value="">Choose Name</option>
                                                 <?php foreach ($customers as $customer) { ?>
@@ -666,20 +670,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
 
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
+                                            <label class="form-label">From Date</label>
                                             <div class="position-relative daterange-wraper">
                                                 <input type="date" class="form-control" name="from">
                                             </div>
                                         </div>
                                     </div>
+
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
+                                            <label class="form-label">To Date</label>
                                             <div class="position-relative daterange-wraper">
                                                 <input type="date" class="form-control" name="to">
                                             </div>
                                         </div>
                                     </div>
+
                                     <div class="col-lg-3 col-sm-6 col-12">
                                         <div class="input-blocks">
+                                            <label class="form-label">&nbsp;</label>
                                             <a class="btn btn-filters ms-auto">
                                                 <i data-feather="search" class="feather-search"></i>
                                                 Search
@@ -708,6 +717,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                         <th>Amount</th>
                                         <th>GST Amount</th>
                                         <th>Total Amount</th>
+                                        <th>GST Name</th>
+                                        <th>GST Rate</th>
                                         <th>Created By</th>
                                         <th>GST Status</th>
                                         <th class="no-sort text-center">Action</th>
@@ -786,6 +797,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                             </td>
 
                                             <td>
+                                                <?= $invoice['tax_name'] ?>
+                                            </td>
+
+                                            <td>
+                                                <?= $invoice['tax_rate'] ?>
+                                            </td>
+
+                                            <td>
                                                 <?= $invoice['admin_username'] ?>
                                             </td>
 
@@ -851,7 +870,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                             </strong>
                                         </td>
 
-                                        <td colspan="3"></td>
+                                        <td colspan="5"></td>
                                     </tr>
                                 </tfoot>
 
