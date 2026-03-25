@@ -70,14 +70,12 @@ try {
                 invoice.status as invoiceStatus,
                 customer.customer_id,
                 customer.customer_name,
-                admin.admin_username,
-                tax.tax_rate
+                admin.admin_username
                 FROM invoice 
                 INNER JOIN customer
                 ON customer.customer_id = invoice.customer_id
                 LEFT JOIN admin
-                ON admin.admin_id = invoice.created_by 
-                  INNER JOIN tax ON tax.tax_id = invoice.tax
+                ON admin.admin_id = invoice.created_by
                 WHERE invoice.is_active = 1 AND invoice_type = 'RECURSIVE'
                 ");
     if ($stmtFetchInvoices->execute()) {
@@ -157,6 +155,19 @@ try {
 
 
 
+        // Fetch taxes for the original invoice
+        $stmtFetchTaxes = $db->prepare("SELECT invoice_id, tax_id, tax_amount FROM invoice_tax WHERE invoice_id = ?");
+        $stmtFetchTaxes->bind_param('i', $invoice['invoice_id']);
+        $stmtFetchTaxes->execute();
+        $invoiceTaxes = $stmtFetchTaxes->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmtFetchTaxes->close();
+
+        // Calculate total tax amount
+        $totalTaxAmount = 0;
+        foreach ($invoiceTaxes as $tax) {
+            $totalTaxAmount += (float) $tax['tax_amount'];
+        }
+
         // Prepare new invoice data
         $newInvoice = [
             'invoice_number' => $newInvoiceNumber,
@@ -165,7 +176,6 @@ try {
             'status' => 'PENDING',
             'amount' => $invoice['amount'],
             'quantity' => $invoice['quantity'],
-            'tax' => $invoice['tax'],
             'discount' => $invoice['discount'],
             'total_amount' => $invoice['total_amount'], // Recalculated below
             'due_date' => $newDueDate->format('Y-m-d'),
@@ -185,9 +195,8 @@ try {
             'is_active' => 1
         ];
 
-
         $newInvoice['total_amount'] = ($newInvoice['amount'] * $newInvoice['quantity']) +
-            ($newInvoice['amount'] * $newInvoice['quantity'] * strToNumber($invoice['tax_rate']) / 100) -
+            $totalTaxAmount -
             $newInvoice['discount'];
 
 
@@ -200,12 +209,12 @@ try {
         // Insert new invoice
         $sql = "INSERT INTO `invoice` (
     `invoice_number`, `payment_method`, `transaction_id`, `status`, `amount`, 
-    `quantity`, `tax`, `discount`, `total_amount`, `due_date`, 
+    `quantity`, `discount`, `total_amount`, `due_date`, 
     `customer_id`, `service_id`, `description`, `created_by`, 
     `from_date`, `to_date`, `invoice_type`, `invoice_title`, 
     `gst_status`, `repeat_cycle`, `create_before`, `reminder_enabled`, 
     `reminder_count`, `is_active`
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $db->prepare($sql);
         if ($stmt === false) {
@@ -213,14 +222,13 @@ try {
         }
 
         $stmt->bind_param(
-            'ssssdiiddissssisssssiiii', // Updated type string
+            'ssssdddssissssisssssiiii', // Updated type string
             $newInvoice['invoice_number'],    // s (string)
             $newInvoice['payment_method'],    // s (string)
             $newInvoice['transaction_id'],    // s (string)
             $newInvoice['status'],            // s (string)
             $newInvoice['amount'],            // d (double)
-            $newInvoice['quantity'],          // i (integer)
-            $newInvoice['tax'],               // i (integer)
+            $newInvoice['quantity'],          // d (double)
             $newInvoice['discount'],          // d (double)
             $newInvoice['total_amount'],      // d (double)
             $newInvoice['due_date'],          // s (string)
@@ -244,7 +252,21 @@ try {
             throw new Exception('Failed to create new invoice: ' . $stmt->error);
         }
 
+        $newInvoiceId = $stmt->insert_id;
         $stmt->close();
+
+        // Copy invoice taxes to the new invoice
+        if (!empty($invoiceTaxes)) {
+            $stmtInsertTax = $db->prepare("INSERT INTO invoice_tax (invoice_id, tax_id, tax_amount) VALUES (?, ?, ?)");
+            foreach ($invoiceTaxes as $tax) {
+                $stmtInsertTax->bind_param('iid', $newInvoiceId, $tax['tax_id'], $tax['tax_amount']);
+                if (!$stmtInsertTax->execute()) {
+                    throw new Exception('Failed to copy tax for new invoice: ' . $stmtInsertTax->error);
+                }
+            }
+            $stmtInsertTax->close();
+        }
+
         // Log success
         echo "New invoice created: {$newInvoice['invoice_number']}";
 

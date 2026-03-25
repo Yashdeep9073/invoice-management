@@ -54,15 +54,18 @@ try {
 
     // Fetch pending invoices with reminder_enabled = 1 and expired due_date
     $stmtFetch = $db->prepare('
-    SELECT invoice.*, tax.*, customer.customer_email, customer.customer_name
+    SELECT invoice.*, 
+           COALESCE(SUM(invoice_tax.tax_amount), 0) as total_tax,
+           customer.customer_email, customer.customer_name
     FROM invoice 
     INNER JOIN customer 
         ON customer.customer_id = invoice.customer_id
-    INNER JOIN tax
-        ON tax.tax_id = invoice.tax
+    LEFT JOIN invoice_tax
+        ON invoice_tax.invoice_id = invoice.invoice_id
     WHERE invoice.status = "PENDING" 
     AND invoice.reminder_enabled = 1 
     AND invoice.due_date <= ?
+    GROUP BY invoice.invoice_id
     ');
     $stmtFetch->bind_param('s', $currentDate);
 
@@ -178,7 +181,7 @@ try {
                                 <td>' . htmlspecialchars($invoice['invoice_number']) . '</td>
                                 <td>' . htmlspecialchars($invoice['due_date']) . '</td>
                                 <td>Rs: ' . number_format($invoice['amount'], 2) . '</td>
-                                <td>' . htmlspecialchars($invoice['tax_rate']) . '</td>
+                                <td>Rs: ' . number_format($invoice['total_tax'], 2) . '</td>
                                 <td>' . htmlspecialchars($invoice['discount']) . '</td>
                                 <td>Rs: ' . number_format($invoice['total_amount'], 2) . '</td>
                             </tr>
