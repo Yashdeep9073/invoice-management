@@ -90,22 +90,35 @@ try {
             // Base query
             // ----------------------------
             $query = "
-        SELECT
-            invoice.invoice_id,
-            invoice.invoice_number,
-            ledger_transactions.*,
-            invoice.status AS invoiceStatus,
-            customer.customer_id,
-            customer.customer_name,
-            admin.admin_username,
-            tax.tax_rate
-        FROM ledger_transactions
-        INNER JOIN customer ON customer.customer_id = ledger_transactions.customer_id
-        LEFT JOIN invoice  ON invoice.invoice_id = ledger_transactions.invoice_id
-        LEFT JOIN admin     ON admin.admin_id = invoice.created_by
-        LEFT JOIN tax      ON tax.tax_id = invoice.tax
-        WHERE 1 = 1
-    ";
+SELECT
+    invoice.invoice_id,
+    invoice.invoice_number,
+    ledger_transactions.*,
+    invoice.status AS invoiceStatus,
+    customer.customer_id,
+    customer.customer_name,
+    admin.admin_username,
+    GROUP_CONCAT(tax.tax_rate) AS tax_rates
+
+FROM ledger_transactions
+
+INNER JOIN customer 
+    ON customer.customer_id = ledger_transactions.customer_id
+
+LEFT JOIN invoice  
+    ON invoice.invoice_id = ledger_transactions.invoice_id
+
+LEFT JOIN admin     
+    ON admin.admin_id = invoice.created_by
+
+LEFT JOIN invoice_tax it 
+    ON it.invoice_id = invoice.invoice_id
+
+LEFT JOIN tax      
+    ON tax.tax_id = it.tax_id
+
+WHERE 1 = 1
+";
 
             // ----------------------------
             // Dynamic filters
@@ -154,27 +167,37 @@ try {
                 $stmtFetchLedgerTransaction->close();
             }
         } else {
-            $stmtFetchLedgerTransaction = $db->prepare("SELECT
-                invoice.invoice_id,
-                invoice.invoice_number,
-                ledger_transactions.*,
-                invoice.status AS invoiceStatus,
-                customer.customer_id,
-                customer.customer_name,
-                admin.admin_username,
-                tax.tax_rate
-            FROM ledger_transactions
-            INNER JOIN customer
-                ON customer.customer_id = ledger_transactions.customer_id
-            LEFT JOIN invoice
-                ON invoice.invoice_id = ledger_transactions.invoice_id
-            LEFT JOIN admin 
-                ON admin.admin_id = invoice.created_by
-            LEFT JOIN tax 
-                ON tax.tax_id = invoice.tax
-            ORDER BY ledger_transactions.ledger_id ASC;
+            $stmtFetchLedgerTransaction = $db->prepare("
+SELECT
+    invoice.invoice_id,
+    invoice.invoice_number,
+    ledger_transactions.*,
+    invoice.status AS invoiceStatus,
+    customer.customer_id,
+    customer.customer_name,
+    admin.admin_username,
+    GROUP_CONCAT(tax.tax_rate) AS tax_rates
 
-                ");
+FROM ledger_transactions
+
+INNER JOIN customer
+    ON customer.customer_id = ledger_transactions.customer_id
+
+LEFT JOIN invoice
+    ON invoice.invoice_id = ledger_transactions.invoice_id
+
+LEFT JOIN admin 
+    ON admin.admin_id = invoice.created_by
+
+LEFT JOIN invoice_tax it 
+    ON it.invoice_id = invoice.invoice_id
+
+LEFT JOIN tax 
+    ON tax.tax_id = it.tax_id
+
+GROUP BY ledger_transactions.ledger_id
+ORDER BY ledger_transactions.ledger_id ASC
+");
             // $stmtFetchLedgerTransaction->bind_param('i', $invoiceId);
             if ($stmtFetchLedgerTransaction->execute()) {
                 $ledgerTransactions = $stmtFetchLedgerTransaction->get_result();
@@ -742,7 +765,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                 </span>
                                             </strong>
                                         </td> -->
-                                        <td colspan="2"></td>
+                                        <td colspan="4"></td>
                                     </tr>
                                 </tfoot>
 

@@ -45,7 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
         $customerState = filter_input(INPUT_POST, 'customerState', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $customerCity = filter_input(INPUT_POST, 'customerCity', FILTER_SANITIZE_NUMBER_INT);
 
-        $gstNumber = !empty($_POST['gstNumber']) ? filter_input(INPUT_POST, 'gstNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS) : null;
+        $gstNumber = !empty($_POST['gstNumber']) ? strtoupper(filter_input(INPUT_POST, 'gstNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS)) : null;
+        $panNumber = !empty($_POST['panNumber']) ? strtoupper(filter_input(INPUT_POST, 'panNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS)) : null;
+        $tanNumber = !empty($_POST['tanNumber']) ? strtoupper(filter_input(INPUT_POST, 'tanNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS)) : null;
 
 
         // Validation Patterns
@@ -55,6 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
         $addressPattern = "/^[\p{L}0-9\s,.\-#\/()':]{5,200}$/u";
 
         $gstPattern = "/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/"; // GSTIN
+        $panPattern = "/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/";
+        $tanPattern = "/^[A-Z]{4}[0-9]{5}[A-Z]{1}$/";
 
         // Validate Customer Data
         if (!preg_match($namePattern, $customerName)) {
@@ -131,12 +135,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
             }
         }
 
-        // // Validate GST Number
-        // if (!preg_match($gstPattern, strtoupper($gstNumber))) {
-        //     $_SESSION['error'] = 'Invalid GST number';
-        //     header("Location: customer-details");
-        //     exit();
-        // }
+        if (!is_null($gstNumber) && $gstNumber !== '' && !preg_match($gstPattern, $gstNumber)) {
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid GST number",
+            ]);
+            exit();
+        }
+
+        if (!is_null($panNumber) && $panNumber !== '' && !preg_match($panPattern, $panNumber)) {
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid PAN number",
+            ]);
+            exit();
+        }
+
+        if (!is_null($tanNumber) && $tanNumber !== '' && !preg_match($tanPattern, $tanNumber)) {
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid TAN number",
+            ]);
+            exit();
+        }
 
         // City validation (numeric check already from filter_input)
         if (!is_numeric($customerCity)) {
@@ -149,8 +170,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
             exit();
         }
 
-        $stmtExistingUser = $db->prepare("SELECT * FROM customer WHERE customer_email = ? OR customer_phone = ?");
-        $stmtExistingUser->bind_param("ss", $customerEmail, $customerPhone);
+        $stmtExistingUser = $db->prepare("SELECT * FROM customer WHERE customer_email = ? OR customer_phone = ? OR gst_number = ? OR pan_number = ? OR tan_number = ?");
+        $stmtExistingUser->bind_param("sssss", $customerEmail, $customerPhone, $gstNumber, $panNumber, $tanNumber);
         $stmtExistingUser->execute();
 
         $result = $stmtExistingUser->get_result();
@@ -158,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
 
             echo json_encode([
                 "status" => 400,
-                "error" => "Customer Phone or Email Already Existing",
+                "error" => "Customer phone, email, GST, PAN, or TAN already exists",
 
             ]);
             exit();
@@ -200,11 +221,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
         customer_state,
         customer_city,
         gst_number,
-        image
+        image,
+        pan_number,
+        tan_number
         ) 
-        VALUES(?,?,?,?,?,?,?,?,?,?,?,?)');
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
         $stmtInsert->bind_param(
-            'sssssssssiss',
+            'sssssssssissss',
             $customerName,
             $customerPhone,
             $customerEmail,
@@ -216,7 +239,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['customerName'])) {
             $customerState,
             $customerCity,
             $gstNumber,
-            $image
+            $image,
+            $panNumber,
+            $tanNumber
         );
         if ($stmtInsert->execute()) {
             echo json_encode([
@@ -335,11 +360,62 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editCustomerId'])) {
             $types .= 'i';
         }
 
-        $editGstNumber = filter_input(INPUT_POST, 'editGstNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $editGstNumber = !empty($_POST['editGstNumber']) ? strtoupper(filter_input(INPUT_POST, 'editGstNumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS)) : null;
         if (!empty($editGstNumber)) {
             $fields[] = 'gst_number = ?';
             $values[] = $editGstNumber;
             $types .= 's';
+        }
+
+        if (array_key_exists('editPanNumber', $_POST)) {
+            $editPanNumber = trim($_POST['editPanNumber']);
+
+            if ($editPanNumber === '') {
+                $fields[] = 'pan_number = NULL';
+            } else {
+                $fields[] = 'pan_number = ?';
+                $values[] = strtoupper($editPanNumber);
+                $types .= 's';
+            }
+        }
+        if (array_key_exists('editTanNumber', $_POST)) {
+            $editTanNumber = trim($_POST['editTanNumber']);
+
+            if ($editTanNumber === '') {
+                $fields[] = 'tan_number = NULL';
+            } else {
+                $fields[] = 'tan_number = ?';
+                $values[] = strtoupper($editTanNumber);
+                $types .= 's';
+            }
+        }
+
+        $gstPattern = "/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/";
+        $panPattern = "/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/";
+        $tanPattern = "/^[A-Z]{4}[0-9]{5}[A-Z]{1}$/";
+
+        if (!is_null($editGstNumber) && $editGstNumber !== '' && !preg_match($gstPattern, $editGstNumber)) {
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid GST number"
+            ]);
+            exit;
+        }
+
+        if (!is_null($editPanNumber) && $editPanNumber !== '' && !preg_match($panPattern, $editPanNumber)) {
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid PAN number"
+            ]);
+            exit;
+        }
+
+        if (!is_null($editTanNumber) && $editTanNumber !== '' && !preg_match($tanPattern, $editTanNumber)) {
+            echo json_encode([
+                "status" => 400,
+                "error" => "Invalid TAN number"
+            ]);
+            exit;
         }
 
 
@@ -789,8 +865,8 @@ ob_end_flush();
                             </li>
                         <?php endif; ?>
                         <li>
-                            <a data-bs-toggle="tooltip" onclick="exportToPDF(`customers`)" data-bs-placement="top" title="Pdf"><img
-                                    src="assets/img/icons/pdf.svg" alt="img"></a>
+                            <a data-bs-toggle="tooltip" onclick="exportToPDF(`customers`)" data-bs-placement="top"
+                                title="Pdf"><img src="assets/img/icons/pdf.svg" alt="img"></a>
                         </li>
                         <li>
                             <a data-bs-toggle="tooltip" onclick="exportToExcel(`customers`)" data-bs-placement="top"
@@ -905,6 +981,8 @@ ob_end_flush();
                                                                 data-customer-state="<?php echo $customer['customer_state'] ?>"
                                                                 data-customer-city="<?php echo $customer['customer_city'] ?>"
                                                                 data-gst-number="<?php echo $customer['gst_number'] ?>"
+                                                                data-pan-number="<?php echo $customer['pan_number'] ?>"
+                                                                data-tan-number="<?php echo $customer['tan_number'] ?>"
                                                                 class="editButton dropdown-item"><i data-feather="edit"
                                                                     class="info-img"></i>Edit
                                                             </a>
@@ -1056,6 +1134,20 @@ ob_end_flush();
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="col-lg-6">
+                                        <div class="input-blocks">
+                                            <label>PAN Number</label>
+                                            <input type="text" class="form-control" name="panNumber"
+                                                placeholder="Enter 10-character PAN number" maxlength="10">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="input-blocks">
+                                            <label>TAN Number</label>
+                                            <input type="text" class="form-control" name="tanNumber"
+                                                placeholder="Enter 10-character TAN number" maxlength="10">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="modal-footer-btn">
                                     <button type="button" class="btn btn-cancel me-2"
@@ -1192,6 +1284,20 @@ ob_end_flush();
                                             <label>GST Numbers</label>
                                             <input type="text" class="form-control" name="editGstNumber"
                                                 id="editGstNumber">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="input-blocks">
+                                            <label>PAN Number</label>
+                                            <input type="text" class="form-control" name="editPanNumber"
+                                                id="editPanNumber" maxlength="10">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="input-blocks">
+                                            <label>TAN Number</label>
+                                            <input type="text" class="form-control" name="editTanNumber"
+                                                id="editTanNumber" maxlength="10">
                                         </div>
                                     </div>
 
@@ -1351,6 +1457,12 @@ ob_end_flush();
                 this.value = this.value.toUpperCase();
                 this.setSelectionRange(start, end);
             });
+            $(document).on('input', "input[name='panNumber'], #editPanNumber, input[name='tanNumber'], #editTanNumber", function () {
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(start, end);
+            });
 
             $(document).on('click', '.editButton', function () {
 
@@ -1367,6 +1479,8 @@ ob_end_flush();
                 let customerState = $(this).data("customer-state");
                 let customerCity = $(this).data("customer-city");
                 let gstNumber = $(this).data("gst-number");
+                let panNumber = $(this).data("pan-number");
+                let tanNumber = $(this).data("tan-number");
 
 
 
@@ -1383,6 +1497,8 @@ ob_end_flush();
                 $('#editCustomerState').val(customerState);
                 $('#editCustomerCity').val(customerCity);
                 $('#editGstNumber').val(gstNumber);
+                $('#editPanNumber').val(panNumber);
+                $('#editTanNumber').val(tanNumber);
 
             });
 
@@ -1636,6 +1752,8 @@ ob_end_flush();
                 let shippingEmail = $('input[name="shippingEmail"]').val().trim();
                 let shippingAddress = $('input[name="shippingAddress"]').val().trim();
                 let gstNumber = $('input[name="gstNumber"]').val().trim();
+                let panNumber = $('input[name="panNumber"]').val().trim();
+                let tanNumber = $('input[name="tanNumber"]').val().trim();
                 let imageInput = $('input[name="image"]')[0];
                 let imageFile = imageInput.files[0];
 
@@ -1646,6 +1764,8 @@ ob_end_flush();
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 const addressRegex = /^[a-zA-Z0-9\s,.\-#\/()':]{5,200}$/;
                 const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+                const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+                const tanRegex = /^[A-Z]{4}[0-9]{5}[A-Z]{1}$/; //tan example: ABCD12345E
 
                 function hasMoreThanWords(text, maxWords) {
                     return text.trim().split(/\s+/).length > maxWords;
@@ -1706,9 +1826,27 @@ ob_end_flush();
                 //     return;
                 // }
 
+                function clean(value) {
+                    return value
+                        .replace(/\s+/g, '')       // remove ALL spaces
+                        .replace(/[^a-zA-Z0-9]/g, '') // remove hidden/special chars
+                        .toUpperCase();
+                }
+
+
                 // GST validation (only if provided)
                 if (gstNumber.length > 0 && !gstRegex.test(gstNumber)) {
                     notyf.error("Please enter a valid GST number");
+                    return;
+                }
+
+
+                if (panNumber.length > 0 && !panRegex.test(clean(panNumber))) {
+                    notyf.error("Invalid PAN (format: ABCDE1234F)");
+                    return;
+                }
+                if (tanNumber.length > 0 && !tanRegex.test(clean(tanNumber))) {
+                    notyf.error("Invalid TAN (format: ABCD12345E)");
                     return;
                 }
 
@@ -1730,6 +1868,8 @@ ob_end_flush();
                 formDataObject.append('customerState', customerState);
                 formDataObject.append('customerCity', customerCity);
                 formDataObject.append('gstNumber', gstNumber);
+                formDataObject.append('panNumber', panNumber);
+                formDataObject.append('tanNumber', tanNumber);
                 formDataObject.append('image', imageFile);
 
 
@@ -1789,6 +1929,8 @@ ob_end_flush();
 
                 const status = $('select[name="editCustomerStatus"]').val();
                 const gstNumber = $('input[name="editGstNumber"]').val().trim();
+                const panNumber = $('input[name="editPanNumber"]').val().trim();
+                const tanNumber = $('input[name="editTanNumber"]').val().trim();
 
                 const imageInput = $('input[name="editImage"]')[0];
                 const imageFile = imageInput.files[0] || null;
@@ -1798,6 +1940,8 @@ ob_end_flush();
                 const mobileRegex = /^[0-9]{10}$/;
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+                const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+                const tanRegex = /^[A-Z]{4}[0-9]{5}[A-Z]{1}$/;
 
                 if (!editCustomerId) {
                     notyf.error("Invalid customer ID.");
@@ -1821,6 +1965,14 @@ ob_end_flush();
 
                 if (gstNumber && !gstRegex.test(gstNumber)) {
                     notyf.error("Invalid GST number.");
+                    return;
+                }
+                if (panNumber && !panRegex.test(panNumber)) {
+                    notyf.error("Invalid PAN (format: ABCDE1234F)");
+                    return;
+                }
+                if (tanNumber && !tanRegex.test(tanNumber)) {
+                    notyf.error("Invalid TAN (format: ABCD12345E)");
                     return;
                 }
 
@@ -1856,6 +2008,8 @@ ob_end_flush();
 
                 formData.append('editCustomerStatus', status);
                 formData.append('editGstNumber', gstNumber);
+                formData.append('editPanNumber', panNumber);
+                formData.append('editTanNumber', tanNumber);
 
                 // Append image only if selected
                 if (imageFile) {
@@ -1873,7 +2027,9 @@ ob_end_flush();
                         if (response.status === 200) {
                             notyf.success("Customer updated successfully");
                             $('#editCustomerModal').modal('hide');
-                            window.location.reload();
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
                         } else {
                             notyf.error(response.error || "Update failed");
                         }

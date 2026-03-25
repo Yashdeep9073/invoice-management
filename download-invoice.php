@@ -26,17 +26,39 @@ try {
 
     // Fetch invoice data
     $stmtFetch = $db->prepare('
-        SELECT invoice.*, tax.tax_name, tax.tax_rate, invoice.status AS paymentStatus,
-               customer.customer_name, customer.customer_address, customer.customer_phone, customer.customer_email,customer.gst_number,
-               COALESCE(customer.ship_name, customer.customer_name) AS ship_name,
-               COALESCE(customer.ship_address, customer.customer_address) AS ship_address,
-               COALESCE(customer.ship_phone, customer.customer_phone) AS ship_phone,
-               COALESCE(customer.ship_email, customer.customer_email) AS ship_email
-        FROM invoice 
-        INNER JOIN customer ON customer.customer_id = invoice.customer_id
-        INNER JOIN tax ON tax.tax_id = invoice.tax
-        WHERE invoice_id = ?
-    ');
+    SELECT 
+        invoice.*, 
+        invoice.status AS paymentStatus,
+
+        customer.customer_name,
+        customer.customer_address,
+        customer.customer_phone,
+        customer.customer_email,
+        customer.gst_number,
+
+        COALESCE(customer.ship_name, customer.customer_name) AS ship_name,
+        COALESCE(customer.ship_address, customer.customer_address) AS ship_address,
+        COALESCE(customer.ship_phone, customer.customer_phone) AS ship_phone,
+        COALESCE(customer.ship_email, customer.customer_email) AS ship_email,
+
+        GROUP_CONCAT(tax.tax_name) AS tax_names,
+        GROUP_CONCAT(tax.tax_rate) AS tax_rates
+
+    FROM invoice 
+
+    INNER JOIN customer 
+        ON customer.customer_id = invoice.customer_id
+
+    LEFT JOIN invoice_tax it 
+        ON it.invoice_id = invoice.invoice_id
+
+    LEFT JOIN tax 
+        ON tax.tax_id = it.tax_id
+
+    WHERE invoice.invoice_id = ?
+
+    GROUP BY invoice.invoice_id
+');
     $stmtFetch->bind_param('i', $invoiceId);
     $stmtFetch->execute();
     $result = $stmtFetch->get_result();
@@ -76,6 +98,46 @@ try {
     $stmtFetchLocalizationSettings->execute();
     $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
     $currencySymbol = $localizationSettings["currency_code"] ?? "$";
+
+
+
+    $quantity = max(1, (int) ($invoice['quantity'] ?? 1));
+    $baseAmount = (float) ($invoice['amount'] ?? 0);
+    $discountPercent = (float) ($invoice['discount'] ?? 0);
+
+    $subtotal = $baseAmount * $quantity;
+    $discountAmount = ($subtotal * $discountPercent) / 100;
+    $taxableAmount = $subtotal - $discountAmount;
+
+    $taxNames = array_map('trim', explode(',', (string) ($invoice['tax_names'] ?? '')));
+    $taxRates = array_map('trim', explode(',', (string) ($invoice['tax_rates'] ?? '')));
+
+    $totalTaxAmount = 0;
+    $taxDetails = [];
+    $totalTaxRate = 0;
+
+    foreach ($taxRates as $i => $rateStr) {
+
+        $rate = (float) str_replace('%', '', $rateStr);
+        if ($rate <= 0) {
+            continue;
+        }
+
+        $name = trim($taxNames[$i] ?? 'GST');
+
+        $taxAmount = ($taxableAmount * $rate) / 100;
+
+        $totalTaxAmount += $taxAmount;
+        $totalTaxRate += $rate;
+
+        $taxDetails[] = [
+            'name' => $name,
+            'rate' => $rate,
+            'amount' => $taxAmount
+        ];
+    }
+
+    $finalTotal = (float) ($invoice['total_amount'] ?? ($taxableAmount + $totalTaxAmount));
 
 
 
@@ -167,25 +229,16 @@ try {
             <tbody>
                 <?php
                 // Build the list of service names
-                $serviceList = '';
+                $hsnCode = 'N/A';
                 foreach ($serviceIds as $id) {
                     $service = $services[$id] ?? ['name' => 'Unknown Service', 'sac_code' => 'N/A'];
-                    $serviceList .= '<li>' . htmlspecialchars($service['name']) . '</li>';
                     $hsnCode = $service['sac_code'];
                 }
 
-                // Given values
-                $pricePerService = $invoice['quantity'] > 0 ? $invoice['total_amount'] / $invoice['quantity'] : 0;
-                $taxRateStr = $invoice['tax_rate']; // "18%"
-            
-                // Convert tax rate string to integer (remove % and convert to int)
-                $taxRate = intval(str_replace('%', '', $taxRateStr)); // Converts "18%" to 18
-            
-                // Calculate price without tax
-                $priceWithoutTax = $taxRate > 0 ? $pricePerService / (1 + $taxRate / 100) : $pricePerService;
-
-                // Calculate tax amount per unit
-                $taxAmount = $pricePerService - $priceWithoutTax;
+                $pricePerService = $quantity > 0 ? $finalTotal / $quantity : 0;
+                $priceWithoutTax = $totalTaxRate > 0
+                    ? $pricePerService / (1 + $totalTaxRate / 100)
+                    : $pricePerService;
                 ?>
                 <tr>
                     <td class="amount-cell"> <?= isset($invoice['invoice_title']) ? $invoice['invoice_title'] : "" ?></td>
@@ -347,77 +400,69 @@ try {
 
     // Summary (center-aligned, below table)
     $discount = isset($invoice['discount']) ? $invoice['discount'] : 0;
-    $tax = isset($invoice['tax_rate']) ? $invoice['tax_name'] . " " . $invoice['tax_rate'] : 0;
-
-    $finalTotal = $invoice['total_amount'];
 
 
     // Start Y position for first line
-    $summaryStartY = 170;
+    $summaryStartY = 160;
     $lineHeight = 6;
+    $rowGap = 2;
+    $rightX = 130;
+    $rightLineEnd = 200;
+    $currentY = $summaryStartY;
 
-    // Line 1: Total
-    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
+    $pdf->SetTextColor(0, 101, 156);
     $pdf->SetFont('FuturaBT-Medium', '', 12);
-    $pdf->SetXY(130, $summaryStartY);
+
     $formattedAmount = number_format($priceWithoutTax, 2);
-    $pdf->Cell(0, $lineHeight, "Total: {$currencySymbol}. {$formattedAmount}/-", 0, 1);    // $pdf->Cell(0, $lineHeight, 'Total:  ₹' . $priceWithoutTax, 0, 1);
+    $pdf->SetXY($rightX, $currentY);
+    $pdf->Cell(0, $lineHeight, "Sub Total: {$currencySymbol}. {$formattedAmount}/-", 0, 1);
+    $currentY += $lineHeight;
+    $pdf->Line($rightX, $currentY + 0.5, $rightLineEnd, $currentY + 0.5);
+    $currentY += $rowGap;
 
-    // HR Line below Discount
-    $pdf->SetLineWidth(0.2);
-    $pdf->Line(130, $summaryStartY + $lineHeight + 0.5, 200, $summaryStartY + $lineHeight + 0.5);
-
-    // Line 2: Discount
-    $pdf->SetTextColor(0, 101, 156); // Set text color to #3e90ed
-    $pdf->SetFont('FuturaBT-Medium', '', 12);
-    $pdf->SetXY(130, $summaryStartY + $lineHeight + 2);
+    $pdf->SetXY($rightX, $currentY);
     $pdf->Cell(0, $lineHeight, 'Discount: ' . $discount . "%", 0, 1);
+    $currentY += $lineHeight;
+    $pdf->Line($rightX, $currentY + 0.5, $rightLineEnd, $currentY + 0.5);
+    $currentY += $rowGap;
 
-    // HR Line below Discount
-    $pdf->SetLineWidth(0.2);
-    $pdf->Line(130, $summaryStartY + $lineHeight * 2 + 1.5, 200, $summaryStartY + $lineHeight * 2 + 1.5);
+    foreach ($taxDetails as $tax) {
+        $pdf->SetXY($rightX, $currentY);
+        $pdf->Cell(
+            0,
+            $lineHeight,
+            "{$tax['name']} ({$tax['rate']}%): {$currencySymbol}. " . number_format($tax['amount'], 2),
+            0,
+            1
+        );
+        $currentY += $lineHeight;
+    }
 
-    // Line 3: Tax
-    $pdf->SetXY(130, $summaryStartY + $lineHeight + 8);
-    $pdf->Cell(0, $lineHeight, 'GST Slab: ' . $tax, 0, 1);
-
-    // HR Line below Tax
-    $pdf->Line(130, $summaryStartY + $lineHeight * 3 + 2.5, 200, $summaryStartY + $lineHeight * 3 + 2.5);
-
-    // Line 4: Total Amount
-    $pdf->SetXY(130, $summaryStartY + $lineHeight + 16);
     $pdf->SetFont('FuturaMdBT-Bold', '', 12);
+    $currentY += 2;
+    $pdf->SetXY($rightX, $currentY);
     $pdf->Cell(0, $lineHeight, "Total Amount: {$currencySymbol}. " . number_format($finalTotal, 2) . "/-", 0, 1);
+    $currentY += $lineHeight;
+    $pdf->Line($rightX, $currentY + 0.5, $rightLineEnd, $currentY + 0.5);
 
-
-    $pdf->Line(130, $summaryStartY + $lineHeight * 4 + 4, 200, $summaryStartY + $lineHeight * 4 + 4);
-
-
-    // Line 5: Total Amount In Words
-    $pdf->SetXY(130, $summaryStartY + $lineHeight + 26);
-    $pdf->SetFont('FuturaMdBT-Bold', '', 12);
+    $currentY += 4;
+    $pdf->SetXY($rightX, $currentY);
     $pdf->Cell(0, $lineHeight, 'Total Amount In Words:', 0, 1);
+    $currentY += $lineHeight;
+    $pdf->Line($rightX, $currentY + 0.5, $rightLineEnd, $currentY + 0.5);
 
-    // HR Line below Tax
-    $pdf->Line(130, $summaryStartY + $lineHeight * 6 + 3, 200, $summaryStartY + $lineHeight * 6 + 3);
-
-    $pdf->SetXY(130, $summaryStartY + $lineHeight + 34);
-    $pdf->SetTextColor(0, 0, 0); // Reset text color to black
+    $currentY += 3;
+    $pdf->SetTextColor(0, 0, 0);
     $pdf->SetFont('FuturaMdBT-Bold', '', 12);
 
-    // Convert number to words
-    $amountInWords = numberToWords($finalTotal); // "Six Hundred Six and Fifty Two Paise O"
-
-    // Split into words and group every 3 words
+    $amountInWords = numberToWords($finalTotal);
     $words = explode(' ', $amountInWords);
     $groupedWords = array_chunk($words, 4);
 
-    // Output each line
-    $currentY = $summaryStartY + $lineHeight + 34;
     foreach ($groupedWords as $wordGroup) {
-        $pdf->SetXY(130, $currentY);
+        $pdf->SetXY($rightX, $currentY);
         $pdf->Cell(0, $lineHeight, implode(' ', $wordGroup), 0, 1);
-        $currentY += $lineHeight; // Move down for next line
+        $currentY += $lineHeight;
     }
 
     // Set font for the thank-you message

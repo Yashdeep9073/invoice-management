@@ -11,19 +11,19 @@ require './utility/formatDateTime.php';
 
 try {
 
+    // Company settings
     $stmtFetchCompanySettings = $db->prepare("SELECT * FROM company_settings");
     $stmtFetchCompanySettings->execute();
     $companySettings = $stmtFetchCompanySettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
     if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-        // Define the expected query parameters
+
         $params = [
-            'customer' => isset($_GET['customer']) ? $_GET['customer'] : '',
-            'from' => isset($_GET['from']) ? $_GET['from'] : '',
-            'to' => isset($_GET['to']) ? $_GET['to'] : '',
+            'customer' => $_GET['customer'] ?? '',
+            'from' => $_GET['from'] ?? '',
+            'to' => $_GET['to'] ?? '',
         ];
 
-        // Check if at least one parameter is present (non-empty)
         $hasParams = false;
         foreach ($params as $value) {
             if ($value !== '') {
@@ -32,194 +32,108 @@ try {
             }
         }
 
-        if ($hasParams) {
+        $customerId = $params['customer'] ?: null;
+        $startDate = $params['from'] ? date('Y-m-d', strtotime($params['from'])) : null;
+        $endDate = $params['to'] ? date('Y-m-d', strtotime($params['to'])) : null;
 
-            $customerId = $params['customer'] ?? null;
-            $startDate = $params['from'] ?? null;
-            $endDate = $params['to'] ?? null;
+        // =========================
+        // COMMON QUERY BUILDER
+        // =========================
+        function buildQuery($db, $status = null, $customerId = null, $startDate = null, $endDate = null)
+        {
+            $query = "
+                SELECT 
+                    invoice.*, 
+                    invoice.status as paymentStatus,
+                    customer.customer_name,
+                    GROUP_CONCAT(tax.tax_name) as taxes,
+                    GROUP_CONCAT(tax.tax_rate) as tax_rates
 
-            // Clean and format dates
-            $startDate = $startDate ? date('Y-m-d', strtotime($startDate)) : null;
-            $endDate = $endDate ? date('Y-m-d', strtotime($endDate)) : null;
+                FROM invoice 
 
-            function buildInvoiceQuery($db, $status, $customerId, $startDate, $endDate)
-            {
-                $query = "
-            SELECT *, invoice.status as paymentStatus 
-            FROM invoice 
-            INNER JOIN customer ON customer.customer_id = invoice.customer_id
-            INNER JOIN tax ON tax.tax_id = invoice.tax
-            WHERE invoice.status = ?
-              AND invoice.is_active = 1
-        ";
+                INNER JOIN customer 
+                    ON customer.customer_id = invoice.customer_id
 
-                $types = "s";
-                $values = [$status];
+                LEFT JOIN invoice_tax it 
+                    ON it.invoice_id = invoice.invoice_id
 
-                if ($customerId) {
-                    $query .= " AND customer.customer_id = ?";
-                    $types .= "i";
-                    $values[] = $customerId;
-                }
+                LEFT JOIN tax 
+                    ON tax.tax_id = it.tax_id
 
-                if ($startDate && $endDate) {
-                    $query .= " AND DATE(invoice.created_at) BETWEEN ? AND ?";
-                    $types .= "ss";
-                    $values[] = $startDate;
-                    $values[] = $endDate;
-                }
+                WHERE invoice.is_active = 1
+            ";
 
-                $stmt = $db->prepare($query);
-                if (!$stmt)
-                    return false;
+            $types = "";
+            $values = [];
 
-                if (!empty($values)) {
-                    $stmt->bind_param($types, ...$values);
-                }
-
-                if ($stmt->execute()) {
-                    return $stmt->get_result();
-                }
-
-                return [];
+            if ($status) {
+                $query .= " AND invoice.status = ?";
+                $types .= "s";
+                $values[] = $status;
             }
 
-            // Build query for all invoices (without status filter)
-            function buildAllInvoicesQuery($db, $customerId, $startDate, $endDate)
-            {
-                $query = "
-            SELECT *, invoice.status as paymentStatus 
-            FROM invoice 
-            INNER JOIN customer ON customer.customer_id = invoice.customer_id
-            INNER JOIN tax ON tax.tax_id = invoice.tax
-            WHERE invoice.is_active = 1
-        ";
-
-                $types = "";
-                $values = [];
-
-                if ($customerId) {
-                    $query .= " AND customer.customer_id = ?";
-                    $types .= "i";
-                    $values[] = $customerId;
-                }
-
-                if ($startDate && $endDate) {
-                    $query .= " AND DATE(invoice.created_at) BETWEEN ? AND ?";
-                    $types .= "ss";
-                    $values[] = $startDate;
-                    $values[] = $endDate;
-                }
-
-                $stmt = $db->prepare($query);
-                if (!$stmt)
-                    return false;
-
-                if (!empty($types)) {
-                    $stmt->bind_param($types, ...$values);
-                }
-
-                if ($stmt->execute()) {
-                    return $stmt->get_result();
-                }
-
-                return [];
+            if ($customerId) {
+                $query .= " AND customer.customer_id = ?";
+                $types .= "i";
+                $values[] = $customerId;
             }
 
-            // Fetch all invoices (without status filter)
-            $allInvoices = buildAllInvoicesQuery($db, $customerId, $startDate, $endDate);
-            // print_r($allInvoices);
-            // exit;
-
-            // Fetch all statuses
-            $paidInvoices = buildInvoiceQuery($db, 'PAID', $customerId, $startDate, $endDate);
-            $pendingInvoices = buildInvoiceQuery($db, 'PENDING', $customerId, $startDate, $endDate);
-            $cancelledInvoices = buildInvoiceQuery($db, 'CANCELLED', $customerId, $startDate, $endDate);
-            $refundedInvoices = buildInvoiceQuery($db, 'REFUNDED', $customerId, $startDate, $endDate);
-
-            // Fetch customers
-            $stmtFetchCustomers = $db->prepare("SELECT * FROM customer WHERE isActive = 1");
-            $stmtFetchCustomers->execute();
-            $customers = $stmtFetchCustomers->get_result()->fetch_all(MYSQLI_ASSOC);
-            $stmtFetchCustomers->close();
-
-        } else {
-
-            // all invoices 
-            $stmtFetchAll = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
-            INNER JOIN customer
-            ON customer.customer_id = invoice.customer_id
-            INNER JOIN tax
-            ON tax.tax_id = invoice.tax
-            WHERE invoice.is_active = 1 ");
-            if ($stmtFetchAll->execute()) {
-                $allInvoices = $stmtFetchAll->get_result();
+            if ($startDate && $endDate) {
+                $query .= " AND DATE(invoice.created_at) BETWEEN ? AND ?";
+                $types .= "ss";
+                $values[] = $startDate;
+                $values[] = $endDate;
             }
 
-            // paid 
-            $stmtFetchPaid = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
-            INNER JOIN customer
-            ON customer.customer_id = invoice.customer_id
-            LEFT JOIN tax
-            ON tax.tax_id = invoice.tax
-            WHERE invoice.status = 'PAID' AND invoice.is_active = 1  ");
-            if ($stmtFetchPaid->execute()) {
-                $paidInvoices = $stmtFetchPaid->get_result();
+            $query .= " GROUP BY invoice.invoice_id ORDER BY invoice.invoice_id DESC";
+
+            $stmt = $db->prepare($query);
+
+            if (!$stmt) {
+                throw new Exception("Query prepare failed: " . $db->error);
             }
 
-            // pending
-            $stmtFetchPending = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
-            INNER JOIN customer
-            ON customer.customer_id = invoice.customer_id
-            INNER JOIN tax
-            ON tax.tax_id = invoice.tax
-            WHERE invoice.status = 'PENDING' AND invoice.is_active = 1");
-            if ($stmtFetchPending->execute()) {
-                $pendingInvoices = $stmtFetchPending->get_result();
+            if (!empty($types)) {
+                $stmt->bind_param($types, ...$values);
             }
 
-            // cancelled
-            $stmtFetchCancelled = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
-            INNER JOIN customer
-            ON customer.customer_id = invoice.customer_id
-            INNER JOIN tax
-            ON tax.tax_id = invoice.tax
-            WHERE invoice.status = 'CANCELLED' AND invoice.is_active = 1  ");
-            if ($stmtFetchCancelled->execute()) {
-                $cancelledInvoices = $stmtFetchCancelled->get_result();
+            if (!$stmt->execute()) {
+                throw new Exception("Query execute failed: " . $stmt->error);
             }
 
-            // refunded
-            $stmtFetchRefunded = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
-            INNER JOIN customer
-            ON customer.customer_id = invoice.customer_id
-            INNER JOIN tax
-            ON tax.tax_id = invoice.tax
-            WHERE invoice.status = 'REFUNDED' AND invoice.is_active = 1");
-            if ($stmtFetchRefunded->execute()) {
-                $refundedInvoices = $stmtFetchRefunded->get_result();
-            }
-
-            $stmtFetchCustomers = $db->prepare("
-            SELECT 
-            *
-            FROM customer
-            WHERE isActive = 1
-            ");
-
-            // Execute the query and fetch results
-            if ($stmtFetchCustomers->execute()) {
-                $customers = $stmtFetchCustomers->get_result()->fetch_all(MYSQLI_ASSOC);
-            } else {
-                $customers = []; // Return an empty array if execution fails
-            }
-
-            // Close the statement
-            $stmtFetchCustomers->close();
+            return $stmt->get_result();
         }
+
+        // =========================
+        // FETCH DATA
+        // =========================
+
+        $allInvoices = buildQuery($db, null, $customerId, $startDate, $endDate);
+        $paidInvoices = buildQuery($db, 'PAID', $customerId, $startDate, $endDate);
+        $pendingInvoices = buildQuery($db, 'PENDING', $customerId, $startDate, $endDate);
+        $cancelledInvoices = buildQuery($db, 'CANCELLED', $customerId, $startDate, $endDate);
+        $refundedInvoices = buildQuery($db, 'REFUNDED', $customerId, $startDate, $endDate);
+
+        // =========================
+        // FETCH CUSTOMERS
+        // =========================
+        $stmtFetchCustomers = $db->prepare("SELECT * FROM customer WHERE isActive = 1");
+        $stmtFetchCustomers->execute();
+        $customers = $stmtFetchCustomers->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmtFetchCustomers->close();
     }
 
-    $stmtFetchLocalizationSettings = $db->prepare("SELECT * FROM localization_settings INNER JOIN currency ON localization_settings.currency_id = currency.currency_id WHERE currency.is_active = 1 ;");
+    // =========================
+    // LOCALIZATION SETTINGS
+    // =========================
+    $stmtFetchLocalizationSettings = $db->prepare("
+        SELECT * 
+        FROM localization_settings 
+        INNER JOIN currency 
+        ON localization_settings.currency_id = currency.currency_id 
+        WHERE currency.is_active = 1
+    ");
+
     $stmtFetchLocalizationSettings->execute();
     $localizationSettings = $stmtFetchLocalizationSettings->get_result()->fetch_array(MYSQLI_ASSOC);
 
@@ -557,7 +471,7 @@ ob_end_clean();
                                                         <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($allInvoice['amount']); ?>
                                                         </td>
                                                         <td><?php echo htmlspecialchars($allInvoice['discount']); ?>%</td>
-                                                        <td><?php echo htmlspecialchars($allInvoice['tax_name'] . "-" . $allInvoice['tax_rate']); ?>
+                                                        <td><?php echo htmlspecialchars($allInvoice['taxes'] . "-" . $allInvoice['tax_rates']); ?>
                                                         </td>
                                                         <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($allInvoice['total_amount']); ?>
                                                         </td>
@@ -716,7 +630,7 @@ ob_end_clean();
                                                             <?php } ?>
                                                         </td>
                                                         <td><?php echo htmlspecialchars($paidInvoice['discount']); ?>%</td>
-                                                        <td><?php echo htmlspecialchars($paidInvoice['tax_rate']); ?></td>
+                                                        <td><?php echo htmlspecialchars($paidInvoice['taxes'] . "-" . $paidInvoice['tax_rates']); ?></td>
                                                         <td><?php echo formatDateTime($paidInvoice['created_at'], $localizationSettings); ?>
                                                         </td>
                                                     </tr>
@@ -873,7 +787,7 @@ ob_end_clean();
                                                             <?php } ?>
                                                         </td>
                                                         <td><?php echo $pendingInvoice['discount']; ?>%</td>
-                                                        <td><?php echo $pendingInvoice['tax_rate']; ?></td>
+                                                        <td><?php echo htmlspecialchars($pendingInvoice['taxes'] . "-" . $pendingInvoice['tax_rates']); ?></td>
                                                         <td><?php $date = new DateTime($pendingInvoice['created_at']);
                                                         echo htmlspecialchars($date->format(isset($localizationSettings["date_format"]) ? $localizationSettings["date_format"] : "d M Y")); ?>
                                                         </td>
@@ -1027,7 +941,7 @@ ob_end_clean();
                                                         </td>
                                                         <td><?php echo htmlspecialchars($cancelledInvoice['discount']); ?>%
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($cancelledInvoice['tax_rate']); ?>
+                                                        <td><?php echo htmlspecialchars($cancelledInvoice['taxes'] . "-" . $cancelledInvoice['tax_rates']); ?>
                                                         </td>
                                                         <td><?php echo formatDateTime($cancelledInvoice['created_at'], $localizationSettings); ?>
                                                         </td>

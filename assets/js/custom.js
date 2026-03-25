@@ -388,51 +388,107 @@ function exportActiveTabLedgerToExcel() {
     return;
   }
 
+  const tableEl = document.getElementById(activeTableId);
   const table = $(`#${activeTableId}`).DataTable();
-  const headerRow = getTableHeaderRow(activeTableId);
 
-  if (!headerRow) {
-    notyf.error("Table header not found!");
+  if (!tableEl || !tableEl.tHead) {
+    notyf.error("Table structure invalid!");
     return;
   }
 
-  let selectedRows = [];
-  let checkboxes = table.rows().nodes().to$().find('input[type="checkbox"]')
-    .filter((i, cb) => !cb.id || !cb.id.startsWith("select-all"));
+  // ===============================
+  // 🔹 Helpers
+  // ===============================
 
-  let checked = checkboxes.filter(":checked");
+  const cleanText = (text) => {
+    return text
+      ?.replace(/[₹$€£¥,]/g, "") // remove currency + commas
+      .replace(/\s+/g, " ")
+      .trim() || "";
+  };
 
-  if (checked.length === 0) {
-    selectedRows = table.rows().nodes().toArray();
-  } else {
-    table.rows().every(function () {
-      let rowNode = this.node();
-      let cb = $(rowNode).find('input[type="checkbox"]');
-      if (cb.length && cb.is(":checked")) selectedRows.push(rowNode);
+  const getSelectedRows = () => {
+    const allRows = table.rows().nodes().toArray();
+
+    const checkboxes = table
+      .rows()
+      .nodes()
+      .to$()
+      .find('input[type="checkbox"]')
+      .filter((i, cb) => !cb.id || !cb.id.startsWith("select-all"));
+
+    const checked = checkboxes.filter(":checked");
+
+    if (checked.length === 0) return allRows;
+
+    return allRows.filter((row) => {
+      const cb = $(row).find('input[type="checkbox"]');
+      return cb.length && cb.is(":checked");
     });
-  }
+  };
 
-  if (selectedRows.length === 0) {
-    notyf.error("No data rows to export!");
+  const getActionColumnIndex = (headerRow) => {
+    for (let i = 0; i < headerRow.cells.length; i++) {
+      if (headerRow.cells[i].innerText.trim().toLowerCase() === "action") {
+        return i;
+      }
+    }
+    return -1;
+  };
+
+  const cleanTable = (tableNode, actionIndex) => {
+    for (let row of tableNode.rows) {
+
+      if (!row.cells || row.cells.length === 0) continue;
+
+      // Skip title row (colspan row)
+      if (row.cells.length === 1 && row.cells[0].colSpan > 1) continue;
+
+      // Remove checkbox column
+      if (row.cells.length > 0) row.deleteCell(0);
+
+      // Remove action column
+      if (actionIndex !== -1 && row.cells.length > actionIndex) {
+        row.deleteCell(actionIndex);
+      }
+
+      // Clean values
+      for (let cell of row.cells) {
+        if (cell.innerText) {
+          cell.innerText = cleanText(cell.innerText);
+        }
+      }
+    }
+  };
+
+  // ===============================
+  // 🔹 Data Extraction
+  // ===============================
+
+  const selectedRows = getSelectedRows();
+
+  if (!selectedRows.length) {
+    notyf.error("No data to export!");
     return;
   }
 
-
-  // ---------- BUILD TEMP TABLE ----------
+  const headerRow = tableEl.tHead.rows[0];
+  const actionIndex = getActionColumnIndex(headerRow);
 
   const customerName = getCustomerNameFromPage();
-  console.log("Customer Name for Excel Title:", customerName); // Debug log to verify customer name extraction
   const customerInfo = getCustomerInfoFromPage();
-  console.log("Customer Info for Excel Title:", customerInfo); // Debug log to verify customer info extraction
 
+  // ===============================
+  // 🔹 Build Export Table
+  // ===============================
 
-  let tempTable = document.createElement("table");
+  const tempTable = document.createElement("table");
 
-  // ---- CUSTOMER NAME ROW ----
-  let titleRow = document.createElement("tr");
-  let titleCell = document.createElement("th");
+  // ---- TITLE ROW ----
+  const titleRow = document.createElement("tr");
+  const titleCell = document.createElement("th");
   titleCell.colSpan = headerRow.cells.length;
-  titleCell.innerText = `Customer: ${customerName} | Email: ${customerInfo.email} | GST No: ${customerInfo.gstNo} | Address: ${customerInfo.address}`;
+  titleCell.innerText = `Customer: ${customerName} | Email: ${customerInfo.email} | GST: ${customerInfo.gstNo} | Address: ${customerInfo.address}`;
   titleCell.style.fontWeight = "bold";
   titleCell.style.textAlign = "center";
   titleRow.appendChild(titleCell);
@@ -441,43 +497,34 @@ function exportActiveTabLedgerToExcel() {
   // ---- EMPTY ROW ----
   tempTable.appendChild(document.createElement("tr"));
 
-  tempTable.appendChild(headerRow.cloneNode(true));
+  // ---- THEAD ----
+  tempTable.appendChild(tableEl.tHead.cloneNode(true));
 
-  selectedRows.forEach(row => {
-    tempTable.appendChild(row.cloneNode(true));
+  // ---- TBODY ----
+  const tbody = document.createElement("tbody");
+  selectedRows.forEach((row) => {
+    tbody.appendChild(row.cloneNode(true));
   });
+  tempTable.appendChild(tbody);
 
-  // ---------- CLEANUP ----------
-  let actionIndex = -1;
-  [...tempTable.rows[0].cells].forEach((cell, i) => {
-    if (cell.innerText.toLowerCase() === "action") actionIndex = i;
-  });
-
-  for (let row of tempTable.rows) {
-
-    // 🔐 Skip rows that are title / empty rows
-    if (!row.cells || row.cells.length === 0) continue;
-
-    // 🔐 Skip customer title row (colSpan row)
-    if (row.cells.length === 1 && row.cells[0].colSpan > 1) continue;
-
-    // Remove checkbox column ONLY if it exists
-    if (row.cells.length > 0) {
-      row.deleteCell(0);
-    }
-
-    // Clean currency symbols
-    for (let cell of row.cells) {
-      if (cell.innerText) {
-        cell.innerText = cell.innerText.replace(/[₹$€£¥]/g, "").trim();
-      }
-    }
+  // ---- TFOOT (NEW FIX) ----
+  if (tableEl.tFoot) {
+    tempTable.appendChild(tableEl.tFoot.cloneNode(true));
   }
 
+  // ===============================
+  // 🔹 Cleanup
+  // ===============================
+  cleanTable(tempTable, actionIndex);
 
-  // ---------- EXPORT ----------
+  // ===============================
+  // 🔹 Export
+  // ===============================
   try {
-    const wb = XLSX.utils.table_to_book(tempTable, { sheet: "Sheet1" });
+    const wb = XLSX.utils.table_to_book(tempTable, {
+      sheet: "Ledger",
+    });
+
     XLSX.writeFile(wb, `${activeTableId}.xlsx`);
     notyf.success("Excel exported successfully!");
   } catch (err) {
@@ -485,7 +532,6 @@ function exportActiveTabLedgerToExcel() {
     notyf.error("Excel export failed!");
   }
 }
-
 
 function exportActiveTabLedgerToPDF() {
   const notyf = new Notyf({ position: { x: "center", y: "top" } });
@@ -557,107 +603,127 @@ function exportActiveTabLedgerToPDF() {
 
 
 // Function to export to Excel
-function exportToExcel(name = "test") {
-  // Initialize Notyf for success and error notifications
+function exportToExcel(name = "export") {
   const notyf = new Notyf({
-    position: {
-      x: "center",
-      y: "top",
-    },
+    position: { x: "center", y: "top" },
     types: [
-      {
-        type: "success",
-        background: "#4dc76f",
-        textColor: "#FFFFFF",
-        dismissible: false,
-        duration: 3000,
-      },
-      {
-        type: "error",
-        background: "#ff1916",
-        textColor: "#FFFFFF",
-        dismissible: false,
-        duration: 3000,
-      },
+      { type: "success", background: "#4dc76f", textColor: "#fff", duration: 3000 },
+      { type: "error", background: "#ff1916", textColor: "#fff", duration: 3000 },
     ],
   });
 
-  let table = $("#myTable").DataTable(); // Initialize DataTables API
-  let selectedRows = [];
+  const table = $("#myTable").DataTable();
+  const originalTable = document.getElementById("myTable");
 
-  // Get selected invoice IDs
-  let checkboxes = table
-    .rows()
-    .nodes()
-    .to$()
-    .find('input[name="invoiceIds"]:checked');
-  let selectedInvoiceIds = checkboxes
-    .map((i, checkbox) => checkbox.value)
-    .get();
+  // ===============================
+  // 🔹 Helpers
+  // ===============================
 
-  // If no checkboxes are selected, include all rows; otherwise, filter rows
-  if (selectedInvoiceIds.length === 0) {
-    selectedRows = table.rows().nodes().toArray(); // Get all rows from DataTables
-  } else {
-    selectedRows = [table.rows().nodes().toArray()[0]]; // Include header row
-    table
+  const cleanText = (text) => {
+    return text
+      ?.replace(/[₹$,]/g, "") // remove currency + commas
+      .replace(/\s+/g, " ")
+      .trim() || "";
+  };
+
+  const removeColumns = (tableEl) => {
+    let actionIndex = -1;
+
+    // detect action column
+    const headers = tableEl.querySelectorAll("thead th");
+    headers.forEach((th, i) => {
+      if (th.innerText.trim().toLowerCase() === "action") {
+        actionIndex = i;
+      }
+    });
+
+    for (let row of tableEl.rows) {
+      // remove checkbox column (first)
+      if (row.cells.length > 0) row.deleteCell(0);
+
+      // remove action column
+      if (actionIndex !== -1 && row.cells.length > actionIndex) {
+        row.deleteCell(actionIndex);
+      }
+
+      // clean text
+      for (let cell of row.cells) {
+        cell.innerText = cleanText(cell.innerText);
+      }
+    }
+  };
+
+  const getSelectedRows = () => {
+    const checkboxes = table
       .rows()
       .nodes()
-      .each(function (row, index) {
-        if (index === 0) return; // Skip header row to avoid duplication
-        let checkbox = $(row).find('input[name="invoiceIds"]');
-        if (checkbox.length && selectedInvoiceIds.includes(checkbox.val())) {
-          selectedRows.push(row);
-        }
-      });
-  }
+      .to$()
+      .find('input[name="invoiceIds"]:checked');
 
-  // Check if there are any rows to export (excluding header)
-  if (selectedRows.length <= 1) {
+    const selectedIds = checkboxes.map((i, el) => el.value).get();
+
+    if (selectedIds.length === 0) {
+      return table.rows().nodes().toArray();
+    }
+
+    return table
+      .rows()
+      .nodes()
+      .toArray()
+      .filter((row) => {
+        const checkbox = $(row).find('input[name="invoiceIds"]');
+        return checkbox.length && selectedIds.includes(checkbox.val());
+      });
+  };
+
+  // ===============================
+  // 🔹 Build Export Table
+  // ===============================
+
+  const selectedRows = getSelectedRows();
+
+  if (!selectedRows.length) {
     notyf.error("No rows selected for export!");
     return;
   }
 
-  // Create a new table for export
-  let tempTable = document.createElement("table");
-  for (let row of selectedRows) {
-    tempTable.appendChild(row.cloneNode(true));
+  const tempTable = document.createElement("table");
+
+  // ✅ THEAD
+  if (originalTable.tHead) {
+    tempTable.appendChild(originalTable.tHead.cloneNode(true));
   }
 
-  // Remove the Action column
-  let actionColumnIndex = -1;
-  let headerCells = tempTable.rows[0].cells;
-  for (let i = 0; i < headerCells.length; i++) {
-    if (headerCells[i].innerText.trim().toLowerCase() === "action") {
-      actionColumnIndex = i;
-      break;
-    }
-  }
-  if (actionColumnIndex !== -1) {
-    for (let row of tempTable.rows) {
-      if (row.cells.length > actionColumnIndex) {
-        row.deleteCell(actionColumnIndex);
-      }
-    }
+  // ✅ TBODY
+  const tbody = document.createElement("tbody");
+  selectedRows.forEach((row) => {
+    tbody.appendChild(row.cloneNode(true));
+  });
+  tempTable.appendChild(tbody);
+
+  // ✅ TFOOT (important fix)
+  if (originalTable.tFoot) {
+    tempTable.appendChild(originalTable.tFoot.cloneNode(true));
   }
 
-  // Remove the checkbox column (first column) and currency symbols
-  for (let row of tempTable.rows) {
-    if (row.cells.length > 0) {
-      row.deleteCell(0); // Remove checkbox column
-    }
-    for (let cell of row.cells) {
-      cell.innerText = cell.innerText.replace(/[₹$]/g, "").trim(); // Remove currency symbols
-    }
-  }
+  // ===============================
+  // 🔹 Clean & Normalize
+  // ===============================
+  removeColumns(tempTable);
 
-  // Export to Excel
+  // ===============================
+  // 🔹 Export
+  // ===============================
   try {
-    let workbook = XLSX.utils.table_to_book(tempTable, { sheet: "Sheet1" });
+    const workbook = XLSX.utils.table_to_book(tempTable, {
+      sheet: "Ledger",
+    });
+
     XLSX.writeFile(workbook, `${name}.xlsx`);
-    notyf.success("Excel file exported successfully!");
-  } catch (error) {
-    notyf.error("Error exporting to Excel: " + error.message);
+    notyf.success("Excel exported successfully!");
+  } catch (err) {
+    console.error(err);
+    notyf.error("Export failed: " + err.message);
   }
 }
 

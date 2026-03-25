@@ -55,20 +55,32 @@ try {
             $startDate = $startDate ? date('Y-m-d', strtotime($startDate)) : null;
             $endDate = $endDate ? date('Y-m-d', strtotime($endDate)) : null;
 
-            // Prepare SQL with conditions
             $query = "SELECT 
             invoice.*,
             invoice.status as invoiceStatus,
             customer.customer_id,
             customer.customer_name,
             admin.admin_username,
-            tax.tax_name,
-            tax.tax_rate
-            FROM invoice 
-            INNER JOIN customer ON customer.customer_id = invoice.customer_id
-            LEFT JOIN admin ON admin.admin_id = invoice.created_by 
-             INNER JOIN tax ON tax.tax_id = invoice.tax
-            WHERE invoice.is_active = 1 AND invoice.status IN ('PAID', 'PENDING')";
+            GROUP_CONCAT(tax.tax_name) as taxes,
+            GROUP_CONCAT(tax.tax_rate) as tax_rates
+
+        FROM invoice 
+
+        INNER JOIN customer 
+            ON customer.customer_id = invoice.customer_id
+
+        LEFT JOIN admin 
+            ON admin.admin_id = invoice.created_by 
+
+        LEFT JOIN invoice_tax it 
+            ON it.invoice_id = invoice.invoice_id
+
+        LEFT JOIN tax 
+            ON tax.tax_id = it.tax_id
+
+        WHERE invoice.is_active = 1 AND invoice.status IN ('PAID', 'PENDING')
+        ";
+
 
             $conditions = [];
             $paramsToBind = [];
@@ -122,21 +134,34 @@ try {
             $customers = $stmtFetchCustomers->get_result()->fetch_all(MYSQLI_ASSOC);
             $stmtFetchCustomers->close();
         } else {
-            $stmtFetchInvoices = $db->prepare("SELECT 
-                invoice.*,
-                invoice.status as invoiceStatus,
-                customer.customer_id,
-                customer.customer_name,
-                admin.admin_username,
-                tax.tax_name,
-                tax.tax_rate
+            $stmtFetchInvoices = $db->prepare("
+                SELECT 
+                    invoice.*,
+                    invoice.status as invoiceStatus,
+                    customer.customer_id,
+                    customer.customer_name,
+                    admin.admin_username,
+                    GROUP_CONCAT(tax.tax_name) as taxes,
+                    GROUP_CONCAT(tax.tax_rate) as tax_rates
+
                 FROM invoice 
+
                 INNER JOIN customer
-                ON customer.customer_id = invoice.customer_id
+                    ON customer.customer_id = invoice.customer_id
+
                 LEFT JOIN admin
-                ON admin.admin_id = invoice.created_by 
-                  INNER JOIN tax ON tax.tax_id = invoice.tax
-                WHERE invoice.is_active = 1 AND invoice.status IN ('PAID', 'PENDING')
+                    ON admin.admin_id = invoice.created_by 
+
+                LEFT JOIN invoice_tax it 
+                    ON it.invoice_id = invoice.invoice_id
+
+                LEFT JOIN tax 
+                    ON tax.tax_id = it.tax_id
+
+                WHERE invoice.is_active = 1  AND invoice.status IN ('PAID', 'PENDING')
+
+                GROUP BY invoice.invoice_id
+                ORDER BY invoice.invoice_id ASC
                 ");
             if ($stmtFetchInvoices->execute()) {
                 $invoices = $stmtFetchInvoices->get_result();
@@ -733,9 +758,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
 
                                     foreach ($invoices->fetch_all(MYSQLI_ASSOC) as $invoice):
 
-                                        // ===== Calculate once per invoice =====
-                                        $taxRateStr = $invoice['tax_rate'];
-                                        $taxRate = (int) str_replace('%', '', $taxRateStr);
+                                         // ===== Calculate ONCE per invoice =====
+                                        $taxRate = array_sum(array_map(fn($r) => (int) str_replace('%', '', trim($r)), explode(',', $invoice['tax_rates'] ?? '0')));
 
                                         $priceWithoutTax = $taxRate > 0
                                             ? $invoice['total_amount'] / (1 + $taxRate / 100)
@@ -797,11 +821,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['gstStatusUpdate'])) {
                                             </td>
 
                                             <td>
-                                                <?= $invoice['tax_name'] ?>
+                                                <?= $invoice['taxes'] ?? '-' ?>
                                             </td>
 
                                             <td>
-                                                <?= $invoice['tax_rate'] ?>
+                                               <?= $invoice['tax_rates'] ? $invoice['tax_rates']  : '-' ?>
                                             </td>
 
                                             <td>

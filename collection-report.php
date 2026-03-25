@@ -34,7 +34,7 @@ try {
     $stmtFetch->execute();
     $customers = $stmtFetch->get_result();
     // Collection Report Query Fetch 
-    
+
 
     $stmtFetchState = $db->prepare("SELECT * FROM state");
     $stmtFetchState->execute();
@@ -240,7 +240,13 @@ ob_end_flush();
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($customers->fetch_all(MYSQLI_ASSOC) as $customer) { ?>
+                                    <?php
+                                    $totalCollected = 0;
+                                    $totalPending = 0;
+                                    foreach ($customers->fetch_all(MYSQLI_ASSOC) as $customer) {
+                                        $totalCollected = $customer['total_collected'];
+                                        $totalPending = $customer['outstanding_amount'];
+                                        ?>
                                         <tr>
                                             <td>
                                                 <label class="checkboxs">
@@ -275,6 +281,26 @@ ob_end_flush();
                                         </tr>
                                     <?php } ?>
                                 </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="5"></td>
+                                        <td>
+                                            <strong>
+                                                <span class="text-success">Total Collected:
+                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalCollected, 2); ?>
+                                                </span>
+                                            </strong>
+                                        </td>
+                                        <td>
+                                            <strong>
+                                                <span class="text-danger">Total Pending:
+                                                    <?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . number_format($totalPending, 2); ?>
+                                                </span>
+                                            </strong>
+                                        </td>
+                                        <td colspan="1"></td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>

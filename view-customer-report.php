@@ -19,26 +19,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['id'])) {
 
         // all invoices 
         $stmtFetchAll = $db->prepare("
-        SELECT 
-            invoice.*,
-            invoice.status AS paymentStatus,
-            customer.*,
-            tax.*,
-            (
-                COALESCE(SUM(l.debit_amount), 0) -
-                COALESCE(SUM(l.credit_amount), 0)
-            ) AS outstanding_amount
-        FROM invoice
-        INNER JOIN customer
-            ON customer.customer_id = invoice.customer_id
-        INNER JOIN tax
-            ON tax.tax_id = invoice.tax
-        LEFT JOIN ledger_transactions l
-            ON l.invoice_id = invoice.invoice_id
-        WHERE invoice.is_active = 1
-        AND customer.customer_id = ?
-        GROUP BY invoice.invoice_id
-    ");
+SELECT 
+    invoice.*,
+    invoice.status AS paymentStatus,
+    customer.*,
+    GROUP_CONCAT(tax.tax_name) AS taxes,
+    GROUP_CONCAT(tax.tax_rate) AS tax_rates,
+    (
+        COALESCE(SUM(l.debit_amount), 0) -
+        COALESCE(SUM(l.credit_amount), 0)
+    ) AS outstanding_amount
+
+FROM invoice
+
+INNER JOIN customer
+    ON customer.customer_id = invoice.customer_id
+
+LEFT JOIN invoice_tax it
+    ON it.invoice_id = invoice.invoice_id
+
+LEFT JOIN tax
+    ON tax.tax_id = it.tax_id
+
+LEFT JOIN ledger_transactions l
+    ON l.invoice_id = invoice.invoice_id
+
+WHERE invoice.is_active = 1
+AND customer.customer_id = ?
+
+GROUP BY invoice.invoice_id
+");
 
         $stmtFetchAll->bind_param('i', $customerId);
 
@@ -48,12 +58,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['id'])) {
 
 
         // paid 
-        $stmtFetchPaid = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
-        INNER JOIN customer
-        ON customer.customer_id = invoice.customer_id
-        INNER JOIN tax
-        ON tax.tax_id = invoice.tax
-        WHERE invoice.status = 'PAID' AND invoice.is_active = 1 AND customer.customer_id = ? ");
+        $stmtFetchPaid = $db->prepare("
+            SELECT 
+                invoice.*,
+                invoice.status AS paymentStatus,
+                customer.*,
+                 GROUP_CONCAT(tax.tax_name) AS taxes,
+                GROUP_CONCAT(tax.tax_rate) AS tax_rates
+
+            FROM invoice
+
+            INNER JOIN customer
+                ON customer.customer_id = invoice.customer_id
+
+            LEFT JOIN invoice_tax it
+                ON it.invoice_id = invoice.invoice_id
+
+            LEFT JOIN tax
+                ON tax.tax_id = it.tax_id
+
+            WHERE invoice.status = 'PAID'
+            AND invoice.is_active = 1
+            AND customer.customer_id = ?
+
+            GROUP BY invoice.invoice_id
+        ");
 
         $stmtFetchPaid->bind_param('i', $customerId);
 
@@ -62,12 +91,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['id'])) {
         }
 
         // pending
-        $stmtFetchPending = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
-        INNER JOIN customer
-        ON customer.customer_id = invoice.customer_id
-        INNER JOIN tax
-        ON tax.tax_id = invoice.tax
-        WHERE invoice.status = 'PENDING' AND invoice.is_active = 1 AND customer.customer_id = ? ");
+        $stmtFetchPending = $db->prepare("
+            SELECT 
+                invoice.*,
+                invoice.status AS paymentStatus,
+                customer.*,
+                GROUP_CONCAT(tax.tax_name) AS taxes,
+
+                GROUP_CONCAT(tax.tax_rate) AS tax_rates
+
+            FROM invoice
+
+            INNER JOIN customer
+                ON customer.customer_id = invoice.customer_id
+
+            LEFT JOIN invoice_tax it
+                ON it.invoice_id = invoice.invoice_id
+
+            LEFT JOIN tax
+                ON tax.tax_id = it.tax_id
+
+            WHERE invoice.status = 'PENDING'
+            AND invoice.is_active = 1
+            AND customer.customer_id = ?
+
+            GROUP BY invoice.invoice_id
+        ");
 
         $stmtFetchPending->bind_param('i', $customerId);
 
@@ -76,12 +125,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['id'])) {
         }
 
         // cancelled
-        $stmtFetchCancelled = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
-        INNER JOIN customer
-        ON customer.customer_id = invoice.customer_id
-        INNER JOIN tax
-        ON tax.tax_id = invoice.tax
-        WHERE invoice.status = 'CANCELLED' AND invoice.is_active = 1 AND customer.customer_id = ?  ");
+        $stmtFetchCancelled = $db->prepare("
+SELECT 
+    invoice.*,
+    invoice.status AS paymentStatus,
+    customer.*,
+    GROUP_CONCAT(tax.tax_name) AS taxes,
+
+    GROUP_CONCAT(tax.tax_rate) AS tax_rates
+
+FROM invoice
+
+INNER JOIN customer
+    ON customer.customer_id = invoice.customer_id
+
+LEFT JOIN invoice_tax it
+    ON it.invoice_id = invoice.invoice_id
+
+LEFT JOIN tax
+    ON tax.tax_id = it.tax_id
+
+WHERE invoice.status = 'CANCELLED'
+AND invoice.is_active = 1
+AND customer.customer_id = ?
+
+GROUP BY invoice.invoice_id
+");
 
         $stmtFetchCancelled->bind_param('i', $customerId);
 
@@ -90,12 +159,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['id'])) {
         }
 
         // refunded
-        $stmtFetchRefunded = $db->prepare("SELECT *,invoice.status as paymentStatus FROM invoice 
-        INNER JOIN customer
-        ON customer.customer_id = invoice.customer_id
-        INNER JOIN tax
-        ON tax.tax_id = invoice.tax
-        WHERE invoice.status = 'REFUNDED' AND invoice.is_active = 1 AND customer.customer_id = ?");
+        $stmtFetchRefunded = $db->prepare("
+SELECT 
+    invoice.*,
+    invoice.status AS paymentStatus,
+    customer.*,
+    GROUP_CONCAT(tax.tax_name) AS taxes,
+
+    GROUP_CONCAT(tax.tax_rate) AS tax_rates
+
+FROM invoice
+
+INNER JOIN customer
+    ON customer.customer_id = invoice.customer_id
+
+LEFT JOIN invoice_tax it
+    ON it.invoice_id = invoice.invoice_id
+
+LEFT JOIN tax
+    ON tax.tax_id = it.tax_id
+
+WHERE invoice.status = 'REFUNDED'
+AND invoice.is_active = 1
+AND customer.customer_id = ?
+
+GROUP BY invoice.invoice_id
+");
 
         $stmtFetchRefunded->bind_param('i', $customerId);
 
@@ -103,26 +192,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['id'])) {
             $refundedInvoices = $stmtFetchRefunded->get_result();
         }
 
-        $stmtFetchLedgerTransaction = $db->prepare("SELECT
-                invoice.invoice_id,
-                invoice.invoice_number,
-                ledger_transactions.*,
-                invoice.status AS invoiceStatus,
-                customer.customer_id,
-                customer.customer_name,
-                admin.admin_username,
-                tax.tax_rate
-            FROM ledger_transactions
-            INNER JOIN customer
-                ON customer.customer_id = ledger_transactions.customer_id
-            LEFT JOIN invoice
-                ON invoice.invoice_id = ledger_transactions.invoice_id
-            LEFT JOIN admin 
-                ON admin.admin_id = invoice.created_by
-            LEFT JOIN tax 
-                ON tax.tax_id = invoice.tax
-            WHERE ledger_transactions.customer_id = ?    
-            ORDER BY ledger_transactions.ledger_id ASC;
+       $stmtFetchLedgerTransaction = $db->prepare("
+        SELECT
+            invoice.invoice_id,
+            invoice.invoice_number,
+            ledger_transactions.*,
+            invoice.status AS invoiceStatus,
+            customer.customer_id,
+            customer.customer_name,
+            admin.admin_username,
+                GROUP_CONCAT(tax.tax_name) AS taxes,
+            GROUP_CONCAT(tax.tax_rate) AS tax_rates
+
+        FROM ledger_transactions
+
+        INNER JOIN customer
+            ON customer.customer_id = ledger_transactions.customer_id
+
+        LEFT JOIN invoice
+            ON invoice.invoice_id = ledger_transactions.invoice_id
+
+        LEFT JOIN admin 
+            ON admin.admin_id = invoice.created_by
+
+        LEFT JOIN invoice_tax it
+            ON it.invoice_id = invoice.invoice_id
+
+        LEFT JOIN tax 
+            ON tax.tax_id = it.tax_id
+
+        WHERE ledger_transactions.customer_id = ?
+
+        GROUP BY ledger_transactions.ledger_id
+        ORDER BY ledger_transactions.ledger_id ASC
         ");
 
         $stmtFetchLedgerTransaction->bind_param('i', $customerId);
@@ -1401,7 +1503,8 @@ ob_end_clean();
                                                     <th>Service</th>
                                                     <th>Amount</th>
                                                     <th>Discount</th>
-                                                    <th>Tax</th>
+                                                    <th>Tax Name</th>
+                                                    <th>Tax Rate</th>
                                                     <th>Total Amount</th>
                                                     <th>Outstanding Amount</th>
                                                     <th>Status</th>
@@ -1441,8 +1544,9 @@ ob_end_clean();
                                                         <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($allInvoice['amount']); ?>
                                                         </td>
                                                         <td><?php echo htmlspecialchars($allInvoice['discount']); ?>%</td>
-                                                        <td><?php echo htmlspecialchars($allInvoice['tax_name'] . "-" . $allInvoice['tax_rate']); ?>
+                                                        <td><?php echo htmlspecialchars($allInvoice['taxes'] ?? "-"); ?>
                                                         </td>
+                                                        <td><?php echo htmlspecialchars($allInvoice['tax_rates'] ?? "-"); ?></td>
                                                         <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($allInvoice['total_amount']); ?>
                                                         <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($allInvoice['outstanding_amount']); ?>
                                                         </td>
@@ -1569,7 +1673,8 @@ ob_end_clean();
                                                     <th>Service</th>
                                                     <th>Amount</th>
                                                     <th>Discount</th>
-                                                    <th>Tax</th>
+                                                    <th>Tax Name</th>
+                                                    <th>Tax Rate</th>
                                                     <th>Total Amount</th>
                                                     <th>Status</th>
                                                 </tr>
@@ -1597,7 +1702,9 @@ ob_end_clean();
                                                         <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($paidInvoice['amount']); ?>
                                                         </td>
                                                         <td><?php echo htmlspecialchars($paidInvoice['discount']); ?>%</td>
-                                                        <td><?php echo htmlspecialchars($paidInvoice['tax_name'] . "-" . $paidInvoice['tax_rate']); ?>
+                                                        <td><?php echo htmlspecialchars($paidInvoice['tax_name'] ?? "-"); ?>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($paidInvoice['tax_rate'] ?? "-"); ?>
                                                         </td>
                                                         <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($paidInvoice['total_amount']); ?>
                                                         </td>
@@ -1644,7 +1751,8 @@ ob_end_clean();
                                                     <th>Service</th>
                                                     <th>Amount</th>
                                                     <th>Discount</th>
-                                                    <th>Tax</th>
+                                                    <th>Tax Name</th>
+                                                    <th>Tax Rate</th>
                                                     <th>Total Amount</th>
                                                     <th>Status</th>
                                                 </tr>
@@ -1674,7 +1782,9 @@ ob_end_clean();
                                                         </td>
                                                         <td><?php echo htmlspecialchars($pendingInvoice['discount']); ?>%
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($pendingInvoice['tax_name'] . "-" . $pendingInvoice['tax_rate']); ?>
+                                                        <td><?php echo htmlspecialchars($pendingInvoice['taxes'] ?? "-"); ?>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($pendingInvoice['tax_rates'] ?? "-"); ?>
                                                         </td>
                                                         <td><?php echo (isset($localizationSettings["currency_symbol"]) ? $localizationSettings["currency_symbol"] : "$") . " " . htmlspecialchars($pendingInvoice['total_amount']); ?>
                                                         </td>
@@ -2052,7 +2162,8 @@ ob_end_clean();
                         <div class="modal-body custom-modal-body">
                             <form class="create-payment-form">
                                 <div class="mb-3">
-                                    <label class="form-label">Transaction Type <span class="text-danger">*</span></label>
+                                    <label class="form-label">Transaction Type <span
+                                            class="text-danger">*</span></label>
                                     <select class="form-select" name="transaction_type" id="transaction_type" required>
                                         <option>Select</option>
                                         <option value="PAYMENT">Payment</option>
@@ -2072,7 +2183,7 @@ ob_end_clean();
                                         <option value="OTHER">Other</option>
                                     </select>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">Amount <span class="text-danger">*</span></label>
                                     <input type="number" name="amount" step="0.01" class="form-control">

@@ -105,9 +105,6 @@ if (isset($_POST['invoiceNumber']) && $_SERVER['REQUEST_METHOD'] == "POST") {
 
 if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
     try {
-        // echo "<pre>";
-        // print_r($_POST);
-        // exit();
 
         $db->begin_transaction();
 
@@ -127,7 +124,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         $customerId = filter_input(INPUT_POST, 'customerName', FILTER_VALIDATE_INT);
         $amount = filter_input(INPUT_POST, 'amount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $quantity = filter_input(INPUT_POST, 'quantity', FILTER_VALIDATE_INT);
-        $tax = filter_input(INPUT_POST, 'tax', FILTER_VALIDATE_INT);
+        $taxes = isset($_POST['tax']) && is_array($_POST['tax'])
+            ? array_map('intval', $_POST['tax'])
+            : [];
         $discount = filter_input(INPUT_POST, 'discount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $totalAmount = filter_input(INPUT_POST, 'total_amount', FILTER_VALIDATE_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $invoiceTitle = htmlspecialchars($_POST["invoice_title"], ENT_QUOTES, 'UTF-8');
@@ -181,23 +180,22 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
         // Prepare and execute the SQL query
         $sql = "INSERT INTO `invoice` (
             `invoice_number`, `payment_method`, `transaction_id`, `status`, 
-            `amount`, `quantity`, `tax`, `discount`, `total_amount`, 
+            `amount`, `quantity`,  `discount`, `total_amount`, 
             `due_date`, `from_date`,`to_date` , `customer_id`, `service_id`, `description`,`created_by`,`invoice_type`,`invoice_title`,`repeat_cycle`,`create_before`
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?,?,?)";
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?,?,?)";
 
         $stmt = $db->prepare($sql);
         if ($stmt === false) {
             throw new Exception('Prepare failed: ' . $db->error);
         }
         $stmt->bind_param(
-            'ssssdiiddsssississsi',
+            'ssssdiddsssississsi',
             $invoiceNumber,
             $paymentMethod,
             $transactionId,
             $status,
             $amount,
             $quantity,
-            $tax,
             $discount,
             $totalAmount,
             $dueDate,
@@ -276,19 +274,63 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
 
         $walletStmt->close();
 
+        if (!empty($taxes)) {
 
+            $taxSql = "INSERT INTO invoice_tax (invoice_id, tax_id, tax_amount) VALUES (?, ?, ?)";
+            $taxStmt = $db->prepare($taxSql);
 
+            if (!$taxStmt) {
+                throw new Exception($db->error);
+            }
+
+            foreach ($taxes as $taxId) {
+
+                // get tax rate
+                $rateQuery = $db->prepare("SELECT tax_rate FROM tax WHERE tax_id = ?");
+                $rateQuery->bind_param("i", $taxId);
+                $rateQuery->execute();
+                $result = $rateQuery->get_result()->fetch_assoc();
+
+                if (!$result) {
+                    throw new Exception("Invalid tax ID: " . $taxId);
+                }
+
+                $rate = floatval($result['tax_rate']);
+                $taxAmount = ($amount * $rate) / 100;
+
+                $taxStmt->bind_param("iid", $invoiceId, $taxId, $taxAmount);
+
+                if (!$taxStmt->execute()) {
+                    throw new Exception($taxStmt->error);
+                }
+            }
+
+            $taxStmt->close();
+        }
 
         $db->commit();
 
         $_SESSION['success'] = 'Invoice created successfully!';
         header("Location: " . getenv("BASE_URL") . "manage-invoice");
         exit;
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         $db->rollback();
-        $_SESSION['error'] = $e->getMessage();
-        // echo $e->getMessage();
-        // die();
+
+        $errorMessage = 'Unable to create invoice right now. Please try again.';
+
+        if ($e instanceof mysqli_sql_exception && (int) $e->getCode() === 1062) {
+            if (strpos($e->getMessage(), 'invoice.invoice_number_UNIQUE') !== false) {
+                $errorMessage = 'Invoice number already exists. Please generate a new invoice number and try again.';
+            } else {
+                $errorMessage = 'A duplicate record was detected. Please review the form and try again.';
+            }
+        } elseif (!empty($e->getMessage())) {
+            $errorMessage = $e->getMessage();
+        }
+
+        $_SESSION['error'] = $errorMessage;
+        header("Location: " . getenv("BASE_URL") . "add-invoice");
+        exit;
     }
 }
 ?>
@@ -679,8 +721,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                                                             <div class="mb-3 add-product">
                                                                 <label class="form-label">Tax (%) <span>
                                                                         *</span></label>
-                                                                <select id="tax" name="tax" class="form-control"
-                                                                    required>
+                                                                <select id="tax" name="tax[]"
+                                                                    class="select2 form-select" required
+                                                                    multiple="multiple">
                                                                     <option>Select Tax Rate
                                                                     </option>
                                                                     <?php foreach ($taxOptions->fetch_all(MYSQLI_ASSOC) as $tax) { ?>
@@ -825,25 +868,30 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                 function calculateTotal() {
                     const amount = parseFloat($('#invoiceAmount').val()) || 0;
                     const quantity = parseInt($('#quantity').val()) || 1;
-                    const taxRate = parseFloat($('#tax option:selected').attr('data-value')) / 100 || 0;
                     const discountRate = parseFloat($('#discount').val()) / 100 || 0;
 
                     // 1. Subtotal
                     const subtotal = amount * quantity;
 
-                    // 2. Discount on subtotal only
+                    // 2. Discount
                     const discountAmount = subtotal * discountRate;
                     const discountedSubtotal = subtotal - discountAmount;
 
-                    // 3. Tax on discounted amount
-                    const taxAmount = discountedSubtotal * taxRate;
+                    // 3. MULTIPLE TAX CALCULATION ✅
+                    let totalTaxRate = 0;
+
+                    $('#tax option:selected').each(function () {
+                        const rate = parseFloat($(this).data('value')) || 0;
+                        totalTaxRate += rate;
+                    });
+
+                    const taxAmount = discountedSubtotal * (totalTaxRate / 100);
 
                     // 4. Final total
                     const total = discountedSubtotal + taxAmount;
 
                     return total.toFixed(2);
                 }
-
 
                 // Update total amount
                 $('#total_amount').val(calculateTotal());
@@ -854,18 +902,24 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                 function calculateTotal() {
                     const amount = parseFloat($('#invoiceAmount').val()) || 0;
                     const quantity = parseInt($('#quantity').val()) || 1;
-                    const taxRate = parseFloat($('#tax option:selected').attr('data-value')) / 100 || 0;
                     const discountRate = parseFloat($('#discount').val()) / 100 || 0;
 
                     // 1. Subtotal
                     const subtotal = amount * quantity;
 
-                    // 2. Discount on subtotal only
+                    // 2. Discount
                     const discountAmount = subtotal * discountRate;
                     const discountedSubtotal = subtotal - discountAmount;
 
-                    // 3. Tax on discounted amount
-                    const taxAmount = discountedSubtotal * taxRate;
+                    // 3. MULTIPLE TAX CALCULATION ✅
+                    let totalTaxRate = 0;
+
+                    $('#tax option:selected').each(function () {
+                        const rate = parseFloat($(this).data('value')) || 0;
+                        totalTaxRate += rate;
+                    });
+
+                    const taxAmount = discountedSubtotal * (totalTaxRate / 100);
 
                     // 4. Final total
                     const total = discountedSubtotal + taxAmount;
@@ -878,24 +932,30 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                 $('#total_amount').val(calculateTotal());
             });
 
-            $(document).on('input', '#tax', function (event) {
+            $(document).on('input change', '#tax', function (event) {
                 event.preventDefault();
 
                 function calculateTotal() {
                     const amount = parseFloat($('#invoiceAmount').val()) || 0;
                     const quantity = parseInt($('#quantity').val()) || 1;
-                    const taxRate = parseFloat($('#tax option:selected').attr('data-value')) / 100 || 0;
                     const discountRate = parseFloat($('#discount').val()) / 100 || 0;
 
                     // 1. Subtotal
                     const subtotal = amount * quantity;
 
-                    // 2. Discount on subtotal only
+                    // 2. Discount
                     const discountAmount = subtotal * discountRate;
                     const discountedSubtotal = subtotal - discountAmount;
 
-                    // 3. Tax on discounted amount
-                    const taxAmount = discountedSubtotal * taxRate;
+                    // 3. MULTIPLE TAX CALCULATION ✅
+                    let totalTaxRate = 0;
+
+                    $('#tax option:selected').each(function () {
+                        const rate = parseFloat($(this).data('value')) || 0;
+                        totalTaxRate += rate;
+                    });
+
+                    const taxAmount = discountedSubtotal * (totalTaxRate / 100);
 
                     // 4. Final total
                     const total = discountedSubtotal + taxAmount;
@@ -903,8 +963,6 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                     return total.toFixed(2);
                 }
 
-
-                // Update total amount
                 $('#total_amount').val(calculateTotal());
             });
 
@@ -914,18 +972,24 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && isset($_POST['submit'])) {
                 function calculateTotal() {
                     const amount = parseFloat($('#invoiceAmount').val()) || 0;
                     const quantity = parseInt($('#quantity').val()) || 1;
-                    const taxRate = parseFloat($('#tax option:selected').attr('data-value')) / 100 || 0;
                     const discountRate = parseFloat($('#discount').val()) / 100 || 0;
 
                     // 1. Subtotal
                     const subtotal = amount * quantity;
 
-                    // 2. Discount on subtotal only
+                    // 2. Discount
                     const discountAmount = subtotal * discountRate;
                     const discountedSubtotal = subtotal - discountAmount;
 
-                    // 3. Tax on discounted amount
-                    const taxAmount = discountedSubtotal * taxRate;
+                    // 3. MULTIPLE TAX CALCULATION ✅
+                    let totalTaxRate = 0;
+
+                    $('#tax option:selected').each(function () {
+                        const rate = parseFloat($(this).data('value')) || 0;
+                        totalTaxRate += rate;
+                    });
+
+                    const taxAmount = discountedSubtotal * (totalTaxRate / 100);
 
                     // 4. Final total
                     const total = discountedSubtotal + taxAmount;
