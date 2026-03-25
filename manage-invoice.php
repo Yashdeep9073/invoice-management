@@ -244,11 +244,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForReminder']
     try {
 
         $invoiceId = intval($_POST['invoiceIdForReminder']);
-        $stmtFetchCustomer = $db->prepare("SELECT invoice.*, customer.*, tax.* FROM invoice 
+        $stmtFetchCustomer = $db->prepare("SELECT invoice.*, customer.*, COALESCE(tax_summary.tax_rate, 0) AS tax_rate FROM invoice 
         INNER JOIN customer
         ON customer.customer_id = invoice.customer_id
-        INNER JOIN tax
-        ON tax.tax_id = invoice.tax
+        LEFT JOIN (
+            SELECT it.invoice_id, SUM(t.tax_rate) AS tax_rate
+            FROM invoice_tax it
+            INNER JOIN tax t ON t.tax_id = it.tax_id
+            GROUP BY it.invoice_id
+        ) AS tax_summary
+        ON tax_summary.invoice_id = invoice.invoice_id
         WHERE invoice.is_active = 1 AND invoice.invoice_id = ? AND invoice.status IN ('PENDING') ");
 
         $stmtFetchCustomer->bind_param('i', $invoiceId);
@@ -526,11 +531,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIdForSend'])) {
     try {
 
         $invoiceId = intval($_POST['invoiceIdForSend']);
-        $stmtFetchCustomer = $db->prepare("SELECT invoice.*, customer.*, tax.* FROM invoice 
+        $stmtFetchCustomer = $db->prepare("SELECT invoice.*, customer.*, COALESCE(tax_summary.tax_rate, 0) AS tax_rate FROM invoice 
         INNER JOIN customer
         ON customer.customer_id = invoice.customer_id
-        INNER JOIN tax
-        ON tax.tax_id = invoice.tax
+        LEFT JOIN (
+            SELECT it.invoice_id, SUM(t.tax_rate) AS tax_rate
+            FROM invoice_tax it
+            INNER JOIN tax t ON t.tax_id = it.tax_id
+            GROUP BY it.invoice_id
+        ) AS tax_summary
+        ON tax_summary.invoice_id = invoice.invoice_id
         WHERE invoice.is_active = 1 AND invoice.invoice_id = ? AND invoice.status IN ('PENDING', 'PAID')");
 
         $stmtFetchCustomer->bind_param('i', $invoiceId);
@@ -918,9 +928,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
 </head>
 
 <body>
-    <!-- <div id="global-loader">
+    <!-- By default off -->
+    <div id="global-loader" style="display: none;">
         <div class="whirly-loader"> </div>
-    </div> -->
+    </div>
 
     <?php if (isset($_SESSION['success'])) { ?>
         <script>
@@ -1369,6 +1380,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                 ],
             });
 
+            function showLoader() {
+                $('#global-loader').fadeIn(200); // smooth show
+            }
+
+            function hideLoader() {
+                $('#global-loader').fadeOut(200); // smooth hide
+            }
+
+
             // Handle the click event on the delete button
             $(document).on('click', '.deleteButton', function (event) {
                 let invoiceId = $(this).data('invoice-id');
@@ -1434,6 +1454,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                     confirmButtonText: "Yes, Send Mail!"
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        showLoader(); // Show loader before sending the request
                         // Send AJAX request to delete the record from the database
                         $.ajax({
                             url: 'manage-invoice.php', // The PHP file that will handle the deletion
@@ -1442,7 +1463,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                             success: function (response) {
                                 let result = JSON.parse(response);
                                 console.log(result);
-
+                                hideLoader(); // Hide loader after receiving the response
                                 if (result.status == 200) {
                                     // Show success message and reload the page
                                     Swal.fire(
@@ -1453,6 +1474,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         // Reload the page
                                         location.reload();
                                     });
+                                    
                                 }
                                 if (result.status == 403) {
                                     // Show success message and reload the page
@@ -1464,6 +1486,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                         // Reload the page
                                         location.reload();
                                     });
+
+
                                 }
                                 if (result.status == 404) {
                                     // Show success message and reload the page
@@ -1496,6 +1520,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                     'There was an error sending the mail.',
                                     'error'
                                 );
+                                hideLoader(); // Hide loader if the AJAX request fails
                             }
                         });
                     }
@@ -1517,6 +1542,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                     confirmButtonText: "Yes, Send Mail!"
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        showLoader(); // Show loader before sending the request
                         // Send AJAX request to delete the record from the database
                         $.ajax({
                             url: 'manage-invoice.php', // The PHP file that will handle the deletion
@@ -1526,6 +1552,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                 console.log(response);
                                 let result = JSON.parse(response);
                                 console.log(result);
+                                hideLoader(); // Hide loader after receiving the response
 
                                 if (result.status == 200) {
                                     // Show success message and reload the page
@@ -1580,6 +1607,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['invoiceIds'])) {
                                     'There was an error sending the mail.',
                                     'error'
                                 );
+                                hideLoader(); // Hide loader if the AJAX request fails
                             }
                         });
                     }
