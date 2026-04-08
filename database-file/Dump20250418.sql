@@ -276,7 +276,7 @@ CREATE TABLE `email_settings` (
 
 LOCK TABLES `email_settings` WRITE;
 /*!40000 ALTER TABLE `email_settings` DISABLE KEYS */;
-INSERT INTO `email_settings` VALUES (3,'VIS Solution','enquiry@dvepl.com','Enquiry@DVEPL25','smtp.gmail.com',465,1,'2025-06-13 08:27:04','2025-10-17 12:02:25','public/upload/emailSetting/images/img_687f330290cd37.39816977.png','support@vibrantick.org','+919870443528','Vibrantick InfoTech Solution | D-185, Phase 8B, Sector 74, SAS Nagar |','https://www.instagram.com/vibrantickinfotech/','https://www.facebook.com/vibranticksolutions/','https://www.linkedin.com/company/vibrantick-infotech-solutions/posts/?feedView=all');
+INSERT INTO `email_settings` VALUES (3,'VIS Solution','noreply@vibrantick.in','Noreply@420','smtp.hostinger.com',465,1,'2025-06-13 08:27:04','2026-03-25 07:28:06','public/upload/emailSetting/images/img_687f330290cd37.39816977.png','support@vibrantick.org','+919870443528','Vibrantick InfoTech Solution | D-185, Phase 8B, Sector 74, SAS Nagar |','https://www.instagram.com/vibrantickinfotech/','https://www.facebook.com/vibranticksolutions/','https://www.linkedin.com/company/vibrantick-infotech-solutions/posts/?feedView=all');
 /*!40000 ALTER TABLE `email_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -418,7 +418,7 @@ CREATE TABLE `invoice` (
 
 LOCK TABLES `invoice` WRITE;
 /*!40000 ALTER TABLE `invoice` DISABLE KEYS */;
-INSERT INTO `invoice` VALUES (262,'VIS-20260325-00009','CASH','TX-20250813-22459-TO7W','PAID',10000.00,1,0.00,11800.00,'2026-03-26',104,'[2, 3]','Remark...','2026-03-25 06:08:03','2026-03-25 06:08:03',1,0,0,1,'','','FIXED','Website Service','HOLD',NULL,0);
+INSERT INTO `invoice` VALUES (262,'VIS-20260325-00009','CASH','TX-20250813-22459-TO7W','PAID',10000.00,1,0.00,11800.00,'2026-03-26',104,'[2, 3]','Remark...','2026-03-25 06:08:03','2026-03-25 07:37:38',1,0,4,1,'','','FIXED','Website Service','HOLD',NULL,0);
 /*!40000 ALTER TABLE `invoice` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -863,4 +863,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-25 12:41:33
+-- Dump completed on 2026-04-03 19:03:01

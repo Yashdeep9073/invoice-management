@@ -338,19 +338,19 @@ try {
 
 
     // Bill To and Ship To (side by side, below header)
-    $pdf->SetFont('FuturaBT-Medium', '', 12);
-    $pdf->SetXY(140, 55);
-    $pdf->Cell(90, 10, 'Ship To:', 0, 0);
-    $pdf->SetTextColor(0, 0, 0); // Reset text color to black
+    // $pdf->SetFont('FuturaBT-Medium', '', 12);
+    // $pdf->SetXY(140, 55);
+    // $pdf->Cell(90, 10, 'Ship To:', 0, 0);
+    // $pdf->SetTextColor(0, 0, 0); // Reset text color to black
 
 
-    $pdf->SetFont('FuturaMdBT-Bold', '', 12);
-    $pdf->SetXY(140, 61);
-    $pdf->MultiCell(90, 8, $invoice['ship_name'] ?? 'N/A', 0, 'L');
-    $address = cleanAddress($invoice['ship_address'] ?? 'N/A');
-    $pdf->SetFont('FuturaMdBT-Bold', '', 10);
-    $pdf->SetXY(140, 66);
-    $pdf->MultiCell(120, 5, $address, 0, 'L');
+    // $pdf->SetFont('FuturaMdBT-Bold', '', 12);
+    // $pdf->SetXY(140, 61);
+    // $pdf->MultiCell(90, 8, $invoice['ship_name'] ?? 'N/A', 0, 'L');
+    // $address = cleanAddress($invoice['ship_address'] ?? 'N/A');
+    // $pdf->SetFont('FuturaMdBT-Bold', '', 10);
+    // $pdf->SetXY(140, 66);
+    // $pdf->MultiCell(120, 5, $address, 0, 'L');
 
 
     $pdf->SetFont('FuturaMdBT-Bold', '', 10);
